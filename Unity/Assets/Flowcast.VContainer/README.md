@@ -1,7 +1,7 @@
 # 🔌 Flowcast.VContainer — DI Extension for Flowcast SDK
 
-> **GitHub**: [Flowcast.VContainer Repository](https://github.com/omidkianifarkingkode/Flowcast.VContainer.git)  
-> **Depends on**: [Flowcast Core](https://github.com/omidkianifarkingkode/Flowcast/) and [VContainer](https://github.com/hadashiA/VContainer)
+> **GitHub**: [Flowcast.VContainer Repository](https://github.com/omidkianifarkingkode/Flowcast/tree/main/Unity/Assets/Flowcast.VContainer)  
+> **Depends on**: [Flowcast Core](https://github.com/omidkianifarkingkode/Flowcast/tree/main/Unity/Assets/Flowcast) and [VContainer](https://github.com/hadashiA/VContainer)
 
 This package provides a VContainer-based dependency injection setup for the Flowcast SDK. It allows developers to register and resolve Flowcast systems in a clean, modular, and testable way.
 
@@ -22,7 +22,7 @@ Edit your Unity project's `Packages/manifest.json` file:
 
 ### Step 1: Add Flowcast
 ```json
-"com.kingkode.flowcast": "https://github.com/omidkianifarkingkode/Flowcast.git"
+"com.kingkode.flowcast": "https://github.com/omidkianifarkingkode/Flowcast.git?path=Unity/Assets/Flowcast"
 ```
 
 ### Step 2: Add VContainer
@@ -32,7 +32,7 @@ Edit your Unity project's `Packages/manifest.json` file:
 
 ### Step 3: Add Flowcast.VContainer
 ```json
-"com.kingkode.flowcast.vcontainer": "https://github.com/omidkianifarkingkode/Flowcast.VContainer.git"
+"com.kingkode.flowcast.vcontainer": "https://github.com/omidkianifarkingkode/Flowcast.git?path=Unity/Assets/Flowcast.VContainer"
 ```
 
 ## 🧰 Usage

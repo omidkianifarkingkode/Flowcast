@@ -1,5 +1,5 @@
-> **GitHub**: [Flowcast Core Repository](https://github.com/omidkianifarkingkode/Flowcast/)  
-> **Extension**: [Flowcast.VContainer (DI Integration)](https://github.com/omidkianifarkingkode/Flowcast.VContainer.git)
+> **GitHub**: [Flowcast Core Repository](https://github.com/omidkianifarkingkode/Flowcast/tree/main/Unity/Assets/Flowcast)  
+> **Extension**: [Flowcast.VContainer (DI Integration)](https://github.com/omidkianifarkingkode/Flowcast/tree/main/Unity/Assets/Flowcast.VContainer)
 
 > This SDK supports integration with the [VContainer](https://github.com/hadashiA/VContainer) dependency injection framework via the official extension repository above.
 
@@ -14,7 +14,7 @@ To install the required packages in your Unity project:
 In your `manifest.json` under `"dependencies"`:
 
 ```json
-"com.kingkode.flowcast": "https://github.com/omidkianifarkingkode/Flowcast.git"
+"com.kingkode.flowcast": "https://github.com/omidkianifarkingkode/Flowcast.git?path=Unity/Assets/Flowcast"
 ```
 
 # 📘 Flowcast SDK — Project Definition & Architecture Overview
