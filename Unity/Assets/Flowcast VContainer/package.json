@@ -1,0 +1,13 @@
+{
+  "name": "com.kingkode.flowcast.vcontainer",
+  "version": "1.0.0",
+  "displayName": "Flowcast VContainer Extension",
+  "description": "VContainer integration for Flowcast.",
+  "unity": "2022.1",
+  "author": {
+    "name": "omid kianifar",
+    "email": "omid.kianifar.kingkode@email.com"
+  },
+  "dependencies": {},
+  "keywords": [ "flowcast", "vcontainer", "integration", "dependency-injection" ]
+}

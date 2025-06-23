@@ -1,0 +1,12 @@
+{
+  "name": "com.kingkode.flowcast",
+  "version": "1.0.0",
+  "displayName": "Flowcast",
+  "description": "Core functionality for Flowcast system.",
+  "unity": "2022.1",
+  "author": {
+    "name": "omid kianifar",
+    "email": "omid.kianifar.kingkode@email.com"
+  },
+  "keywords": [ "flowcast", "core" ]
+}

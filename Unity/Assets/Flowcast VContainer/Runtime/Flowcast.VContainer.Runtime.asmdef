@@ -1,0 +1,17 @@
+{
+    "name": "Flowcast.VContainer.Runtime",
+    "rootNamespace": "",
+    "references": [
+        "Flowcast.Runtime",
+        "VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
