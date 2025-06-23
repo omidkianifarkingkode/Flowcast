@@ -5,18 +5,6 @@
 
 ---
 
-### 📦 Installation via UPM (Git URL)
-
-To install the required packages in your Unity project:
-
-#### ✅ 1. Install **VContainer**
-
-In your `manifest.json` under `"dependencies"`:
-
-```json
-"com.kingkode.flowcast": "https://github.com/omidkianifarkingkode/Flowcast.git?path=Unity/Assets/Flowcast"
-```
-
 # 📘 Flowcast SDK — Project Definition & Architecture Overview
 
 ## Overview
