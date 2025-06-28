@@ -1,7 +1,7 @@
 {
   "name": "com.kingkode.flowcast.vcontainer",
   "version": "1.0.0",
-  "displayName": "Flowcast VContainer Extension",
+  "displayName": "Flowcast.VContainer",
   "description": "VContainer integration for Flowcast.",
   "unity": "2022.1",
   "author": {
