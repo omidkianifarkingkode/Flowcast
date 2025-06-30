@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 using ILogger = Flowcast.Logging.ILogger;
+using FixedMathSharp;
 
 namespace Flowcast.Lockstep
 {
     public class LockstepProviderUpdate : LockstepProviderBase
     {
-        private float _accumulatedTime = 0f;
+        private float _accumulatedTime;
         private float _frameDuration;
 
         public LockstepProviderUpdate(ILockstepSettings settings, ILogger logger)
@@ -16,7 +17,7 @@ namespace Flowcast.Lockstep
 
         public override void Tick()
         {
-            _accumulatedTime += Time.deltaTime;
+            _accumulatedTime += Time.deltaTime * SimulationSpeedMultiplier;
 
             while (_accumulatedTime >= _frameDuration)
             {
@@ -25,11 +26,10 @@ namespace Flowcast.Lockstep
             }
         }
 
-
         public float GetDelay()
         {
-            float expectedTime = CurrentGameFrame * _frameDuration;
-            float actualTime = Time.timeSinceLevelLoad;
+            var expectedTime = (long)CurrentGameFrame * _frameDuration;
+            var actualTime = Time.timeSinceLevelLoad;
             return actualTime - expectedTime;
         }
     }

@@ -1,12 +1,11 @@
 using Flowcast.Commons;
 using Flowcast.Player;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Flowcast.Inputs
 {
-    public class InputCollector : IInputCollector
+    public class LocalInputCollector : ILocalInputCollector
     {
         private readonly IInputValidatorFactory _validatorFactory;
         private readonly Queue<IInput> _inputQueue = new();
@@ -17,7 +16,7 @@ namespace Flowcast.Inputs
 
         public IReadOnlyCollection<IInput> BufferedInputs => _inputQueue.ToList().AsReadOnly();
 
-        public InputCollector(IInputValidatorFactory validatorFactory, IPlayerProvider playerProvider, IFrameProvider frameProvider, IIdGenerator idGenerator)
+        public LocalInputCollector(IInputValidatorFactory validatorFactory, IPlayerProvider playerProvider, IFrameProvider frameProvider, IIdGenerator idGenerator)
         {
             _validatorFactory = validatorFactory;
             _playerProvider = playerProvider;
@@ -47,8 +46,13 @@ namespace Flowcast.Inputs
             return Result.Success();
         }
 
+        public IReadOnlyCollection<IInput> ConsumeBufferedInputs()
+        {
+            var inputs = _inputQueue.ToArray(); // snapshot
+            _inputQueue.Clear();                // flush
 
-        public void Clear() => _inputQueue.Clear();
+            return inputs;
+        }
     }
 }
 

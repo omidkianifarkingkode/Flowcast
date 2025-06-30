@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FixedMathSharp;
+using System;
+using UnityEngine;
 using ILogger = Flowcast.Logging.ILogger;
 
 namespace Flowcast.Lockstep
@@ -11,6 +13,13 @@ namespace Flowcast.Lockstep
         public ulong CurrentGameFrame { get; protected set; }
         public ulong CurrentLockstepTurn { get; protected set; }
         public ulong SimulationTimeTicks => CurrentGameFrame * (ulong)(1000 / Settings.GameFramesPerSecond);
+
+        public float SimulationSpeedMultiplier
+        {
+            get => _simulationSpeedMultiplier;
+            set => _simulationSpeedMultiplier = Mathf.Max(0, value);
+        }
+        private float _simulationSpeedMultiplier = 1;
 
         public event System.Action OnGameFrame;
         public event System.Action OnLockstepTurn;

@@ -21,6 +21,13 @@
         ulong SimulationTimeTicks { get; }
 
         /// <summary>
+        /// Multiplier for game simulation speed. 1.0 = real time. >1.0 = faster. <1.0 = slower.
+        /// Used for rollback catch-up and testing.
+        /// </summary>
+        float SimulationSpeedMultiplier { get; set; }
+
+
+        /// <summary>
         /// Called once every game frame.
         /// </summary>
         event System.Action OnGameFrame;

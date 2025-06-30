@@ -1,7 +1,5 @@
-﻿using Flowcast.Inputs;
-using NUnit.Framework.Interfaces;
+﻿using NUnit.Framework.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,16 +19,15 @@ namespace Flowcast.Network
         void Tick();
     }
 
-    public interface IPlayerInputChannel
-    {
-        event Action<IReadOnlyCollection<IInput>> OnInputsReceived;
-        void SendInputs(IReadOnlyCollection<IInput> inputs);
-    }
 
     public interface IGameStateVerificationService
     {
         void SendGameStateHash(ulong frameNumber, byte[] gameStateHash, BitSet inputAckBitmap);
         event Action<string> OnStatusReceived;
+    }
+
+    public class BitSet
+    {
     }
 
     public interface IRemoteCommandReceiver
@@ -40,7 +37,6 @@ namespace Flowcast.Network
 
     public interface INetworkManager :
         INetworkConnectionService,
-        IPlayerInputChannel,
         IGameStateVerificationService,
         IRemoteCommandReceiver
     {

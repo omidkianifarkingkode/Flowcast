@@ -5,7 +5,7 @@ namespace Flowcast.Tests.Runtime.InputTests
 {
     public static class InputCollectorExtensions
     {
-        public static Result AddSpawnInput(this IInputCollector collector, int objectId, int x, int y)
+        public static Result AddSpawnInput(this ILocalInputCollector collector, int objectId, int x, int y)
         {
             var input = new SpawnInput(1, x, y);
             return collector.Collect(input);
