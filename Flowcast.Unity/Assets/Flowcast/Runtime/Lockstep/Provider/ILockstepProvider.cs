@@ -1,6 +1,8 @@
-﻿namespace Flowcast.Lockstep
+﻿using Flowcast.Commons;
+
+namespace Flowcast.Lockstep
 {
-    public interface ILockstepProvider
+    public interface ILockstepProvider : IFrameProvider
     {
         ILockstepSettings Settings { get; }
 

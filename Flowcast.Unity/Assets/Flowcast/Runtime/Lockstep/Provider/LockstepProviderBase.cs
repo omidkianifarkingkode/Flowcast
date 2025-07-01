@@ -54,5 +54,7 @@ namespace Flowcast.Lockstep
             OnGameFrame?.Invoke();
             CurrentGameFrame++;
         }
+
+        public ulong GetCurrentFrame() => CurrentGameFrame;
     }
 }

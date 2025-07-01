@@ -2,15 +2,20 @@
 using Flowcast.Lockstep;
 using Flowcast.Logging;
 using Flowcast.Pipeline;
+using Flowcast.Player;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Flowcast
 {
     public interface IFlowcastEngine
     {
+        void Initialize(long localId, IReadOnlyList<long> allIds);
         void SubmitInput(IInput input);
-
+        void StartTicking(); // Begin simulation
+        void StopTicking();  // Optional for pause/leave
     }
 
     public class FlowcastEngine : IFlowcastEngine
@@ -20,15 +25,18 @@ namespace Flowcast
         private readonly IGameUpdatePipeline _gameUpdatePipeline;
         private readonly IGameStateSyncService _gameStateSyncService;
         private readonly IGameStateSerializer _gameStateSerializer;
-        private readonly ILockstepProvider _lockstepProvider;
+        private readonly LockstepProviderBase _lockstepProvider;
+        private readonly PlayerProvider _playerProvider;
         private readonly ILogger _logger;
+        private bool _isTicking;
 
         public FlowcastEngine(
             ILocalInputCollector inputCollector,
             IRemoteInputCollector inputChannel,
             IGameUpdatePipeline gameUpdatePipeline,
             IGameStateSyncService gameStateSyncService,
-            ILockstepProvider lockstepProvider,
+            LockstepProviderBase lockstepProvider,
+            PlayerProvider playerProvider,
             ILogger logger,
             IGameStateSerializer gameStateSerializer)
         {
@@ -37,6 +45,7 @@ namespace Flowcast
             _gameUpdatePipeline = gameUpdatePipeline;
             _gameStateSyncService = gameStateSyncService;
             _lockstepProvider = lockstepProvider;
+            _playerProvider = playerProvider;
             _logger = logger;
 
             // Hook up event-driven "sagas"
@@ -45,12 +54,34 @@ namespace Flowcast
             _gameStateSerializer = gameStateSerializer;
         }
 
+        public void Initialize(long localId, IReadOnlyList<long> allIds)
+        {
+            _playerProvider.Initialize(localId, allIds);
+            // Optionally forward to other modules
+        }
+
         public void SubmitInput(IInput input)
         {
             var result = _inputCollector.Collect(input);
 
             if (!result.IsSuccess)
                 _logger.LogWarning($"Input rejected: {result.Error}");
+        }
+
+        public void StartTicking()
+        {
+            _isTicking = true;
+        }
+
+        public void StopTicking()
+        {
+            _isTicking = false;
+        }
+
+        public void Tick() 
+        {
+            if (_isTicking)
+                _lockstepProvider.Tick();
         }
 
         private void OrchestrateGameFrame()
