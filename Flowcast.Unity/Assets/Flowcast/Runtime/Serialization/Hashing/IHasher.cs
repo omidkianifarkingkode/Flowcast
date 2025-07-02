@@ -11,6 +11,7 @@
         void Write(bool value);
         void Write(char value);
         void Write(string value);
+        void WriteBytes(byte[] data);
 
         uint GetHash();
         void Reset();

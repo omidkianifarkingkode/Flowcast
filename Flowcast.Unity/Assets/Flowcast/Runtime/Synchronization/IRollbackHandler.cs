@@ -1,4 +1,5 @@
-﻿using Flowcast.Serialization;
+﻿using Flowcast.Logging;
+using Flowcast.Serialization;
 using System;
 
 namespace Flowcast.Synchronization
@@ -8,21 +9,33 @@ namespace Flowcast.Synchronization
         void ApplySnapshot(SnapshotEntry snapshot);
     }
 
-    public class RollbackHandler<T> : IRollbackHandler where T : ISerializableGameState
+    public class RollbackHandler : IRollbackHandler
     {
-        private readonly IGameStateSerializer<T> _serializer;
-        private readonly Action<T> _applyState;
+        private readonly IGameStateSerializer _serializer;
+        private readonly ILogger _logger;
+        private readonly RollbackConfig _config;
 
-        public RollbackHandler(IGameStateSerializer<T> serializer, Action<T> applyState)
+        public RollbackHandler(IGameStateSerializer serializer, ILogger logger , RollbackConfig config)
         {
             _serializer = serializer;
-            _applyState = applyState;
+            _logger = logger;
+            _config = config;
         }
 
         public void ApplySnapshot(SnapshotEntry snapshot)
         {
             var state = _serializer.DeserializeSnapshot(snapshot.Data);
-            _applyState(state);
+
+            if (_config.EnableRollbackLog)
+                _logger.Log("[Rollback] Game state reverted.");
+
+            _config.OnRollback?.Invoke(state);
         }
+    }
+
+    public class RollbackConfig
+    {
+        public Action<ISerializableGameState> OnRollback { get; set; }
+        public bool EnableRollbackLog { get; set; } = false;
     }
 }

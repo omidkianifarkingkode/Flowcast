@@ -57,6 +57,28 @@ namespace Flowcast.Serialization
                 Write(c);
         }
 
+        public void WriteBytes(byte[] data)
+        {
+            for (int i = 0; i < data.Length; i += 4)
+            {
+                uint chunk = 0;
+
+                if (i + 3 < data.Length)
+                    chunk = BitConverter.ToUInt32(data, i);
+                else
+                {
+                    for (int j = 0; j < data.Length - i; j++)
+                    {
+                        chunk |= (uint)(data[i + j] << (8 * j));
+                    }
+                }
+
+                Write(chunk);
+            }
+        }
+
+
+
         public uint GetHash()
         {
             return _hash;

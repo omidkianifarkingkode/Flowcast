@@ -10,7 +10,7 @@ namespace Flowcast.Inputs
     /// 
     /// It should only contain inputs from other players (or authoritative echoes).
     /// </summary>
-    public interface IRemoteInputCollector
+    public interface IRemoteInputChannel
     {
         /// <summary>
         /// Sends local inputs to the server.

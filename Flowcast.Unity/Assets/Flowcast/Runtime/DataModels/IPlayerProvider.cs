@@ -1,26 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace Flowcast.Player
+namespace Flowcast.Data
 {
-    public class PlayerInfo
-    {
-        public long Id { get; }
-        public int Index { get; }
-        public bool IsLocal { get; }
-
-        public PlayerInfo(long id, int index, bool isLocal)
-        {
-            Id = id;
-            Index = index;
-            IsLocal = isLocal;
-        }
-    }
-
-
     public interface IPlayerProvider
     {
         long GetLocalPlayerId();
@@ -31,10 +12,10 @@ namespace Flowcast.Player
 
     public class PlayerProvider : IPlayerProvider
     {
-        private long _localPlayerId;
-        private IReadOnlyList<long> _playerIds;
+        private readonly long _localPlayerId;
+        private readonly IReadOnlyList<long> _playerIds;
 
-        public void Initialize(long localId, IReadOnlyList<long> allIds)
+        public PlayerProvider(long localId, IReadOnlyList<long> allIds)
         {
             _localPlayerId = localId;
             _playerIds = allIds;

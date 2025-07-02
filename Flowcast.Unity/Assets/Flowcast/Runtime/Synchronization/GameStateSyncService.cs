@@ -1,4 +1,5 @@
 ﻿using Flowcast.Collections;
+using Flowcast.Network;
 using Flowcast.Serialization;
 using System;
 
@@ -6,7 +7,7 @@ namespace Flowcast.Synchronization
 {
     public interface IGameStateSyncService
     {
-        void SaveSnapshot(ulong tick, byte[] serializedState);
+        void CaptureAndSyncSnapshot(ulong tick, byte[] serializedState);
         void SetSynced(ulong tick, bool isSynced);
         bool TryGetSnapshot(ulong tick, out SnapshotEntry entry);
         bool TryGetLatestSyncedSnapshot(out SnapshotEntry entry);
@@ -21,35 +22,42 @@ namespace Flowcast.Synchronization
         private readonly CircularBuffer<SnapshotEntry> _buffer;
         private readonly IHasher _hasher;
         private readonly IRollbackHandler _rollbackHandler;
+        private readonly ISimulationSyncService _simulationSyncService;
 
-        public GameStateSyncService(IHasher hasher, IRollbackHandler rollbackHandler, int maxEntries = 128)
+        public GameStateSyncService(IHasher hasher, IRollbackHandler rollbackHandler, ISimulationSyncService simulationSyncService, int maxEntries = 128)
         {
             _hasher = hasher;
             _buffer = new CircularBuffer<SnapshotEntry>(maxEntries);
             _rollbackHandler = rollbackHandler;
+            _simulationSyncService = simulationSyncService;
+
+            _simulationSyncService.OnSyncStatusReceived += SetSynced;
+            _simulationSyncService.OnRollbackRequested += HandleRollbackRequest;
         }
 
-        public void SaveSnapshot(ulong tick, byte[] serializedState)
+        public void CaptureAndSyncSnapshot(ulong frame, byte[] serializedState)
         {
             uint hash = ComputeHash(serializedState);
 
             var entry = new SnapshotEntry
             {
-                Tick = tick,
+                Tick = frame,
                 Data = serializedState,
                 Hash = hash,
                 IsSynced = false
             };
 
             _buffer.Add(entry);
+
+            _simulationSyncService.SendStateHash(frame, hash);
         }
 
-        public void SetSynced(ulong tick, bool isSynced)
+        public void SetSynced(ulong frame, bool isSynced)
         {
             for (int i = 0; i < _buffer.Count; i++)
             {
                 ref var entry = ref _buffer.RefAt(i);
-                if (entry.Tick == tick)
+                if (entry.Tick == frame)
                 {
                     entry.IsSynced = true;
                     return;
@@ -57,12 +65,12 @@ namespace Flowcast.Synchronization
             }
         }
 
-        public bool TryGetSnapshot(ulong tick, out SnapshotEntry entry)
+        public bool TryGetSnapshot(ulong frame, out SnapshotEntry entry)
         {
             for (int i = 0; i < _buffer.Count; i++)
             {
                 entry = _buffer.GetAt(i);
-                if (entry.Tick == tick)
+                if (entry.Tick == frame)
                     return true;
             }
 
@@ -108,29 +116,14 @@ namespace Flowcast.Synchronization
 
         private uint ComputeHash(byte[] data)
         {
+            if (data == null || data.Length == 0)
+                return 0;
+
             _hasher.Reset();
-
-            // Treat the serialized state as a raw byte stream
-            for (int i = 0; i < data.Length; i += 4)
-            {
-                uint chunk = 0;
-
-                if (i + 3 < data.Length)
-                    chunk = BitConverter.ToUInt32(data, i);
-                else
-                {
-                    for (int j = 0; j < data.Length - i; j++)
-                    {
-                        chunk |= (uint)(data[i + j] << (8 * j));
-                    }
-                }
-
-                _hasher.Write(chunk);
-            }
-
+            _hasher.WriteBytes(data);
             return _hasher.GetHash();
         }
-
+    
         public bool NeedsRollback()
         {
             if (_buffer.Count == 0)
@@ -154,6 +147,20 @@ namespace Flowcast.Synchronization
             }
 
             throw new InvalidOperationException("No synced snapshot available for rollback.");
+        }
+
+        private void HandleRollbackRequest(ulong frame)
+        {
+            // Optionally verify frame is known
+            if (TryGetSnapshot(frame, out var entry))
+            {
+                _rollbackHandler.ApplySnapshot(entry);
+                ClearAfter(frame);
+            }
+            else
+            {
+                throw new InvalidOperationException($"No snapshot available for rollback to frame {frame}.");
+            }
         }
     }
 }

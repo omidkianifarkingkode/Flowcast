@@ -1,18 +1,24 @@
-﻿using Flowcast.Inputs;
+﻿using Flowcast.Data;
+using Flowcast.Inputs;
 using Flowcast.Lockstep;
 using Flowcast.Logging;
 using Flowcast.Pipeline;
-using Flowcast.Player;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
-using System.Collections.Generic;
-using System.Security.Cryptography;
 
 namespace Flowcast
 {
     public interface IFlowcastEngine
     {
-        void Initialize(long localId, IReadOnlyList<long> allIds);
+        ILocalInputCollector InputCollector { get; }
+        IRemoteInputChannel InputChannel { get; }
+        IGameUpdatePipeline GameUpdatePipeline { get; }
+        IGameStateSyncService GameStateSyncService { get; }
+        IGameStateSerializer GameStateSerializer { get; }
+        ILockstepProvider LockstepProvider { get; }
+        IPlayerProvider PlayerProvider { get; }
+        ILogger Logger { get; }
+
         void SubmitInput(IInput input);
         void StartTicking(); // Begin simulation
         void StopTicking();  // Optional for pause/leave
@@ -20,49 +26,57 @@ namespace Flowcast
 
     public class FlowcastEngine : IFlowcastEngine
     {
-        private readonly ILocalInputCollector _inputCollector;
-        private readonly IRemoteInputCollector _inputChannel;
+        public static IFlowcastEngine Instance { get; private set; }
+
+        public ILocalInputCollector InputCollector => _localInputCollector;
+        public IRemoteInputChannel InputChannel => _remoteInputChannel;
+        public IGameUpdatePipeline GameUpdatePipeline => _gameUpdatePipeline;
+        public IGameStateSyncService GameStateSyncService => _gameStateSyncService;
+        public IGameStateSerializer GameStateSerializer => _gameStateSerializer;
+        public ILockstepProvider LockstepProvider => _lockstepProvider;
+        public IPlayerProvider PlayerProvider => _playerProvider;
+        public ILogger Logger => _logger;
+
+        private readonly ILocalInputCollector _localInputCollector;
+        private readonly IRemoteInputChannel _remoteInputChannel;
         private readonly IGameUpdatePipeline _gameUpdatePipeline;
         private readonly IGameStateSyncService _gameStateSyncService;
         private readonly IGameStateSerializer _gameStateSerializer;
         private readonly LockstepProviderBase _lockstepProvider;
-        private readonly PlayerProvider _playerProvider;
+        private readonly IPlayerProvider _playerProvider;
         private readonly ILogger _logger;
+
         private bool _isTicking;
 
         public FlowcastEngine(
             ILocalInputCollector inputCollector,
-            IRemoteInputCollector inputChannel,
+            IRemoteInputChannel inputChannel,
             IGameUpdatePipeline gameUpdatePipeline,
             IGameStateSyncService gameStateSyncService,
             LockstepProviderBase lockstepProvider,
-            PlayerProvider playerProvider,
             ILogger logger,
-            IGameStateSerializer gameStateSerializer)
+            IGameStateSerializer gameStateSerializer,
+            IPlayerProvider playerProvider)
         {
-            _inputCollector = inputCollector;
-            _inputChannel = inputChannel;
+            Instance = this;
+
+            _localInputCollector = inputCollector;
+            _remoteInputChannel = inputChannel;
             _gameUpdatePipeline = gameUpdatePipeline;
             _gameStateSyncService = gameStateSyncService;
             _lockstepProvider = lockstepProvider;
-            _playerProvider = playerProvider;
             _logger = logger;
 
             // Hook up event-driven "sagas"
             _lockstepProvider.OnGameFrame += OrchestrateGameFrame;
             _lockstepProvider.OnLockstepTurn += OrchestrateLockstepTurn;
             _gameStateSerializer = gameStateSerializer;
-        }
-
-        public void Initialize(long localId, IReadOnlyList<long> allIds)
-        {
-            _playerProvider.Initialize(localId, allIds);
-            // Optionally forward to other modules
+            _playerProvider = playerProvider;
         }
 
         public void SubmitInput(IInput input)
         {
-            var result = _inputCollector.Collect(input);
+            var result = _localInputCollector.Collect(input);
 
             if (!result.IsSuccess)
                 _logger.LogWarning($"Input rejected: {result.Error}");
@@ -78,7 +92,7 @@ namespace Flowcast
             _isTicking = false;
         }
 
-        public void Tick() 
+        public void Tick()
         {
             if (_isTicking)
                 _lockstepProvider.Tick();
@@ -103,21 +117,21 @@ namespace Flowcast
 
         private void DispatchPlayerInputs()
         {
-            var buffered = _inputCollector.ConsumeBufferedInputs();
+            var buffered = _localInputCollector.ConsumeBufferedInputs();
             if (buffered.Count > 0)
             {
-                _inputChannel.SendInputs(buffered);
+                _remoteInputChannel.SendInputs(buffered);
                 _logger.Log($"[InputDispatch] Sent {buffered.Count} inputs");
             }
         }
 
         private void ProcessInputs(ulong frame)
         {
-            var inputs = _inputChannel.GetInputsForFrame(frame);
+            var inputs = _remoteInputChannel.GetInputsForFrame(frame);
             foreach (var input in inputs)
-                _inputCollector.Collect(input); // Apply remote inputs
+                _localInputCollector.Collect(input); // Apply remote inputs
 
-            _inputChannel.RemoveInputsForFrame(frame); // Clean up
+            _remoteInputChannel.RemoveInputsForFrame(frame); // Clean up
         }
 
         private void UpdateGameState(ulong frame)
@@ -129,7 +143,7 @@ namespace Flowcast
         {
             var serializedGameState = _gameStateSerializer.SerializeSnapshot();
 
-            _gameStateSyncService.SaveSnapshot(_lockstepProvider.CurrentGameFrame, serializedGameState);
+            _gameStateSyncService.CaptureAndSyncSnapshot(_lockstepProvider.CurrentGameFrame, serializedGameState);
         }
 
         private bool HandleRollback()
