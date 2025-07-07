@@ -1,12 +1,16 @@
 ﻿using Flowcast.Collections;
+using Flowcast.Inputs;
 using Flowcast.Network;
 using Flowcast.Serialization;
 using System;
+using System.Collections.Generic;
 
 namespace Flowcast.Synchronization
 {
     public interface IGameStateSyncService
     {
+        event Action<ulong> OnRollback;
+
         void CaptureAndSyncSnapshot(ulong tick, byte[] serializedState);
         void SetSynced(ulong tick, bool isSynced);
         bool TryGetSnapshot(ulong tick, out SnapshotEntry entry);
@@ -19,6 +23,8 @@ namespace Flowcast.Synchronization
 
     public class GameStateSyncService : IGameStateSyncService
     {
+        public event Action<ulong> OnRollback;
+
         private readonly CircularBuffer<SnapshotEntry> _buffer;
         private readonly IHasher _hasher;
         private readonly IRollbackHandler _rollbackHandler;
@@ -123,14 +129,23 @@ namespace Flowcast.Synchronization
             _hasher.WriteBytes(data);
             return _hasher.GetHash();
         }
-    
+
         public bool NeedsRollback()
         {
-            if (_buffer.Count == 0)
+            const int graceFrames = 5;
+
+            if (_buffer.Count <= graceFrames)
                 return false;
 
-            var latest = _buffer.GetAt(0); // Newest is index 0
-            return !latest.IsSynced;
+            // Skip newest N frames
+            for (int i = graceFrames; i < _buffer.Count; i++)
+            {
+                var entry = _buffer.GetAt(i);
+                if (!entry.IsSynced)
+                    return true;
+            }
+
+            return false;
         }
 
         public void RollbackToVerifiedFrame()
@@ -142,6 +157,9 @@ namespace Flowcast.Synchronization
                 {
                     _rollbackHandler.ApplySnapshot(entry);
                     ClearAfter(entry.Tick);
+
+                    OnRollback?.Invoke(entry.Tick);
+
                     return;
                 }
             }
@@ -156,6 +174,8 @@ namespace Flowcast.Synchronization
             {
                 _rollbackHandler.ApplySnapshot(entry);
                 ClearAfter(frame);
+
+                OnRollback?.Invoke(entry.Tick);
             }
             else
             {

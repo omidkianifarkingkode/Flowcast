@@ -33,5 +33,7 @@ namespace Flowcast.Inputs
         /// Useful for debugging, analytics, or custom input routing.
         /// </summary>
         event Action<IReadOnlyCollection<IInput>> OnInputsReceived;
+
+        event Action<IReadOnlyCollection<IInput>> OnInputsSent;
     }
 }

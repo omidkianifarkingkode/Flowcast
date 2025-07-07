@@ -29,7 +29,8 @@ namespace Flowcast.Inputs
             }
 
             if (!_typeMappings.TryGetValue(inputType, out var validatorType))
-                throw new KeyNotFoundException($"No validator mapped for input type '{inputType.Name}'.");
+                return default;
+                //throw new KeyNotFoundException($"No validator mapped for input type '{inputType.Name}'.");
 
             var validator = _creator(validatorType);
             return validator ?? throw new InvalidOperationException($"Validator creation failed for '{validatorType.Name}'.");

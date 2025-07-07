@@ -16,10 +16,13 @@ namespace Flowcast.Network
         }
 
         public event Action<IReadOnlyCollection<IInput>> OnInputsReceived;
+        public event Action<IReadOnlyCollection<IInput>> OnInputsSent;
 
         public void SendInputs(IReadOnlyCollection<IInput> inputs)
         {
             _inputTransportService.SendInputs(inputs);
+
+            OnInputsSent?.Invoke(inputs);
         }
 
         public IReadOnlyCollection<IInput> GetInputsForFrame(ulong frame)

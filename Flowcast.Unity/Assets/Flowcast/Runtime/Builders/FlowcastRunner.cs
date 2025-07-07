@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Flowcast.Monitoring;
+using UnityEngine;
 
 namespace Flowcast.Builders
 {
@@ -7,10 +8,12 @@ namespace Flowcast.Builders
     {
         private FlowcastEngine _engine;
         private FlowcastStatsUI _statusUI;
+        [SerializeField] Monitor _monitor;
 
         private void OnEnable()
         {
             _statusUI = GetComponent<FlowcastStatsUI>();
+            _monitor = FindAnyObjectByType<Monitor>();
         }
 
         public void SetEngine(FlowcastEngine engine)
@@ -18,6 +21,7 @@ namespace Flowcast.Builders
             _engine = engine;
             _engine.StartTicking();
             _statusUI.SetEngine(engine);
+            _monitor.MonitorFlowcast(engine);
         }
 
         private void Update()
