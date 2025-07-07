@@ -1,9 +1,21 @@
-﻿using Flowcast.Serialization;
+﻿using Flowcast.Network;
+using Flowcast.Serialization;
 
 namespace Flowcast.Builders
 {
     public interface IRequireGameState
     {
-        IOptionalSettings SetGameStateModel(ISerializableGameState state);
+        IRequireNetwork SetGameStateModel(ISerializableGameState state);
+    }
+
+    public interface IRequireNetwork 
+    {
+        public IOptionalSettings SetNetworkServices(
+            INetworkConnectionService connectionService,
+            IInputTransportService inputTransportService,
+            ISimulationSyncService syncService,
+            INetworkDiagnosticsService diagnosticsService);
+
+        public IOptionalSettings SetNetworkManager(INetworkManager manager) => SetNetworkServices(manager, manager, manager, manager);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Flowcast.Data;
+using Flowcast.Network;
 using Flowcast.Serialization;
 using System;
 using System.IO;
@@ -30,6 +31,7 @@ namespace Flowcast.Tests.Runtime
             IFlowcastEngine flowcast = FlowcastBuilder.CreateLockstep()
                 .SetGameSession(gameSessionData)
                 .SetGameStateModel(gameState)
+                .SetNetworkManager(new DummyNetworkServer())
                 .ConfigureRollback(config =>
                 {
                     config.OnRollback = state => { };

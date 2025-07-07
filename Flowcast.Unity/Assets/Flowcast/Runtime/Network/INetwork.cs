@@ -19,7 +19,6 @@ namespace Flowcast.Network
         void Disconnect();
         bool IsConnected { get; }
         TimeSpan EstimatedLatency { get; }
-        void Tick();
     }
 
     public interface IMatchmakingService
@@ -75,5 +74,4 @@ namespace Flowcast.Network
         ISimulationSyncService,
         INetworkDiagnosticsService
     { }
-
-}
+    }

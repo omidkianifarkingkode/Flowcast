@@ -14,13 +14,18 @@ using ILogger = Flowcast.Logging.ILogger;
 
 namespace Flowcast.Builders
 {
-    public class LockstepBuilder : IRequireGameSession, IRequireGameState, IOptionalSettings
+    public class LockstepBuilder : IRequireGameSession, IRequireGameState, IRequireNetwork, IOptionalSettings
     {
         private GameSessionData _gameSessionData;
         private ISerializableGameState _gameState;
         private ILogger _logger;
         private ILockstepSettings _settings;
         private IGameStateSerializer _gameStateSerializer;
+
+        private INetworkConnectionService _connectionService;
+        private IInputTransportService _inputTransportService;
+        private ISimulationSyncService _simulationSyncService;
+        private INetworkDiagnosticsService _diagnosticsService;
 
         private RollbackConfig _rollbackConfig = new();
 
@@ -30,9 +35,21 @@ namespace Flowcast.Builders
             return this;
         }
 
-        public IOptionalSettings SetGameStateModel(ISerializableGameState state)
+        public IRequireNetwork SetGameStateModel(ISerializableGameState state)
         {
             _gameState = state;
+            return this;
+        }
+
+        public IOptionalSettings SetNetworkServices(INetworkConnectionService connectionService,
+                                                    IInputTransportService inputTransportService,
+                                                    ISimulationSyncService simulationSyncService,
+                                                    INetworkDiagnosticsService diagnosticsService)
+        {
+            _connectionService = connectionService;
+            _inputTransportService = inputTransportService;
+            _simulationSyncService = simulationSyncService;
+            _diagnosticsService = diagnosticsService;
             return this;
         }
 
@@ -71,12 +88,12 @@ namespace Flowcast.Builders
                 _gameSessionData.Players.Select(x => x.PlayerId).ToArray());
 
             IInputValidatorFactory validatorFactory = new InputValidatorFactory(builder => builder.AutoMap());
-            IRemoteInputChannel remoteCollector = new RemoteInputChannel();
+            IRemoteInputChannel remoteCollector = new RemoteInputChannel(_inputTransportService);
             IGameUpdatePipeline pipeline = SimulationPipelineBuilder.BuildDefault();
 
             _gameStateSerializer ??= new GameStateSerializer(() => _gameState);
-            var rollbackHandler = new RollbackHandler(serializer, _logger, _rollbackConfig);
-            IGameStateSyncService syncService = new GameStateSyncService(new XorHasher(), rollbackHandler);//todo: set hasher as optinal builder and force to introduce IInetwork
+            var rollbackHandler = new RollbackHandler(_gameStateSerializer, _logger, _rollbackConfig);
+            IGameStateSyncService syncService = new GameStateSyncService(new XorHasher(), rollbackHandler, _simulationSyncService);//todo: set hasher as optinal builder and force to introduce IInetwork
             var lockstepProvider = new LockstepProviderUpdate(_settings, _logger);
 
             IFrameProvider frameProvider = lockstepProvider;
