@@ -30,9 +30,9 @@ namespace Flowcast.Builders
         private int _sampleCount = 0;
 
 
-        private IFlowcastEngine _engine;
+        private ILockstepEngine _engine;
 
-        public void SetEngine(IFlowcastEngine engine)
+        public void SetEngine(ILockstepEngine engine)
         {
             _engine = engine;
         }
@@ -44,7 +44,7 @@ namespace Flowcast.Builders
                 _isVisible = !_isVisible;
             }
 
-            if (_engine is not FlowcastEngine flowcast) return;
+            if (_engine is not LockstepEngine flowcast) return;
 
             var now = Time.realtimeSinceStartup;
             var delta = now - _lastStatsUpdateTime;
@@ -77,7 +77,7 @@ namespace Flowcast.Builders
             if (!_isVisible || _engine == null)
                 return;
 
-            if (_engine is not FlowcastEngine flowcast) return;
+            if (_engine is not LockstepEngine flowcast) return;
 
             var lockstep = flowcast.LockstepProvider;
             var sync = flowcast.GameStateSyncService;

@@ -21,20 +21,20 @@ namespace Flowcast.Network
         TimeSpan EstimatedLatency { get; }
     }
 
-    public interface IMatchmakingService
+    public interface INetworkMatchmakingService
     {
         Task RequestMatchAsync(string gameMode, object customData = null);
         event Action<GameSessionData> OnMatchFound;
     }
 
-    public interface IInputTransportService
+    public interface INetworkInputTransportService
     {
         void SendInputs(IReadOnlyCollection<IInput> inputs);
 
         event Action<IReadOnlyCollection<IInput>> OnInputsReceived;
     }
 
-    public interface ISimulationSyncService
+    public interface INetworkGameStateSyncService
     {
         void SendStateHash(ulong frame, uint hash);
         event Action<ulong /*frame*/, bool /*isSynced*/> OnSyncStatusReceived;
@@ -69,9 +69,9 @@ namespace Flowcast.Network
 
     public interface INetworkManager :
         INetworkConnectionService,
-        IMatchmakingService,
-        IInputTransportService,
-        ISimulationSyncService,
+        INetworkMatchmakingService,
+        INetworkInputTransportService,
+        INetworkGameStateSyncService,
         INetworkDiagnosticsService
     { }
     }

@@ -8,7 +8,7 @@ using Flowcast.Synchronization;
 
 namespace Flowcast
 {
-    public interface IFlowcastEngine
+    public interface ILockstepEngine
     {
         ILocalInputCollector InputCollector { get; }
         IRemoteInputChannel InputChannel { get; }
@@ -24,9 +24,9 @@ namespace Flowcast
         void StopTicking();  // Optional for pause/leave
     }
 
-    public class FlowcastEngine : IFlowcastEngine
+    public class LockstepEngine : ILockstepEngine
     {
-        public static IFlowcastEngine Instance { get; private set; }
+        public static ILockstepEngine Instance { get; private set; }
 
         public ILocalInputCollector InputCollector => _localInputCollector;
         public IRemoteInputChannel InputChannel => _remoteInputChannel;
@@ -48,7 +48,7 @@ namespace Flowcast
 
         private bool _isTicking;
 
-        public FlowcastEngine(
+        public LockstepEngine(
             ILocalInputCollector inputCollector,
             IRemoteInputChannel inputChannel,
             IGameUpdatePipeline gameUpdatePipeline,
@@ -141,9 +141,7 @@ namespace Flowcast
 
         private void SyncGameState(ulong turn)
         {
-            var serializedGameState = _gameStateSerializer.SerializeSnapshot();
-
-            _gameStateSyncService.CaptureAndSyncSnapshot(_lockstepProvider.CurrentGameFrame, serializedGameState);
+            _gameStateSyncService.CaptureAndSyncSnapshot(_lockstepProvider.CurrentGameFrame);
         }
 
         private bool HandleRollback()

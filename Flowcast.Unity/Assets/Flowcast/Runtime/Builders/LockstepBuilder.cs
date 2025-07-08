@@ -5,7 +5,6 @@ using Flowcast.Lockstep;
 using Flowcast.Logging;
 using Flowcast.Network;
 using Flowcast.Pipeline;
-using Flowcast.Serialization;
 using Flowcast.Synchronization;
 using System;
 using System.Linq;
@@ -17,17 +16,12 @@ namespace Flowcast.Builders
     public class LockstepBuilder : IRequireGameSession, IRequireGameState, IRequireNetwork, IOptionalSettings
     {
         private GameSessionData _gameSessionData;
-        private ISerializableGameState _gameState;
         private ILogger _logger;
         private ILockstepSettings _settings;
-        private IGameStateSerializer _gameStateSerializer;
 
-        private INetworkConnectionService _connectionService;
-        private IInputTransportService _inputTransportService;
-        private ISimulationSyncService _simulationSyncService;
-        private INetworkDiagnosticsService _diagnosticsService;
-
-        private RollbackConfig _rollbackConfig = new();
+        private GameStateSyncOptionsBuilder _gameStateSyncBuilder;
+        private NetworkBuilder _networkBuilder;
+        private GameUpdatePipelineBuilder _gameUpdatePipelineBuilder;
 
         public IRequireGameState SetGameSession(GameSessionData gameSessionData)
         {
@@ -35,21 +29,25 @@ namespace Flowcast.Builders
             return this;
         }
 
-        public IRequireNetwork SetGameStateModel(ISerializableGameState state)
+        public IRequireNetwork SynchronizeGameState(Action<IGameStateSyncOptionsBuilder> setup)
         {
-            _gameState = state;
+            _gameStateSyncBuilder = new();
+
+            setup?.Invoke(_gameStateSyncBuilder);
+
+            _gameStateSyncBuilder.Build();
+
             return this;
         }
 
-        public IOptionalSettings SetNetworkServices(INetworkConnectionService connectionService,
-                                                    IInputTransportService inputTransportService,
-                                                    ISimulationSyncService simulationSyncService,
-                                                    INetworkDiagnosticsService diagnosticsService)
+        public IOptionalSettings SetupNetworkServices(Action<INetworkBuilder> setup)
         {
-            _connectionService = connectionService;
-            _inputTransportService = inputTransportService;
-            _simulationSyncService = simulationSyncService;
-            _diagnosticsService = diagnosticsService;
+            _networkBuilder = new();
+
+            setup?.Invoke(_networkBuilder);
+
+            _networkBuilder.Build();
+
             return this;
         }
 
@@ -65,20 +63,16 @@ namespace Flowcast.Builders
             return this;
         }
 
-        public IOptionalSettings ConfigureRollback(Action<RollbackConfig> config)
+        public IOptionalSettings SetupProcessPipeline(Action<IGameUpdatePipelineBuilder> setup) 
         {
-            config?.Invoke(_rollbackConfig);
+            _gameUpdatePipelineBuilder = new();
+
+            setup?.Invoke(_gameUpdatePipelineBuilder);
+
             return this;
         }
 
-        public IOptionalSettings SetGameStateSerializer(IGameStateSerializer serializer)
-        {
-            _gameStateSerializer = serializer;
-            return this;
-        }
-
-
-        public IFlowcastEngine BuildAndStart()
+        public ILockstepEngine BuildAndStart()
         {
             _settings ??= LockstepSettingsAsset.Instance;
             _logger ??= new UnityLogger();
@@ -88,12 +82,13 @@ namespace Flowcast.Builders
                 _gameSessionData.Players.Select(x => x.PlayerId).ToArray());
 
             IInputValidatorFactory validatorFactory = new InputValidatorFactory(builder => builder.AutoMap());
-            IRemoteInputChannel remoteCollector = new RemoteInputChannel(_inputTransportService);
-            IGameUpdatePipeline pipeline = SimulationPipelineBuilder.BuildDefault();
+            IRemoteInputChannel remoteCollector = new RemoteInputChannel(_networkBuilder.InputTransportService);
 
-            _gameStateSerializer ??= new GameStateSerializer(() => _gameState);
-            var rollbackHandler = new RollbackHandler(_gameStateSerializer, _logger, _rollbackConfig);
-            IGameStateSyncService syncService = new GameStateSyncService(new XorHasher(), rollbackHandler, _simulationSyncService);//todo: set hasher as optinal builder and force to introduce IInetwork
+            _gameUpdatePipelineBuilder ??= new();
+            IGameUpdatePipeline pipeline = _gameUpdatePipelineBuilder.Build();
+
+            var rollbackHandler = new RollbackHandler(_gameStateSyncBuilder.Serializer, _logger, _gameStateSyncBuilder.Options);
+            IGameStateSyncService syncService = new GameStateSyncService(_gameStateSyncBuilder.GameState, _gameStateSyncBuilder.Serializer, _gameStateSyncBuilder.Hasher, rollbackHandler, _networkBuilder.SimulationSyncService, _gameStateSyncBuilder.Options);
             var lockstepProvider = new LockstepProviderUpdate(_settings, _logger);
 
             IFrameProvider frameProvider = lockstepProvider;
@@ -103,14 +98,14 @@ namespace Flowcast.Builders
                 validatorFactory, playerProvider, frameProvider, idGenerator
             );
 
-            var engine = new FlowcastEngine(
+            var engine = new LockstepEngine(
                 inputCollector,
                 remoteCollector,
                 pipeline,
                 syncService,
                 lockstepProvider,
                 _logger,
-                _gameStateSerializer,
+                _gameStateSyncBuilder.Serializer,
                 playerProvider
             );
 

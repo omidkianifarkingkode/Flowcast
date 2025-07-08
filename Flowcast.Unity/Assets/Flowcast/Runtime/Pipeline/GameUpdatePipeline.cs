@@ -8,8 +8,6 @@ namespace Flowcast.Pipeline
     /// </summary>
     public interface IGameUpdatePipeline 
     {
-        public void AddStep(ISimulationStep step);
-
         public void ProcessFrame(ulong frame);
     }
     
@@ -17,32 +15,15 @@ namespace Flowcast.Pipeline
     {
         private readonly List<ISimulationStep> _steps = new();
 
-        public void AddStep(ISimulationStep step)
+        public GameUpdatePipeline(List<ISimulationStep> steps)
         {
-            _steps.Add(step);
+            _steps = steps;
         }
 
         public void ProcessFrame(ulong frame)
         {
             foreach (var system in _steps)
                 system.ProcessFrame(frame);
-        }
-    }
-
-    public static class SimulationPipelineBuilder
-    {
-        public static GameUpdatePipeline BuildDefault()
-        {
-            var pipeline = new GameUpdatePipeline();
-
-            pipeline.AddStep(new SpawnStep());
-            pipeline.AddStep(new PathfindingStep());
-            pipeline.AddStep(new MovementStep());
-            pipeline.AddStep(new CollisionStep());
-            pipeline.AddStep(new LogicStep());
-            pipeline.AddStep(new DespawnStep());
-
-            return pipeline;
         }
     }
 

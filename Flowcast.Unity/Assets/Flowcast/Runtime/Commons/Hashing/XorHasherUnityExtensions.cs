@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace Flowcast.Serialization
+namespace Flowcast.Commons
 {
     public static class XorHasherUnityExtensions
     {

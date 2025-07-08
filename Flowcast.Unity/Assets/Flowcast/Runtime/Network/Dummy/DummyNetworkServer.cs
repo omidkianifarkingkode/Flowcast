@@ -4,11 +4,15 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Flowcast.Data;
 using Flowcast.Inputs;
+using UnityEngine;
 
 namespace Flowcast.Network
 {
-    public class DummyNetworkServer : INetworkManager
+    public class DummyNetworkServer : MonoBehaviour, INetworkManager
     {
+        [Header("Simulation Options")]
+        public DummyNetworkServerOptions Options = new();
+
         public event Action OnConnected;
         public event Action OnDisconnected;
         public event Action<Exception> OnConnectionError;
@@ -18,8 +22,9 @@ namespace Flowcast.Network
         public event Action<TimeSpan> OnPingResult;
         public event Action<GameSessionData> OnMatchFound;
 
-        public bool IsConnected { get; private set; } = false;
-        public TimeSpan EstimatedLatency { get; set; } = TimeSpan.FromMilliseconds(80); // configurable
+        public bool IsConnected { get; private set; }
+
+        public TimeSpan EstimatedLatency => Options.GetRandomLatency();
 
         public void Connect(string serverAddress)
         {
@@ -35,6 +40,7 @@ namespace Flowcast.Network
 
         public void SendInputs(IReadOnlyCollection<IInput> inputs)
         {
+            if (!Options.EchoInputs) return;
             SimulateInputDelivery(inputs).Forget();
         }
 
@@ -58,41 +64,57 @@ namespace Flowcast.Network
             Disconnect();
         }
 
-        // ------------------------------
-        // UniTask-based simulation logic
-        // ------------------------------
-
         private async UniTaskVoid SimulateInputDelivery(IReadOnlyCollection<IInput> inputs)
         {
-            await UniTask.Delay(EstimatedLatency);
+            await UniTask.Delay(Options.GetRandomLatency());
             await UniTask.SwitchToMainThread();
+
+            if (Options.ShouldDropPacket()) return;
             OnInputsReceived?.Invoke(inputs);
         }
 
         private async UniTaskVoid SimulateSyncStatus(ulong frame)
         {
-            await UniTask.Delay(EstimatedLatency);
+            await UniTask.Delay(Options.GetRandomLatency());
             await UniTask.SwitchToMainThread();
-            OnSyncStatusReceived?.Invoke(frame, true); // always synced
+
+            if (Options.ShouldDropPacket()) return;
+
+            OnSyncStatusReceived?.Invoke(frame, true);
+
+            if (Options.ShouldTriggerRollback())
+            {
+                var rollbackFrame = Math.Max(0, (long)frame - 5);
+                OnRollbackRequested?.Invoke((ulong)rollbackFrame);
+            }
         }
 
         private async UniTaskVoid SimulatePing()
         {
-            await UniTask.Delay(EstimatedLatency);
+            await UniTask.Delay(Options.GetRandomLatency());
             await UniTask.SwitchToMainThread();
-            OnPingResult?.Invoke(EstimatedLatency);
+
+            OnPingResult?.Invoke(TimeSpan.FromMilliseconds(Options.BaseLatencyMs));
         }
 
         private async UniTaskVoid SimulateRollback(ulong frame)
         {
-            await UniTask.Delay(EstimatedLatency);
+            await UniTask.Delay(Options.GetRandomLatency());
             await UniTask.SwitchToMainThread();
+
+            if (Options.ShouldDropPacket()) return;
             OnRollbackRequested?.Invoke(frame);
         }
 
         public Task RequestMatchAsync(string gameMode, object customData = null)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Matchmaking simulation not implemented.");
         }
+
+#if UNITY_EDITOR
+        // Convenience for triggering from editor
+        public void Editor_SendPing() => SendPing();
+        public void Editor_RequestRollback() => RequestRollback(LockstepEngine.Instance.LockstepProvider.CurrentLockstepTurn - 10);
+#endif
     }
 }

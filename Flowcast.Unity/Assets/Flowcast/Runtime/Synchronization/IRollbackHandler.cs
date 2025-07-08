@@ -6,30 +6,30 @@ namespace Flowcast.Synchronization
 {
     public interface IRollbackHandler
     {
-        void ApplySnapshot(SnapshotEntry snapshot);
+        void Rollback(SnapshotEntry snapshot);
     }
 
     public class RollbackHandler : IRollbackHandler
     {
         private readonly IGameStateSerializer _serializer;
         private readonly ILogger _logger;
-        private readonly RollbackConfig _config;
+        private readonly IGameStateSyncOptions _options;
 
-        public RollbackHandler(IGameStateSerializer serializer, ILogger logger , RollbackConfig config)
+        public RollbackHandler(IGameStateSerializer serializer, ILogger logger , IGameStateSyncOptions options)
         {
             _serializer = serializer;
             _logger = logger;
-            _config = config;
+            _options = options;
         }
 
-        public void ApplySnapshot(SnapshotEntry snapshot)
+        public void Rollback(SnapshotEntry snapshot)
         {
             var state = _serializer.DeserializeSnapshot(snapshot.Data);
 
-            if (_config.EnableRollbackLog)
+            if (_options.EnableRollbackLog)
                 _logger.Log("[Rollback] Game state reverted.");
 
-            _config.OnRollback?.Invoke(state);
+            _options.OnRollback?.Invoke(state);
         }
     }
 

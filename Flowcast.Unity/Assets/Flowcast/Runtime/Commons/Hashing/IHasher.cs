@@ -1,4 +1,4 @@
-﻿namespace Flowcast.Serialization
+﻿namespace Flowcast.Commons
 {
     public interface IHasher
     {
@@ -17,6 +17,17 @@
         void Reset();
     }
 
+    public static class HashExtensions 
+    {
+        public static uint ComputeHash(this IHasher hasher, byte[] data)
+        {
+            if (data == null || data.Length == 0)
+                return 0;
 
+            hasher.Reset();
+            hasher.WriteBytes(data);
+            return hasher.GetHash();
+        }
+    }
 }
 

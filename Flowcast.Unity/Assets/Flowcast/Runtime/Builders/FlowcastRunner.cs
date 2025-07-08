@@ -6,7 +6,7 @@ namespace Flowcast.Builders
     [RequireComponent(typeof(FlowcastStatsUI))]
     public class FlowcastRunner : MonoBehaviour
     {
-        private FlowcastEngine _engine;
+        private LockstepEngine _engine;
         private FlowcastStatsUI _statusUI;
         [SerializeField] Monitor _monitor;
 
@@ -16,7 +16,7 @@ namespace Flowcast.Builders
             _monitor = FindAnyObjectByType<Monitor>();
         }
 
-        public void SetEngine(FlowcastEngine engine)
+        public void SetEngine(LockstepEngine engine)
         {
             _engine = engine;
             _engine.StartTicking();

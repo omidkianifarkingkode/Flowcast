@@ -18,7 +18,7 @@ namespace Flowcast.Monitoring
 
         public ulong SegmentInterval = 10;
 
-        public IFlowcastEngine Flowcast { get; private set; }
+        public ILockstepEngine Flowcast { get; private set; }
 
         private List<FlowcastLogEntry> _logs = new();
 
@@ -44,7 +44,7 @@ namespace Flowcast.Monitoring
             _pingButton.onClick.AddListener(SendPingInput);
         }
 
-        public void MonitorFlowcast(IFlowcastEngine flowcast)
+        public void MonitorFlowcast(ILockstepEngine flowcast)
         {
             Flowcast = flowcast;
 

@@ -1,9 +1,8 @@
 ﻿using Flowcast.Collections;
-using Flowcast.Inputs;
+using Flowcast.Commons;
 using Flowcast.Network;
 using Flowcast.Serialization;
 using System;
-using System.Collections.Generic;
 
 namespace Flowcast.Synchronization
 {
@@ -11,11 +10,9 @@ namespace Flowcast.Synchronization
     {
         event Action<ulong> OnRollback;
 
-        void CaptureAndSyncSnapshot(ulong tick, byte[] serializedState);
-        void SetSynced(ulong tick, bool isSynced);
-        bool TryGetSnapshot(ulong tick, out SnapshotEntry entry);
+        void CaptureAndSyncSnapshot(ulong frame);
+        bool TryGetSnapshot(ulong frame, out SnapshotEntry entry);
         bool TryGetLatestSyncedSnapshot(out SnapshotEntry entry);
-        void ClearAfter(ulong tickExclusive);
 
         bool NeedsRollback();
         void RollbackToVerifiedFrame();
@@ -26,39 +23,48 @@ namespace Flowcast.Synchronization
         public event Action<ulong> OnRollback;
 
         private readonly CircularBuffer<SnapshotEntry> _buffer;
+        private readonly ISerializableGameState _gameState;
+        private readonly IGameStateSerializer _gameStateSerializer;
         private readonly IHasher _hasher;
         private readonly IRollbackHandler _rollbackHandler;
-        private readonly ISimulationSyncService _simulationSyncService;
+        private readonly INetworkGameStateSyncService _networkSyncService;
 
-        public GameStateSyncService(IHasher hasher, IRollbackHandler rollbackHandler, ISimulationSyncService simulationSyncService, int maxEntries = 128)
+        private readonly IGameStateSyncOptions _options;
+
+        public GameStateSyncService(ISerializableGameState gameState, IGameStateSerializer gameStateSerializer, IHasher hasher, IRollbackHandler rollbackHandler, INetworkGameStateSyncService networkSyncService, IGameStateSyncOptions options)
         {
+            _options = options;
+            _gameState = gameState;
+            _gameStateSerializer = gameStateSerializer;
             _hasher = hasher;
-            _buffer = new CircularBuffer<SnapshotEntry>(maxEntries);
+            _buffer = new CircularBuffer<SnapshotEntry>(_options.SnapshotHistoryLimit);
             _rollbackHandler = rollbackHandler;
-            _simulationSyncService = simulationSyncService;
+            _networkSyncService = networkSyncService;
 
-            _simulationSyncService.OnSyncStatusReceived += SetSynced;
-            _simulationSyncService.OnRollbackRequested += HandleRollbackRequest;
+            _networkSyncService.OnSyncStatusReceived += SetSynced;
+            _networkSyncService.OnRollbackRequested += HandleRollbackRequest;
         }
 
-        public void CaptureAndSyncSnapshot(ulong frame, byte[] serializedState)
+        public void CaptureAndSyncSnapshot(ulong frame)
         {
-            uint hash = ComputeHash(serializedState);
+            var serializedGameState = _gameStateSerializer.SerializeSnapshot();
+
+            uint hash = _hasher.ComputeHash(serializedGameState);
 
             var entry = new SnapshotEntry
             {
                 Tick = frame,
-                Data = serializedState,
+                Data = serializedGameState,
                 Hash = hash,
                 IsSynced = false
             };
 
             _buffer.Add(entry);
 
-            _simulationSyncService.SendStateHash(frame, hash);
+            _networkSyncService.SendStateHash(frame, hash);
         }
 
-        public void SetSynced(ulong frame, bool isSynced)
+        private void SetSynced(ulong frame, bool isSynced)
         {
             for (int i = 0; i < _buffer.Count; i++)
             {
@@ -100,7 +106,7 @@ namespace Flowcast.Synchronization
             return false;
         }
 
-        public void ClearAfter(ulong tickExclusive)
+        private void ClearAfter(ulong tickExclusive)
         {
             int kept = 0;
 
@@ -120,25 +126,13 @@ namespace Flowcast.Synchronization
             _buffer.TrimToLatest(kept);
         }
 
-        private uint ComputeHash(byte[] data)
-        {
-            if (data == null || data.Length == 0)
-                return 0;
-
-            _hasher.Reset();
-            _hasher.WriteBytes(data);
-            return _hasher.GetHash();
-        }
-
         public bool NeedsRollback()
         {
-            const int graceFrames = 5;
-
-            if (_buffer.Count <= graceFrames)
+            if (_buffer.Count <= _options.DesyncToleranceFrames)
                 return false;
 
             // Skip newest N frames
-            for (int i = graceFrames; i < _buffer.Count; i++)
+            for (int i = _options.DesyncToleranceFrames; i < _buffer.Count; i++)
             {
                 var entry = _buffer.GetAt(i);
                 if (!entry.IsSynced)
@@ -155,7 +149,7 @@ namespace Flowcast.Synchronization
                 var entry = _buffer.GetAt(i);
                 if (entry.IsSynced)
                 {
-                    _rollbackHandler.ApplySnapshot(entry);
+                    _rollbackHandler.Rollback(entry);
                     ClearAfter(entry.Tick);
 
                     OnRollback?.Invoke(entry.Tick);
@@ -172,7 +166,7 @@ namespace Flowcast.Synchronization
             // Optionally verify frame is known
             if (TryGetSnapshot(frame, out var entry))
             {
-                _rollbackHandler.ApplySnapshot(entry);
+                _rollbackHandler.Rollback(entry);
                 ClearAfter(frame);
 
                 OnRollback?.Invoke(entry.Tick);

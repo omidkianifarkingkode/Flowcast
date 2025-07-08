@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Flowcast.Serialization
+namespace Flowcast.Commons
 {
     public class XorHasher : IHasher
     {

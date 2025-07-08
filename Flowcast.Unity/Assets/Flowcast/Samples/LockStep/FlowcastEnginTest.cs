@@ -1,7 +1,10 @@
 ﻿using Flowcast.Data;
+using Flowcast.Inputs;
 using Flowcast.Network;
+using Flowcast.Pipeline;
 using Flowcast.Serialization;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -25,18 +28,26 @@ namespace Flowcast.Tests.Runtime
 
             var gameState = new MyGameState()
             {
-                Health = 1
+                Health = 1 
             };
 
-            IFlowcastEngine flowcast = FlowcastBuilder.CreateLockstep()
+            ILockstepEngine engine = FlowcastBuilder.CreateLockstep()
                 .SetGameSession(gameSessionData)
-                .SetGameStateModel(gameState)
-                .SetNetworkManager(new DummyNetworkServer())
-                .ConfigureRollback(config =>
-                {
-                    config.OnRollback = state => { };
-                    config.EnableRollbackLog = true;
-                })
+                .SynchronizeGameState(syncSetup => syncSetup
+                    .UseDefaultOptions()
+                    .SetGameStateModel(gameState)
+                    .OnRollback((snapshot) => 
+                    {
+                        Debug.Log("Rollback");
+                    }))
+                .SetupNetworkServices(networkSetup => networkSetup
+                    .UseDummyServer(new() 
+                    {
+                        BaseLatencyMs = 100,
+                        EchoInputs = true,
+                    }))
+                .SetupProcessPipeline(piplineSetup => piplineSetup
+                    .UseDefaultSteps())
                 .BuildAndStart();
 
             // flowcast.SubmitInput();

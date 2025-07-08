@@ -7,9 +7,9 @@ namespace Flowcast.Network
     public class RemoteInputChannel : IRemoteInputChannel
     {
         private readonly Dictionary<ulong, List<IInput>> _inputBuffer = new();
-        private readonly IInputTransportService _inputTransportService;
+        private readonly INetworkInputTransportService _inputTransportService;
 
-        public RemoteInputChannel(IInputTransportService inputTransportService)
+        public RemoteInputChannel(INetworkInputTransportService inputTransportService)
         {
             _inputTransportService = inputTransportService;
             _inputTransportService.OnInputsReceived += ReceiveInputs;
