@@ -1,4 +1,5 @@
 ﻿using Flowcast.Data;
+using Flowcast.Commands;
 using Flowcast.Lockstep;
 using Flowcast.Logging;
 using Flowcast.Network;
@@ -8,26 +9,35 @@ using System;
 
 namespace Flowcast.Builders
 {
-    public interface IRequireGameSession
+    public interface IRequireMatchInfo
     {
-        IRequireGameState SetGameSession(GameSessionData gameSessionData);
+        IRequireCommand SetMatchInfo(MatchInfo matchInfo);
+    }
+
+    public interface IRequireCommand
+    {
+        IRequireGameState ConfigureCommandSystem(Action<ICommandOptionsBuilderStart> command);
     }
 
     public interface IRequireGameState
     {
-        IRequireNetwork SynchronizeGameState(Action<IGameStateSyncOptionsBuilder> setup);
+        IRequireNetwork SynchronizeGameState(Action<IGameStateSyncOptionsBuilder> gameState);
     }
 
     public interface IRequireNetwork
     {
-        public IOptionalSettings SetupNetworkServices(Action<INetworkBuilder> setup);
+        public IRequirePipline SetupNetworkServices(Action<INetworkBuilder> network);
+    }
+
+    public interface IRequirePipline 
+    {
+        IOptionalSettings ConfigureSimulationPipeline(Action<IGameUpdatePipelineBuilder> pipeline);
     }
 
     public interface IOptionalSettings
     {
         IOptionalSettings SetLogger(ILogger logger);
         IOptionalSettings SetLockstepSettings(ILockstepSettings settings);
-        IOptionalSettings SetupProcessPipeline(Action<IGameUpdatePipelineBuilder> setup);
         ILockstepEngine BuildAndStart();
     }
 }

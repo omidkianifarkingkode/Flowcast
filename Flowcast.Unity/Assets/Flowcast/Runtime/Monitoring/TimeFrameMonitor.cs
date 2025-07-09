@@ -43,10 +43,10 @@ namespace Flowcast.Monitoring
 
             switch (log.Type)
             {
-                case LogType.InputSent:
+                case LogType.CommandSent:
                     iconLog.color = Color.cyan;
                     break;
-                case LogType.InputRecieved:
+                case LogType.CommandRecieved:
                     iconLog.color = Color.green;
                     break;
                 case LogType.Rollback:

@@ -1,17 +1,18 @@
 ﻿using Flowcast.Data;
-using Flowcast.Inputs;
+using Flowcast.Commands;
 using Flowcast.Lockstep;
 using Flowcast.Logging;
 using Flowcast.Pipeline;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 namespace Flowcast
 {
     public interface ILockstepEngine
     {
-        ILocalInputCollector InputCollector { get; }
-        IRemoteInputChannel InputChannel { get; }
+        ILocalCommandCollector CommandCollector { get; }
+        IRemoteCommandChannel CommandChannel { get; }
         IGameUpdatePipeline GameUpdatePipeline { get; }
         IGameStateSyncService GameStateSyncService { get; }
         IGameStateSerializer GameStateSerializer { get; }
@@ -19,7 +20,7 @@ namespace Flowcast
         IPlayerProvider PlayerProvider { get; }
         ILogger Logger { get; }
 
-        void SubmitInput(IInput input);
+        void SubmitCommand(ICommand command);
         void StartTicking(); // Begin simulation
         void StopTicking();  // Optional for pause/leave
     }
@@ -28,8 +29,8 @@ namespace Flowcast
     {
         public static ILockstepEngine Instance { get; private set; }
 
-        public ILocalInputCollector InputCollector => _localInputCollector;
-        public IRemoteInputChannel InputChannel => _remoteInputChannel;
+        public ILocalCommandCollector CommandCollector => _localCommandCollector;
+        public IRemoteCommandChannel CommandChannel => _remoteCommandChannel;
         public IGameUpdatePipeline GameUpdatePipeline => _gameUpdatePipeline;
         public IGameStateSyncService GameStateSyncService => _gameStateSyncService;
         public IGameStateSerializer GameStateSerializer => _gameStateSerializer;
@@ -37,8 +38,9 @@ namespace Flowcast
         public IPlayerProvider PlayerProvider => _playerProvider;
         public ILogger Logger => _logger;
 
-        private readonly ILocalInputCollector _localInputCollector;
-        private readonly IRemoteInputChannel _remoteInputChannel;
+        private readonly ICommandManager _commandManager;
+        private readonly ILocalCommandCollector _localCommandCollector;
+        private readonly IRemoteCommandChannel _remoteCommandChannel;
         private readonly IGameUpdatePipeline _gameUpdatePipeline;
         private readonly IGameStateSyncService _gameStateSyncService;
         private readonly IGameStateSerializer _gameStateSerializer;
@@ -49,8 +51,9 @@ namespace Flowcast
         private bool _isTicking;
 
         public LockstepEngine(
-            ILocalInputCollector inputCollector,
-            IRemoteInputChannel inputChannel,
+            ICommandManager commandManager,
+            ILocalCommandCollector commandCollector,
+            IRemoteCommandChannel commandChannel,
             IGameUpdatePipeline gameUpdatePipeline,
             IGameStateSyncService gameStateSyncService,
             LockstepProviderBase lockstepProvider,
@@ -60,8 +63,9 @@ namespace Flowcast
         {
             Instance = this;
 
-            _localInputCollector = inputCollector;
-            _remoteInputChannel = inputChannel;
+            _commandManager = commandManager;
+            _localCommandCollector = commandCollector;
+            _remoteCommandChannel = commandChannel;
             _gameUpdatePipeline = gameUpdatePipeline;
             _gameStateSyncService = gameStateSyncService;
             _lockstepProvider = lockstepProvider;
@@ -74,12 +78,12 @@ namespace Flowcast
             _playerProvider = playerProvider;
         }
 
-        public void SubmitInput(IInput input)
+        public void SubmitCommand(ICommand command)
         {
-            var result = _localInputCollector.Collect(input);
+            var result = _localCommandCollector.Collect(command);
 
             if (!result.IsSuccess)
-                _logger.LogWarning($"Input rejected: {result.Error}");
+                _logger.LogWarning($"Command rejected: {result.Error}");
         }
 
         public void StartTicking()
@@ -102,59 +106,22 @@ namespace Flowcast
         {
             var frame = _lockstepProvider.CurrentGameFrame;
 
-            DispatchPlayerInputs();
-            ProcessInputs(frame);
-            UpdateGameState(frame);
+            // Process Commands
+            _commandManager.ProcessOnFrame(frame);
+
+            // Update Gameplay
+            _gameUpdatePipeline.ProcessFrame(frame);
         }
 
         private void OrchestrateLockstepTurn()
         {
-            var turn = _lockstepProvider.CurrentLockstepTurn;
+            var step = _lockstepProvider.CurrentLockstepTurn;
 
-            SyncGameState(turn);
-            HandleRollback();
-        }
+            // Process Commands
+            _commandManager.ProcessOnLockstep(step);
 
-        private void DispatchPlayerInputs()
-        {
-            var buffered = _localInputCollector.ConsumeBufferedInputs();
-            if (buffered.Count > 0)
-            {
-                _remoteInputChannel.SendInputs(buffered);
-                _logger.Log($"[InputDispatch] Sent {buffered.Count} inputs");
-            }
-        }
-
-        private void ProcessInputs(ulong frame)
-        {
-            var inputs = _remoteInputChannel.GetInputsForFrame(frame);
-            foreach (var input in inputs)
-                _localInputCollector.Collect(input); // Apply remote inputs
-
-            _remoteInputChannel.RemoveInputsForFrame(frame); // Clean up
-        }
-
-        private void UpdateGameState(ulong frame)
-        {
-            _gameUpdatePipeline.ProcessFrame(frame);
-        }
-
-        private void SyncGameState(ulong turn)
-        {
+            // SyncGameState
             _gameStateSyncService.CaptureAndSyncSnapshot(_lockstepProvider.CurrentGameFrame);
-        }
-
-        private bool HandleRollback()
-        {
-            if (_gameStateSyncService.NeedsRollback())
-            {
-                _logger.LogWarning("State desync detected. Rolling back...");
-                _gameStateSyncService.RollbackToVerifiedFrame();
-
-                return true;
-            }
-
-            return false;
         }
     }
 }

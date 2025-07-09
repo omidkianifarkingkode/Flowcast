@@ -1,5 +1,5 @@
 ﻿using Flowcast.Data;
-using Flowcast.Inputs;
+using Flowcast.Commands;
 using NUnit.Framework.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -24,14 +24,14 @@ namespace Flowcast.Network
     public interface INetworkMatchmakingService
     {
         Task RequestMatchAsync(string gameMode, object customData = null);
-        event Action<GameSessionData> OnMatchFound;
+        event Action<MatchInfo> OnMatchFound;
     }
 
-    public interface INetworkInputTransportService
+    public interface INetworkCommandTransportService
     {
-        void SendInputs(IReadOnlyCollection<IInput> inputs);
+        void SendCommands(IReadOnlyCollection<ICommand> commands);
 
-        event Action<IReadOnlyCollection<IInput>> OnInputsReceived;
+        event Action<IReadOnlyCollection<ICommand>> OnCommandsReceived;
     }
 
     public interface INetworkGameStateSyncService
@@ -70,7 +70,7 @@ namespace Flowcast.Network
     public interface INetworkManager :
         INetworkConnectionService,
         INetworkMatchmakingService,
-        INetworkInputTransportService,
+        INetworkCommandTransportService,
         INetworkGameStateSyncService,
         INetworkDiagnosticsService
     { }

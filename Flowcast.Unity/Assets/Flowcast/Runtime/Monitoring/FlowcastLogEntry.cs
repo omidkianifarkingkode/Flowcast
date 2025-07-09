@@ -1,4 +1,4 @@
-﻿using Flowcast.Inputs;
+﻿using Flowcast.Commands;
 using System;
 
 namespace Flowcast.Monitoring
@@ -6,8 +6,8 @@ namespace Flowcast.Monitoring
     public enum LogType
     {
         None = 0,
-        InputSent,
-        InputRecieved,
+        CommandSent,
+        CommandRecieved,
         Rollback,
         Snapshot
     }
@@ -19,9 +19,9 @@ namespace Flowcast.Monitoring
         public LogType Type;      
     }
 
-    public class InputLogEntry : FlowcastLogEntry
+    public class CommandLogEntry : FlowcastLogEntry
     {
-        public IInput Input;
+        public ICommand Command;
     }
 
     public class RollbackLogEntry : FlowcastLogEntry

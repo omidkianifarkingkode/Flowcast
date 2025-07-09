@@ -1,6 +1,6 @@
 ﻿using Flowcast.Commons;
 using Flowcast.Data;
-using Flowcast.Inputs;
+using Flowcast.Commands;
 using Flowcast.Lockstep;
 using Flowcast.Logging;
 using Flowcast.Network;
@@ -13,40 +13,61 @@ using ILogger = Flowcast.Logging.ILogger;
 
 namespace Flowcast.Builders
 {
-    public class LockstepBuilder : IRequireGameSession, IRequireGameState, IRequireNetwork, IOptionalSettings
+    public class LockstepBuilder : IRequireMatchInfo, IRequireCommand, IRequireGameState, IRequireNetwork, IRequirePipline, IOptionalSettings
     {
-        private GameSessionData _gameSessionData;
+        private MatchInfo _matchInfo;
         private ILogger _logger;
         private ILockstepSettings _settings;
 
+        private CommandOptions _commandOptions;
         private GameStateSyncOptionsBuilder _gameStateSyncBuilder;
         private NetworkBuilder _networkBuilder;
         private GameUpdatePipelineBuilder _gameUpdatePipelineBuilder;
 
-        public IRequireGameState SetGameSession(GameSessionData gameSessionData)
+        public IRequireCommand SetMatchInfo(MatchInfo matchInfo)
         {
-            _gameSessionData = gameSessionData;
+            _matchInfo = matchInfo;
             return this;
         }
 
-        public IRequireNetwork SynchronizeGameState(Action<IGameStateSyncOptionsBuilder> setup)
+        public IRequireGameState ConfigureCommandSystem(Action<ICommandOptionsBuilderStart> command) 
+        {
+            var optionBuilder = new CommandOptionsBuilder();
+
+            command?.Invoke(optionBuilder);
+
+            _commandOptions = optionBuilder.Build();
+
+            return this;
+        }
+
+        public IRequireNetwork SynchronizeGameState(Action<IGameStateSyncOptionsBuilder> gameState)
         {
             _gameStateSyncBuilder = new();
 
-            setup?.Invoke(_gameStateSyncBuilder);
+            gameState?.Invoke(_gameStateSyncBuilder);
 
             _gameStateSyncBuilder.Build();
 
             return this;
         }
 
-        public IOptionalSettings SetupNetworkServices(Action<INetworkBuilder> setup)
+        public IRequirePipline SetupNetworkServices(Action<INetworkBuilder> network)
         {
             _networkBuilder = new();
 
-            setup?.Invoke(_networkBuilder);
+            network?.Invoke(_networkBuilder);
 
             _networkBuilder.Build();
+
+            return this;
+        }
+
+        public IOptionalSettings ConfigureSimulationPipeline(Action<IGameUpdatePipelineBuilder> pipline)
+        {
+            _gameUpdatePipelineBuilder = new();
+
+            pipline?.Invoke(_gameUpdatePipelineBuilder);
 
             return this;
         }
@@ -63,44 +84,46 @@ namespace Flowcast.Builders
             return this;
         }
 
-        public IOptionalSettings SetupProcessPipeline(Action<IGameUpdatePipelineBuilder> setup) 
-        {
-            _gameUpdatePipelineBuilder = new();
-
-            setup?.Invoke(_gameUpdatePipelineBuilder);
-
-            return this;
-        }
-
         public ILockstepEngine BuildAndStart()
         {
+            if (_commandOptions == null)
+                throw new InvalidOperationException("Command-System must be configured before building.");
+
+            if (_gameStateSyncBuilder == null)
+                throw new InvalidOperationException("Game state sync must be configured before building.");
+
+            if (_networkBuilder == null)
+                throw new InvalidOperationException("Network must be configured before building.");
+
+            _settings = _matchInfo.LockstepSettings;
             _settings ??= LockstepSettingsAsset.Instance;
+
             _logger ??= new UnityLogger();
 
             var playerProvider = new PlayerProvider(
-                _gameSessionData.LocalPlayerId,
-                _gameSessionData.Players.Select(x => x.PlayerId).ToArray());
-
-            IInputValidatorFactory validatorFactory = new InputValidatorFactory(builder => builder.AutoMap());
-            IRemoteInputChannel remoteCollector = new RemoteInputChannel(_networkBuilder.InputTransportService);
+                _matchInfo.LocalPlayerId,
+                _matchInfo.Players.Select(x => x.PlayerId).ToArray());
 
             _gameUpdatePipelineBuilder ??= new();
             IGameUpdatePipeline pipeline = _gameUpdatePipelineBuilder.Build();
 
             var rollbackHandler = new RollbackHandler(_gameStateSyncBuilder.Serializer, _logger, _gameStateSyncBuilder.Options);
-            IGameStateSyncService syncService = new GameStateSyncService(_gameStateSyncBuilder.GameState, _gameStateSyncBuilder.Serializer, _gameStateSyncBuilder.Hasher, rollbackHandler, _networkBuilder.SimulationSyncService, _gameStateSyncBuilder.Options);
+            IGameStateSyncService syncService = new GameStateSyncService(_gameStateSyncBuilder.GameState, _gameStateSyncBuilder.Serializer, _gameStateSyncBuilder.Hasher, rollbackHandler, _networkBuilder.SimulationSyncService, _gameStateSyncBuilder.Options, _logger);
             var lockstepProvider = new LockstepProviderUpdate(_settings, _logger);
 
             IFrameProvider frameProvider = lockstepProvider;
             IIdGenerator idGenerator = new SequentialIdGenerator();
 
-            ILocalInputCollector inputCollector = new LocalInputCollector(
-                validatorFactory, playerProvider, frameProvider, idGenerator
-            );
+            ICommandValidatorFactory commandValidatorFactory = new CommandValidatorFactory(_commandOptions.ValidatorFactoryOptions);
+            ICommandProcessorFactory commandProcessorFactory = new CommandProcessorFactory(_commandOptions.CommandFactoryOptions);
+            IRemoteCommandChannel remoteCommandChannel = new RemoteCommandChannel(_networkBuilder.CommandTransportService);
+            ILocalCommandCollector localCommandCollector = new LocalCommandCollector(commandValidatorFactory, frameProvider, idGenerator);
+            ICommandManager commandManager = new CommandManager(_commandOptions, localCommandCollector, remoteCommandChannel, commandProcessorFactory, _logger);
 
             var engine = new LockstepEngine(
-                inputCollector,
-                remoteCollector,
+                commandManager,
+                localCommandCollector,
+                remoteCommandChannel,
                 pipeline,
                 syncService,
                 lockstepProvider,

@@ -1,5 +1,6 @@
-﻿using Flowcast.Data;
-using Flowcast.Inputs;
+﻿using Flowcast.Commons;
+using Flowcast.Data;
+using Flowcast.Commands;
 using Flowcast.Network;
 using Flowcast.Pipeline;
 using Flowcast.Serialization;
@@ -14,7 +15,7 @@ namespace Flowcast.Tests.Runtime
     {
         private void Start()
         {
-            var gameSessionData = new GameSessionData()
+            var matchInfo = new MatchInfo()
             {
                 LocalPlayerId = 1,
                 MatchId = Guid.NewGuid().ToString(),
@@ -28,11 +29,27 @@ namespace Flowcast.Tests.Runtime
 
             var gameState = new MyGameState()
             {
-                Health = 1 
+                Health = 1
             };
 
             ILockstepEngine engine = FlowcastBuilder.CreateLockstep()
-                .SetGameSession(gameSessionData)
+                .SetMatchInfo(matchInfo)
+                .ConfigureCommandSystem(command => command
+                    .OnCommandReceived(command =>
+                    {
+                        Debug.Log("Received: " + command);
+                    })
+                    .HandleCommandsOnLockstepTurn()
+                    .SetupValidatorFactory(factory =>
+                    {
+                        factory.AutoMap();
+                        factory.MapLazy(()=>new SpawnValidator());
+                    })
+                    .SetupProcessorFactory(factory =>
+                    {
+                        factory.AutoMap();
+                        factory.MapManual<SpawnCommand, SpawnProcessor>();
+                    }))
                 .SynchronizeGameState(syncSetup => syncSetup
                     .UseDefaultOptions()
                     .SetGameStateModel(gameState)
@@ -44,13 +61,18 @@ namespace Flowcast.Tests.Runtime
                     .UseDummyServer(new() 
                     {
                         BaseLatencyMs = 100,
-                        EchoInputs = true,
+                        EchoCommands = true,
                     }))
-                .SetupProcessPipeline(piplineSetup => piplineSetup
-                    .UseDefaultSteps())
+                .ConfigureSimulationPipeline(piplineSetup => piplineSetup
+                    .HandleStepManually(tick => 
+                    {
+                        Debug.Log("Process on Tick");
+                    }))
                 .BuildAndStart();
 
-            // flowcast.SubmitInput();
+            var command = new SpawnCommand(Vector2.zero, "1");
+
+            engine.SubmitCommand(command);
         }
     }
 
@@ -69,4 +91,34 @@ namespace Flowcast.Tests.Runtime
         }
     }
 
+    public class SpawnCommand : BaseCommand
+    {
+        public string UnitType { get; set; }
+        public Vector2 Position { get; set; }
+
+        public SpawnCommand(Vector2 position, string unitType)
+        {
+            Position = position;
+            UnitType = unitType;
+        }
+    }
+
+    public class SpawnValidator : ICommandValidator<SpawnCommand>
+    {
+        public Result Validate(SpawnCommand command)
+        {
+            if (string.IsNullOrEmpty(command.UnitType))
+                return Result.Failure("Missing unit type");
+
+            return Result.Success();
+        }
+    }
+
+    public class SpawnProcessor : ICommandProcessor<SpawnCommand>
+    {
+        public void Process(SpawnCommand command)
+        {
+            Debug.Log($"Processing {command.UnitType}");
+        }
+    }
 }

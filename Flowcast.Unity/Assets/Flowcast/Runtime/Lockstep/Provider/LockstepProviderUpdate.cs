@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using ILogger = Flowcast.Logging.ILogger;
-using FixedMathSharp;
 
 namespace Flowcast.Lockstep
 {

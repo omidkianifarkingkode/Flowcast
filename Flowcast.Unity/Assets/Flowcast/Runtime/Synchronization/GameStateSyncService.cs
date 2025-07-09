@@ -1,5 +1,6 @@
 ﻿using Flowcast.Collections;
 using Flowcast.Commons;
+using Flowcast.Logging;
 using Flowcast.Network;
 using Flowcast.Serialization;
 using System;
@@ -13,8 +14,6 @@ namespace Flowcast.Synchronization
         void CaptureAndSyncSnapshot(ulong frame);
         bool TryGetSnapshot(ulong frame, out SnapshotEntry entry);
         bool TryGetLatestSyncedSnapshot(out SnapshotEntry entry);
-
-        bool NeedsRollback();
         void RollbackToVerifiedFrame();
     }
 
@@ -30,10 +29,18 @@ namespace Flowcast.Synchronization
         private readonly INetworkGameStateSyncService _networkSyncService;
 
         private readonly IGameStateSyncOptions _options;
+        private readonly ILogger _logger;
 
-        public GameStateSyncService(ISerializableGameState gameState, IGameStateSerializer gameStateSerializer, IHasher hasher, IRollbackHandler rollbackHandler, INetworkGameStateSyncService networkSyncService, IGameStateSyncOptions options)
+        public GameStateSyncService(ISerializableGameState gameState,
+                                    IGameStateSerializer gameStateSerializer,
+                                    IHasher hasher,
+                                    IRollbackHandler rollbackHandler,
+                                    INetworkGameStateSyncService networkSyncService,
+                                    IGameStateSyncOptions options,
+                                    ILogger logger)
         {
             _options = options;
+            _logger = logger;
             _gameState = gameState;
             _gameStateSerializer = gameStateSerializer;
             _hasher = hasher;
@@ -62,19 +69,9 @@ namespace Flowcast.Synchronization
             _buffer.Add(entry);
 
             _networkSyncService.SendStateHash(frame, hash);
-        }
 
-        private void SetSynced(ulong frame, bool isSynced)
-        {
-            for (int i = 0; i < _buffer.Count; i++)
-            {
-                ref var entry = ref _buffer.RefAt(i);
-                if (entry.Tick == frame)
-                {
-                    entry.IsSynced = true;
-                    return;
-                }
-            }
+            if (_options.EnableLocalAutoRollback)
+                CheckStateAndRollback();
         }
 
         public bool TryGetSnapshot(ulong frame, out SnapshotEntry entry)
@@ -106,6 +103,38 @@ namespace Flowcast.Synchronization
             return false;
         }
 
+        public void RollbackToVerifiedFrame()
+        {
+            for (int i = 0; i < _buffer.Count; i++)
+            {
+                var entry = _buffer.GetAt(i);
+                if (entry.IsSynced)
+                {
+                    _rollbackHandler.Rollback(entry);
+                    ClearAfter(entry.Tick);
+
+                    OnRollback?.Invoke(entry.Tick);
+
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException("No synced snapshot available for rollback.");
+        }
+
+        private void SetSynced(ulong frame, bool isSynced)
+        {
+            for (int i = 0; i < _buffer.Count; i++)
+            {
+                ref var entry = ref _buffer.RefAt(i);
+                if (entry.Tick == frame)
+                {
+                    entry.IsSynced = true;
+                    return;
+                }
+            }
+        }
+
         private void ClearAfter(ulong tickExclusive)
         {
             int kept = 0;
@@ -126,7 +155,20 @@ namespace Flowcast.Synchronization
             _buffer.TrimToLatest(kept);
         }
 
-        public bool NeedsRollback()
+        private bool CheckStateAndRollback() 
+        {
+            if (NeedsRollback())
+            {
+                _logger.LogWarning("State desync detected. Rolling back...");
+                RollbackToVerifiedFrame();
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool NeedsRollback()
         {
             if (_buffer.Count <= _options.DesyncToleranceFrames)
                 return false;
@@ -140,25 +182,6 @@ namespace Flowcast.Synchronization
             }
 
             return false;
-        }
-
-        public void RollbackToVerifiedFrame()
-        {
-            for (int i = 0; i < _buffer.Count; i++)
-            {
-                var entry = _buffer.GetAt(i);
-                if (entry.IsSynced)
-                {
-                    _rollbackHandler.Rollback(entry);
-                    ClearAfter(entry.Tick);
-
-                    OnRollback?.Invoke(entry.Tick);
-
-                    return;
-                }
-            }
-
-            throw new InvalidOperationException("No synced snapshot available for rollback.");
         }
 
         private void HandleRollbackRequest(ulong frame)

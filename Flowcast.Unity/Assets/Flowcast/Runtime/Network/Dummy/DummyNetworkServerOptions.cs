@@ -23,9 +23,9 @@ namespace Flowcast.Network
         public int PacketLossPercent = 0;
 
         /// <summary>
-        /// If true, automatically echo inputs back to simulate server receipt.
+        /// If true, automatically echo commands back to simulate server receipt.
         /// </summary>
-        public bool EchoInputs = true;
+        public bool EchoCommands = true;
 
         /// <summary>
         /// If true, randomly trigger rollback events during sync.

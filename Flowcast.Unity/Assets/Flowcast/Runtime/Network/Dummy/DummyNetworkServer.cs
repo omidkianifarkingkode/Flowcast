@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Flowcast.Data;
-using Flowcast.Inputs;
+using Flowcast.Commands;
 using UnityEngine;
 
 namespace Flowcast.Network
@@ -16,11 +16,11 @@ namespace Flowcast.Network
         public event Action OnConnected;
         public event Action OnDisconnected;
         public event Action<Exception> OnConnectionError;
-        public event Action<IReadOnlyCollection<IInput>> OnInputsReceived;
+        public event Action<IReadOnlyCollection<ICommand>> OnCommandsReceived;
         public event Action<ulong, bool> OnSyncStatusReceived;
         public event Action<ulong> OnRollbackRequested;
         public event Action<TimeSpan> OnPingResult;
-        public event Action<GameSessionData> OnMatchFound;
+        public event Action<MatchInfo> OnMatchFound;
 
         public bool IsConnected { get; private set; }
 
@@ -38,10 +38,10 @@ namespace Flowcast.Network
             OnDisconnected?.Invoke();
         }
 
-        public void SendInputs(IReadOnlyCollection<IInput> inputs)
+        public void SendCommands(IReadOnlyCollection<ICommand> commands)
         {
-            if (!Options.EchoInputs) return;
-            SimulateInputDelivery(inputs).Forget();
+            if (!Options.EchoCommands) return;
+            SimulateCommandDelivery(commands).Forget();
         }
 
         public void SendStateHash(ulong frame, uint hash)
@@ -64,13 +64,14 @@ namespace Flowcast.Network
             Disconnect();
         }
 
-        private async UniTaskVoid SimulateInputDelivery(IReadOnlyCollection<IInput> inputs)
+        private async UniTaskVoid SimulateCommandDelivery(IReadOnlyCollection<ICommand> commands)
         {
             await UniTask.Delay(Options.GetRandomLatency());
             await UniTask.SwitchToMainThread();
 
             if (Options.ShouldDropPacket()) return;
-            OnInputsReceived?.Invoke(inputs);
+
+            OnCommandsReceived?.Invoke(commands);
         }
 
         private async UniTaskVoid SimulateSyncStatus(ulong frame)

@@ -1,4 +1,4 @@
-﻿using Flowcast.Inputs;
+﻿using Flowcast.Commands;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -23,8 +23,8 @@ namespace Flowcast.Monitoring
         private List<FlowcastLogEntry> _logs = new();
 
         private ulong _lastTurnSegmented = 0;
-        private bool _inputSentSinceLast = false;
-        private bool _inputReceivedSinceLast = false;
+        private bool _commandSentSinceLast = false;
+        private bool _commandReceivedSinceLast = false;
         private bool _rollbackOccurredSinceLast = false;
 
         private float _lastStatsUpdateTime = 0f;
@@ -41,7 +41,7 @@ namespace Flowcast.Monitoring
             Instace = this;
 
             _closeButton.onClick.AddListener(Close);
-            _pingButton.onClick.AddListener(SendPingInput);
+            _pingButton.onClick.AddListener(SendPingCommand);
         }
 
         public void MonitorFlowcast(ILockstepEngine flowcast)
@@ -51,11 +51,11 @@ namespace Flowcast.Monitoring
             var sync = Flowcast.GameStateSyncService;
 
             Flowcast.LockstepProvider.OnLockstepTurn += OnLockstepTurn;
-            Flowcast.InputChannel.OnInputsReceived += OnInputsReceived;
-            Flowcast.InputChannel.OnInputsSent += OnInputSent;
+            Flowcast.CommandChannel.OnCommandsReceived += OnCommandsReceived;
+            Flowcast.CommandChannel.OnCommandsSent += OnCommandSent;
             sync.OnRollback += OnRollback;
 
-            // Optional: hook into input collector dispatch
+            // Optional: hook into command collector dispatch
 
         }
 
@@ -82,28 +82,28 @@ namespace Flowcast.Monitoring
             _timeframeMonitor.AddLog(entry);
         }
 
-        private void OnInputSent(IReadOnlyCollection<IInput> inputs)
+        private void OnCommandSent(IReadOnlyCollection<ICommand> commands)
         {
-            _inputSentSinceLast = true;
+            _commandSentSinceLast = true;
 
-            foreach (var input in inputs)
-                AddLogEntry(new InputLogEntry
+            foreach (var command in commands)
+                AddLogEntry(new CommandLogEntry
                 {
-                    Input = input,
-                    Type = LogType.InputSent,
-                    Turn = input.Frame
+                    Command = command,
+                    Type = LogType.CommandSent,
+                    Turn = command.Frame
                 });
         }
 
-        private void OnInputsReceived(IReadOnlyCollection<IInput> inputs)
+        private void OnCommandsReceived(IReadOnlyCollection<ICommand> commands)
         {
-            _inputReceivedSinceLast = true;
-            foreach (var input in inputs)
-                AddLogEntry(new InputLogEntry
+            _commandReceivedSinceLast = true;
+            foreach (var command in commands)
+                AddLogEntry(new CommandLogEntry
                 {
-                    Input = input,
-                    Type = LogType.InputRecieved,
-                    Turn = input.Frame
+                    Command = command,
+                    Type = LogType.CommandRecieved,
+                    Turn = command.Frame
                 });
         }
 
@@ -138,14 +138,14 @@ namespace Flowcast.Monitoring
             {
                 string label = $"Turn {currentTurn}";
                 if (_rollbackOccurredSinceLast) label += " 🔴";
-                else if (_inputReceivedSinceLast) label += " 🔵";
-                else if (_inputSentSinceLast) label += " 🟢";
+                else if (_commandReceivedSinceLast) label += " 🔵";
+                else if (_commandSentSinceLast) label += " 🟢";
 
                 AddTimeframeSegment(currentTurn, label);
 
                 _lastTurnSegmented = currentTurn;
-                _inputSentSinceLast = false;
-                _inputReceivedSinceLast = false;
+                _commandSentSinceLast = false;
+                _commandReceivedSinceLast = false;
                 _rollbackOccurredSinceLast = false;
             }
 
@@ -165,10 +165,10 @@ namespace Flowcast.Monitoring
             gameObject.SetActive(false);
         }
 
-        private void SendPingInput()
+        private void SendPingCommand()
         {
-            var ping = new PingInput();
-            Flowcast.SubmitInput(ping);
+            var ping = new PingCommand();
+            Flowcast.SubmitCommand(ping);
         }
 
     }

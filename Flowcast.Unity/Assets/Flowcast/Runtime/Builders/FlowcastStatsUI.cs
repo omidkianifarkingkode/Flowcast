@@ -81,7 +81,7 @@ namespace Flowcast.Builders
 
             var lockstep = flowcast.LockstepProvider;
             var sync = flowcast.GameStateSyncService;
-            var input = flowcast.InputCollector;
+            var command = flowcast.CommandCollector;
             var player = flowcast.PlayerProvider;
 
             GUILayout.BeginArea(new Rect(10, 10, 300, 220), "Flowcast Stats", GUI.skin.window);
@@ -92,8 +92,7 @@ namespace Flowcast.Builders
             GUILayout.Label($"FPS: {_fps:0.0} (avg: {GetAverage(_fpsSamples):0.0})");
             GUILayout.Label($"TPS: {_tps:0.0} (avg: {GetAverage(_tpsSamples):0.0})");
             GUILayout.Label($"Speed: {lockstep.SimulationSpeedMultiplier:0.00}");
-            GUILayout.Label($"Needs Rollback: {sync.NeedsRollback()}");
-            GUILayout.Label($"Pending Inputs: {input.BufferedInputs.Count()}");
+            GUILayout.Label($"Pending Commands: {command.BufferedCommands.Count()}");
 
             //if (_fps < 50 || _tps < _settings.LockstepTurnRate - 1)
             //{

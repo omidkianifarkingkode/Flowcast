@@ -1,4 +1,4 @@
-﻿using Flowcast.Inputs;
+﻿using Flowcast.Commands;
 using Flowcast.Lockstep;
 using System;
 using System.Linq;
@@ -17,7 +17,7 @@ namespace Flowcast.VContainer
                 ? assembliesToScan
                 : AppDomain.CurrentDomain.GetAssemblies();
 
-            RegisterInputValidators(builder, assemblies);
+            RegisterCommandValidators(builder, assemblies);
 
 
             RegisterLockstepSettings(builder);
@@ -25,45 +25,45 @@ namespace Flowcast.VContainer
 
 
         /// <summary>
-        /// Registers all IInputValidator<T> implementations and the InputValidatorFactory with VContainer.
+        /// Registers all ICommandValidator<T> implementations and the CommandValidatorFactory with VContainer.
         /// </summary>
-        public static void RegisterInputValidators(this IContainerBuilder builder, params Assembly[] assemblies)
+        public static void RegisterCommandValidators(this IContainerBuilder builder, params Assembly[] assemblies)
         {
-            // Step 1: Scan once and store all IInputValidator<TInput> mappings
+            // Step 1: Scan once and store all ICommandValidator<TCommand> mappings
             var validatorMappings = assemblies
                 .SelectMany(asm => asm.GetTypes())
                 .Where(t => !t.IsAbstract && !t.IsInterface)
                 .SelectMany(t => t.GetInterfaces()
-                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IInputValidator<>))
-                    .Select(i => new { InputType = i.GetGenericArguments()[0], ValidatorType = t }))
+                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommandValidator<>))
+                    .Select(i => new { CommandType = i.GetGenericArguments()[0], ValidatorType = t }))
                 .Distinct()
                 .ToList();
 
             // Step 2: Register each validator in DI
             foreach (var mapping in validatorMappings)
             {
-                var serviceType = typeof(IInputValidator<>).MakeGenericType(mapping.InputType);
+                var serviceType = typeof(ICommandValidator<>).MakeGenericType(mapping.CommandType);
                 builder.Register(mapping.ValidatorType, Lifetime.Transient).As(serviceType).As(mapping.ValidatorType);
             }
 
             // Step 3: Register the factory using the pre-scanned mappings
             // Use a Holder Object + Deferred Factory Resolution (Recommended for Complex Setup)
             // 3.1 Register a placeholder holder as a container singleton.
-            var holder = new InputValidatorFactoryHolder();
+            var holder = new CommandValidatorFactoryHolder();
             builder.RegisterInstance(holder);
 
             // 3.2 After the container is built register a build callback to create the actual factory
             builder.RegisterBuildCallback(container =>
             {
-                holder.Factory = new InputValidatorFactory(setup =>
+                holder.Factory = new CommandValidatorFactory(setup =>
                 {
-                    setup.UseCreator(type => (IInputValidator)container.Resolve(type));
-                    setup.Map(validatorMappings.Select(m => (m.InputType, m.ValidatorType)));
+                    setup.UseCreator(type => (ICommandValidator)container.Resolve(type));
+                    setup.MapGroup(validatorMappings.Select(m => (m.CommandType, m.ValidatorType)));
                 });
             });
 
-            // 3.3 Register IInputValidatorFactory as resolved from the holder
-            builder.Register(c => c.Resolve<InputValidatorFactoryHolder>().Factory, Lifetime.Singleton);
+            // 3.3 Register ICommandValidatorFactory as resolved from the holder
+            builder.Register(c => c.Resolve<CommandValidatorFactoryHolder>().Factory, Lifetime.Singleton);
         }
 
         private static void RegisterLockstepSettings(IContainerBuilder builder)
@@ -82,9 +82,9 @@ namespace Flowcast.VContainer
         }
     }
 
-    internal class InputValidatorFactoryHolder
+    internal class CommandValidatorFactoryHolder
     {
-        public IInputValidatorFactory Factory { get; set; }
+        public ICommandValidatorFactory Factory { get; set; }
     }
 
 }

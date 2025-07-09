@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Flowcast.Pipeline
 {
@@ -24,6 +25,21 @@ namespace Flowcast.Pipeline
         {
             foreach (var system in _steps)
                 system.ProcessFrame(frame);
+        }
+    }
+
+    public class SimpleGameUpdatePipeline : IGameUpdatePipeline
+    {
+        private readonly Action<ulong> _onTick;
+
+        public SimpleGameUpdatePipeline(Action<ulong> onTick)
+        {
+            _onTick = onTick ?? throw new ArgumentNullException(nameof(onTick));
+        }
+
+        public void ProcessFrame(ulong frame)
+        {
+            _onTick(frame);
         }
     }
 

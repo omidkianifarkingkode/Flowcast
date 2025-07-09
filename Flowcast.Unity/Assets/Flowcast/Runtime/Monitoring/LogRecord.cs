@@ -18,16 +18,16 @@ namespace Flowcast.Monitoring
             gameObject.SetActive(true);
             _entry = entry;
 
-            if (entry is InputLogEntry inputLogEntry) 
+            if (entry is CommandLogEntry commandLogEntry) 
             {
-                if (entry.Type == LogType.InputSent)
+                if (entry.Type == LogType.CommandSent)
                 {
                     _icon.color = Color.cyan;
-                    _text.SetText($"Input sent: Frame={inputLogEntry.Turn}, Id={inputLogEntry.Input.Id}");
-                }else if (entry.Type == LogType.InputRecieved)
+                    _text.SetText($"Command sent: Frame={commandLogEntry.Turn}, Id={commandLogEntry.Command.Id}");
+                }else if (entry.Type == LogType.CommandRecieved)
                 {
                     _icon.color = Color.green;
-                    _text.SetText($"Input recieved: Frame={inputLogEntry.Turn}, Id={inputLogEntry.Input.Id}, PlayerId={inputLogEntry.Input.PlayerId}");
+                    _text.SetText($"Command recieved: Frame={commandLogEntry.Turn}, Id={commandLogEntry.Command.Id}");
                 }
             }
             else if (entry is RollbackLogEntry rollbackLogEntry) 
