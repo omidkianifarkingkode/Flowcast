@@ -1,4 +1,5 @@
 ﻿using Flowcast.Commons;
+using System;
 
 namespace Flowcast.Lockstep
 {
@@ -32,11 +33,13 @@ namespace Flowcast.Lockstep
         /// <summary>
         /// Called once every game frame.
         /// </summary>
-        event System.Action OnGameFrame;
+        event Action OnGameFrame;
 
         /// <summary>
         /// Called once at the beginning of each new lockstep turn.
         /// </summary>
-        event System.Action OnLockstepTurn;
+        event Action OnLockstepTurn;
+
+        void AdjustSimulationSpeed(float forGappedFrame);
     }
 }

@@ -56,7 +56,7 @@ namespace Flowcast.Monitoring
         }
 
 
-        private TimeframeSegment? FindSegmentForTurn(ulong turn)
+        private TimeframeSegment FindSegmentForTurn(ulong turn)
         {
             foreach (var s in _segments)
             {

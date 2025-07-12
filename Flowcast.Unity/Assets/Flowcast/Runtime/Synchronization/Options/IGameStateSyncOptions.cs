@@ -1,9 +1,10 @@
-﻿using Flowcast.Serialization;
+﻿using Flowcast.Lockstep;
+using Flowcast.Serialization;
 using System;
 
 namespace Flowcast.Synchronization
 {
-    public interface IGameStateSyncOptions
+    public interface IGameStateSyncOptions : ILockstepSettings
     {
         /// <summary>
         /// Maximum number of snapshots to store in the circular buffer.

@@ -11,6 +11,8 @@ namespace Flowcast
 {
     public interface ILockstepEngine
     {
+        bool IsInRecovery { get; }
+
         ILocalCommandCollector CommandCollector { get; }
         IRemoteCommandChannel CommandChannel { get; }
         IGameUpdatePipeline GameUpdatePipeline { get; }
@@ -28,6 +30,8 @@ namespace Flowcast
     public class LockstepEngine : ILockstepEngine
     {
         public static ILockstepEngine Instance { get; private set; }
+
+        public bool IsInRecovery => _isInRecovery;
 
         public ILocalCommandCollector CommandCollector => _localCommandCollector;
         public IRemoteCommandChannel CommandChannel => _remoteCommandChannel;
@@ -49,6 +53,9 @@ namespace Flowcast
         private readonly ILogger _logger;
 
         private bool _isTicking;
+
+        private bool _isInRecovery;
+        private ulong _targetRecoveryFrame;
 
         public LockstepEngine(
             ICommandManager commandManager,
@@ -80,6 +87,12 @@ namespace Flowcast
 
         public void SubmitCommand(ICommand command)
         {
+            if (_isInRecovery)
+            {
+                _logger.LogWarning("Ignoring input during rollback recovery phase.");
+                return;
+            }
+
             var result = _localCommandCollector.Collect(command);
 
             if (!result.IsSuccess)
@@ -104,13 +117,12 @@ namespace Flowcast
 
         private void OrchestrateGameFrame()
         {
-            var frame = _lockstepProvider.CurrentGameFrame;
+            // Begin recovery if rollback was requested
+            if (CheckAndRecoverRollback())
+                return;
 
-            // Process Commands
-            _commandManager.ProcessOnFrame(frame);
-
-            // Update Gameplay
-            _gameUpdatePipeline.ProcessFrame(frame);
+            // Process Commands and Update Gameplay
+            ProcessGameFrame();
         }
 
         private void OrchestrateLockstepTurn()
@@ -123,5 +135,80 @@ namespace Flowcast
             // SyncGameState
             _gameStateSyncService.CaptureAndSyncSnapshot(_lockstepProvider.CurrentGameFrame);
         }
+
+        private bool CheckAndRecoverRollback()
+        {
+            if (_isInRecovery)
+            {
+                FinalizeRollback();
+                return false;
+            }
+
+            if (!_gameStateSyncService.IsRollbackPending)
+            {
+                return false;
+            }
+
+            if (!_gameStateSyncService.TryGetLatestSyncedSnapshot(out var entry))
+                return false;
+
+            ulong rollbackStart = entry.Tick;
+            ulong networkTarget = _gameStateSyncService.TargetRecoveryFrame;
+
+            _lockstepProvider.AdjustSimulationSpeed(networkTarget - rollbackStart);
+
+            _targetRecoveryFrame = _gameStateSyncService.ApplyPendingRollback(_lockstepProvider.SimulationSpeedMultiplier);
+            _isInRecovery = true;
+
+            return true;
+        }
+
+        private void FinalizeRollback()
+        {
+            if (_lockstepProvider.CurrentGameFrame < _targetRecoveryFrame)
+            {
+                return;
+            }
+
+            _lockstepProvider.SimulationSpeedMultiplier = 1f;
+            _isInRecovery = false;
+
+            _logger.Log($"[Recovery] Caught up to frame {_targetRecoveryFrame}. Resuming normal speed.");
+        }
+
+        private void ProcessGameFrame() 
+        {
+            var frame = _lockstepProvider.CurrentGameFrame;
+
+            // Process Commands
+            _commandManager.ProcessOnFrame(frame);
+
+            // Update Gameplay
+            _gameUpdatePipeline.ProcessFrame(frame);
+        }
     }
+
+    public static class CatchupEstimator
+    {
+        public static ulong EstimateTargetFrame(
+            ulong rollbackStartFrame,
+            ulong networkTargetFrame,
+            float speedMultiplier,
+            float gameFps)
+        {
+            if (speedMultiplier <= 1f || rollbackStartFrame >= networkTargetFrame)
+                return networkTargetFrame;
+
+            float gap = networkTargetFrame - rollbackStartFrame;
+
+            // Time in seconds it takes to catch up
+            float catchupTime = gap / (gameFps * (speedMultiplier - 1f));
+
+            // How many more frames will pass on the network during catch-up
+            float estimatedDrift = catchupTime * gameFps;
+
+            return rollbackStartFrame + (ulong)System.Math.Ceiling(gap + estimatedDrift);
+        }
+    }
+
 }

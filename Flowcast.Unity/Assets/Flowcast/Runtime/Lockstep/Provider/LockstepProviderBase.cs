@@ -21,8 +21,8 @@ namespace Flowcast.Lockstep
         }
         private float _simulationSpeedMultiplier = 1;
 
-        public event System.Action OnGameFrame;
-        public event System.Action OnLockstepTurn;
+        public event Action OnGameFrame;
+        public event Action OnLockstepTurn;
 
         protected LockstepProviderBase(ILockstepSettings settings, ILogger logger)
         {
@@ -53,6 +53,14 @@ namespace Flowcast.Lockstep
             //Logger.Log($"[GameFrame] {CurrentGameFrame}");
             OnGameFrame?.Invoke();
             CurrentGameFrame++;
+        }
+
+        public void AdjustSimulationSpeed(float forGappedFrame) 
+        {
+            float speed = forGappedFrame >= Settings.FarRollbackThreshold ? 
+                Settings.MaxCatchupSpeed : Settings.MinCatchupSpeed;
+
+            _simulationSpeedMultiplier = speed;
         }
 
         public ulong GetCurrentFrame() => CurrentGameFrame;

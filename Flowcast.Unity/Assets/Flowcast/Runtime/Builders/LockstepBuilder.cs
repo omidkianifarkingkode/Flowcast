@@ -17,7 +17,6 @@ namespace Flowcast.Builders
     {
         private MatchInfo _matchInfo;
         private ILogger _logger;
-        private ILockstepSettings _settings;
 
         private CommandOptions _commandOptions;
         private GameStateSyncOptionsBuilder _gameStateSyncBuilder;
@@ -78,12 +77,6 @@ namespace Flowcast.Builders
             return this;
         }
 
-        public IOptionalSettings SetLockstepSettings(ILockstepSettings settings)
-        {
-            _settings = settings;
-            return this;
-        }
-
         public ILockstepEngine BuildAndStart()
         {
             if (_commandOptions == null)
@@ -95,8 +88,7 @@ namespace Flowcast.Builders
             if (_networkBuilder == null)
                 throw new InvalidOperationException("Network must be configured before building.");
 
-            _settings = _matchInfo.LockstepSettings;
-            _settings ??= LockstepSettingsAsset.Instance;
+            _gameStateSyncBuilder.Options = _matchInfo.GameSettings;
 
             _logger ??= new UnityLogger();
 
@@ -108,8 +100,8 @@ namespace Flowcast.Builders
             IGameUpdatePipeline pipeline = _gameUpdatePipelineBuilder.Build();
 
             var rollbackHandler = new RollbackHandler(_gameStateSyncBuilder.Serializer, _logger, _gameStateSyncBuilder.Options);
-            IGameStateSyncService syncService = new GameStateSyncService(_gameStateSyncBuilder.GameState, _gameStateSyncBuilder.Serializer, _gameStateSyncBuilder.Hasher, rollbackHandler, _networkBuilder.SimulationSyncService, _gameStateSyncBuilder.Options, _logger);
-            var lockstepProvider = new LockstepProviderUpdate(_settings, _logger);
+            IGameStateSyncService syncService = new GameStateSyncService(_gameStateSyncBuilder.Serializer, _gameStateSyncBuilder.Hasher, rollbackHandler, _networkBuilder.SimulationSyncService, _gameStateSyncBuilder.Options, _logger);
+            var lockstepProvider = new LockstepProviderUpdate(_gameStateSyncBuilder.Options, _logger);
 
             IFrameProvider frameProvider = lockstepProvider;
             IIdGenerator idGenerator = new SequentialIdGenerator();

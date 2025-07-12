@@ -3,32 +3,31 @@ using System.IO;
 
 namespace Flowcast.Serialization
 {
-    public class GameStateSerializer : IGameStateSerializer
+    public class BinarySerializer : IGameStateSerializer
     {
-        // for get current game state via some IStateProvider
-        private readonly Func<ISerializableGameState> _stateFactory;
+        private readonly Func<IBinarySerializableGameState> _gameStateFactory;
 
-        public GameStateSerializer(Func<ISerializableGameState> stateFactory)
+        public BinarySerializer(Func<IBinarySerializableGameState> gameStateFactory)
         {
-            _stateFactory = stateFactory;
+            _gameStateFactory = gameStateFactory;
         }
 
         public byte[] SerializeSnapshot()
         {
-            var state = _stateFactory();
+            var gameState = _gameStateFactory();
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
-            state.WriteTo(writer);
+            gameState.WriteTo(writer);
             return stream.ToArray();
         }
 
         public ISerializableGameState DeserializeSnapshot(byte[] data)
         {
-            var state = _stateFactory();
+            var gameState = _gameStateFactory();
             using var stream = new MemoryStream(data);
             using var reader = new BinaryReader(stream);
-            state.ReadFrom(reader);
-            return state;
+            gameState.ReadFrom(reader);
+            return gameState;
         }
     }
 

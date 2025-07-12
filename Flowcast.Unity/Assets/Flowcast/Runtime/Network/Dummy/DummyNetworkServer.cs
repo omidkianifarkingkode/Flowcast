@@ -17,8 +17,8 @@ namespace Flowcast.Network
         public event Action OnDisconnected;
         public event Action<Exception> OnConnectionError;
         public event Action<IReadOnlyCollection<ICommand>> OnCommandsReceived;
-        public event Action<ulong, bool> OnSyncStatusReceived;
-        public event Action<ulong> OnRollbackRequested;
+        public event Action<SyncStatus> OnSyncStatusReceived;
+        public event Action<RollbackRequest> OnRollbackRequested;
         public event Action<TimeSpan> OnPingResult;
         public event Action<MatchInfo> OnMatchFound;
 
@@ -44,9 +44,9 @@ namespace Flowcast.Network
             SimulateCommandDelivery(commands).Forget();
         }
 
-        public void SendStateHash(ulong frame, uint hash)
+        public void SendStateHash(StateHashReport report)
         {
-            SimulateSyncStatus(frame).Forget();
+            SimulateSyncStatus(report).Forget();
         }
 
         public void SendPing()
@@ -54,9 +54,9 @@ namespace Flowcast.Network
             SimulatePing().Forget();
         }
 
-        public void RequestRollback(ulong rollbackTo)
+        public void RequestRollback()
         {
-            SimulateRollback(rollbackTo).Forget();
+            SimulateRollback().Forget();
         }
 
         public void Dispose()
@@ -74,19 +74,22 @@ namespace Flowcast.Network
             OnCommandsReceived?.Invoke(commands);
         }
 
-        private async UniTaskVoid SimulateSyncStatus(ulong frame)
+        private async UniTaskVoid SimulateSyncStatus(StateHashReport stateHashReport)
         {
             await UniTask.Delay(Options.GetRandomLatency());
             await UniTask.SwitchToMainThread();
 
             if (Options.ShouldDropPacket()) return;
 
-            OnSyncStatusReceived?.Invoke(frame, true);
+            OnSyncStatusReceived?.Invoke(new SyncStatus
+            {
+                Frame = stateHashReport.Frame,
+                IsSynced = true
+            });
 
             if (Options.ShouldTriggerRollback())
             {
-                var rollbackFrame = Math.Max(0, (long)frame - 5);
-                OnRollbackRequested?.Invoke((ulong)rollbackFrame);
+                OnRollbackRequested?.Invoke(new RollbackRequest());
             }
         }
 
@@ -98,13 +101,13 @@ namespace Flowcast.Network
             OnPingResult?.Invoke(TimeSpan.FromMilliseconds(Options.BaseLatencyMs));
         }
 
-        private async UniTaskVoid SimulateRollback(ulong frame)
+        private async UniTaskVoid SimulateRollback()
         {
             await UniTask.Delay(Options.GetRandomLatency());
             await UniTask.SwitchToMainThread();
 
             if (Options.ShouldDropPacket()) return;
-            OnRollbackRequested?.Invoke(frame);
+            OnRollbackRequested?.Invoke(new RollbackRequest());
         }
 
         public Task RequestMatchAsync(string gameMode, object customData = null)
@@ -115,7 +118,7 @@ namespace Flowcast.Network
 #if UNITY_EDITOR
         // Convenience for triggering from editor
         public void Editor_SendPing() => SendPing();
-        public void Editor_RequestRollback() => RequestRollback(LockstepEngine.Instance.LockstepProvider.CurrentLockstepTurn - 10);
+        public void Editor_RequestRollback() => RequestRollback();
 #endif
     }
 }

@@ -26,5 +26,9 @@ namespace Flowcast.Lockstep
         [field:SerializeField] public int GameFramesPerSecond { get; set; } = 20;
 
         [field: SerializeField] public int GameFramesPerLockstepTurn { get; set; } = 5;
+
+        [field: SerializeField] public float MinCatchupSpeed { get; set; } = 1.5f; 
+        [field: SerializeField] public float MaxCatchupSpeed { get; set; } = 5.0f; 
+        [field: SerializeField] public int FarRollbackThreshold { get; set; } = 20;
     }
 }

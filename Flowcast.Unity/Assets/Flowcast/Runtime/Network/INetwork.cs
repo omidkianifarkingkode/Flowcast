@@ -36,9 +36,10 @@ namespace Flowcast.Network
 
     public interface INetworkGameStateSyncService
     {
-        void SendStateHash(ulong frame, uint hash);
-        event Action<ulong /*frame*/, bool /*isSynced*/> OnSyncStatusReceived;
-        event Action<ulong /*rollbackToFrame*/> OnRollbackRequested;
+        void SendStateHash(StateHashReport report);
+
+        event Action<SyncStatus> OnSyncStatusReceived;
+        event Action<RollbackRequest> OnRollbackRequested;
     }
 
     public interface INetworkDiagnosticsService

@@ -37,7 +37,6 @@ namespace Flowcast.Builders
     public interface IOptionalSettings
     {
         IOptionalSettings SetLogger(ILogger logger);
-        IOptionalSettings SetLockstepSettings(ILockstepSettings settings);
         ILockstepEngine BuildAndStart();
     }
 }

@@ -4,6 +4,7 @@ using Flowcast.Logging;
 using Flowcast.Network;
 using Flowcast.Serialization;
 using System;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 namespace Flowcast.Synchronization
 {
@@ -11,18 +12,24 @@ namespace Flowcast.Synchronization
     {
         event Action<ulong> OnRollback;
 
+        bool IsRollbackPending { get; }
+        ulong TargetRecoveryFrame { get; }
+
         void CaptureAndSyncSnapshot(ulong frame);
         bool TryGetSnapshot(ulong frame, out SnapshotEntry entry);
         bool TryGetLatestSyncedSnapshot(out SnapshotEntry entry);
         void RollbackToVerifiedFrame();
+        ulong ApplyPendingRollback(float speedMultiplier);
     }
 
     public class GameStateSyncService : IGameStateSyncService
     {
         public event Action<ulong> OnRollback;
 
+        public bool IsRollbackPending { get; private set; }
+        public ulong TargetRecoveryFrame { get; private set; }
+
         private readonly CircularBuffer<SnapshotEntry> _buffer;
-        private readonly ISerializableGameState _gameState;
         private readonly IGameStateSerializer _gameStateSerializer;
         private readonly IHasher _hasher;
         private readonly IRollbackHandler _rollbackHandler;
@@ -31,8 +38,10 @@ namespace Flowcast.Synchronization
         private readonly IGameStateSyncOptions _options;
         private readonly ILogger _logger;
 
-        public GameStateSyncService(ISerializableGameState gameState,
-                                    IGameStateSerializer gameStateSerializer,
+        private RollbackRequest _pendingRollbackRequest;
+
+
+        public GameStateSyncService(IGameStateSerializer gameStateSerializer,
                                     IHasher hasher,
                                     IRollbackHandler rollbackHandler,
                                     INetworkGameStateSyncService networkSyncService,
@@ -41,7 +50,6 @@ namespace Flowcast.Synchronization
         {
             _options = options;
             _logger = logger;
-            _gameState = gameState;
             _gameStateSerializer = gameStateSerializer;
             _hasher = hasher;
             _buffer = new CircularBuffer<SnapshotEntry>(_options.SnapshotHistoryLimit);
@@ -68,7 +76,11 @@ namespace Flowcast.Synchronization
 
             _buffer.Add(entry);
 
-            _networkSyncService.SendStateHash(frame, hash);
+            _networkSyncService.SendStateHash(new StateHashReport 
+            {
+                Frame = frame,
+                Hash = hash 
+            });
 
             if (_options.EnableLocalAutoRollback)
                 CheckStateAndRollback();
@@ -122,14 +134,35 @@ namespace Flowcast.Synchronization
             throw new InvalidOperationException("No synced snapshot available for rollback.");
         }
 
-        private void SetSynced(ulong frame, bool isSynced)
+        public ulong ApplyPendingRollback(float speedMultiplier)
+        {
+            if (!TryGetLatestSyncedSnapshot(out var entry))
+                throw new InvalidOperationException("No synced snapshot available for rollback.");
+
+            _rollbackHandler.Rollback(entry);
+            ClearAfter(entry.Tick);
+            IsRollbackPending = false;
+
+            TargetRecoveryFrame = CatchupEstimator.EstimateTargetFrame(rollbackStartFrame: entry.Tick,
+                                                                       networkTargetFrame: _pendingRollbackRequest.CurrentNetworkFrame,
+                                                                       speedMultiplier: speedMultiplier,
+                                                                       gameFps: _options.GameFramesPerSecond);
+
+            _logger.Log($"[Recovery] Rolled back to frame {entry.Tick}. Target to catch up: {TargetRecoveryFrame}");
+
+            OnRollback?.Invoke(entry.Tick);
+
+            return TargetRecoveryFrame;
+        }
+
+        private void SetSynced(SyncStatus syncStatus)
         {
             for (int i = 0; i < _buffer.Count; i++)
             {
                 ref var entry = ref _buffer.RefAt(i);
-                if (entry.Tick == frame)
+                if (entry.Tick == syncStatus.Frame)
                 {
-                    entry.IsSynced = true;
+                    entry.IsSynced = syncStatus.IsSynced;
                     return;
                 }
             }
@@ -184,20 +217,10 @@ namespace Flowcast.Synchronization
             return false;
         }
 
-        private void HandleRollbackRequest(ulong frame)
+        private void HandleRollbackRequest(RollbackRequest rollbackRequest)
         {
-            // Optionally verify frame is known
-            if (TryGetSnapshot(frame, out var entry))
-            {
-                _rollbackHandler.Rollback(entry);
-                ClearAfter(frame);
-
-                OnRollback?.Invoke(entry.Tick);
-            }
-            else
-            {
-                throw new InvalidOperationException($"No snapshot available for rollback to frame {frame}.");
-            }
+            IsRollbackPending = true;
+            _pendingRollbackRequest = rollbackRequest;
         }
     }
 }

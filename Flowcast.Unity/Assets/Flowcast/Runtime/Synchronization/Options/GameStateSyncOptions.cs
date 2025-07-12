@@ -1,34 +1,29 @@
 ﻿using Flowcast.Serialization;
 using System;
+using UnityEngine;
 
 namespace Flowcast.Synchronization
 {
-
+    [Serializable]
     public class GameStateSyncOptions : IGameStateSyncOptions
     {
-        /// <summary>
-        /// Maximum number of snapshots to store in the circular buffer.
-        /// </summary>
-        public int SnapshotHistoryLimit { get; set; } = 128;
+        public int GameFramesPerSecond { get; set; } = 50;
 
-        /// <summary>
-        /// Number of most recent frames to skip before considering rollback (to tolerate latency jitter).
-        /// </summary>
+        public int GameFramesPerLockstepTurn { get; set; } = 5;
+        
+        public int SnapshotHistoryLimit { get; set; } = 20;
+
         public int DesyncToleranceFrames { get; set; } = 5;
 
-        /// <summary>
-        /// Whether the client is allowed to auto-rollback without explicit server instruction.
-        /// </summary>
+        public float MinCatchupSpeed { get; set; } = 1.5f;
+        public float MaxCatchupSpeed { get; set; } = 5.0f;
+        public int FarRollbackThreshold { get; set; } = 20;
+
         public bool EnableLocalAutoRollback { get; set; } = false;
 
-        /// <summary>
-        /// Enables debug logging when rollback occurs.
-        /// </summary>
         public bool EnableRollbackLog { get; set; } = false;
 
-        /// <summary>
-        /// Hook to apply deserialized game state during rollback.
-        /// </summary>
+        [Newtonsoft.Json.JsonIgnore]
         public Action<ISerializableGameState> OnRollback { get; set; }
     }
 }

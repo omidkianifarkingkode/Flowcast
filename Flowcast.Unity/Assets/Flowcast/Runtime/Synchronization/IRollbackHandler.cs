@@ -32,10 +32,4 @@ namespace Flowcast.Synchronization
             _options.OnRollback?.Invoke(state);
         }
     }
-
-    public class RollbackConfig
-    {
-        public Action<ISerializableGameState> OnRollback { get; set; }
-        public bool EnableRollbackLog { get; set; } = false;
-    }
 }
