@@ -48,6 +48,7 @@ namespace Flowcast
         private readonly IGameUpdatePipeline _gameUpdatePipeline;
         private readonly IGameStateSyncService _gameStateSyncService;
         private readonly IGameStateSerializer _gameStateSerializer;
+        private readonly IRollbackHandler _rollbackHandler;
         private readonly LockstepProviderBase _lockstepProvider;
         private readonly IPlayerProvider _playerProvider;
         private readonly ILogger _logger;
@@ -111,18 +112,30 @@ namespace Flowcast
 
         public void Tick()
         {
+            // Begin recovery if rollback was requested
+            _rollbackHandler.CheckAndApplyRollback(
+                onPreparing: () =>
+                {
+                    StopTicking();
+                },
+                onStarted: () => 
+                {
+                    StartTicking();
+                });
+
             if (_isTicking)
                 _lockstepProvider.Tick();
         }
 
         private void OrchestrateGameFrame()
         {
-            // Begin recovery if rollback was requested
-            if (CheckAndRecoverRollback())
-                return;
+            var frame = _lockstepProvider.CurrentGameFrame;
 
-            // Process Commands and Update Gameplay
-            ProcessGameFrame();
+            // Process Commands
+            _commandManager.ProcessOnFrame(frame);
+
+            // Update Gameplay
+            _gameUpdatePipeline.ProcessFrame(frame);
         }
 
         private void OrchestrateLockstepTurn()
@@ -134,80 +147,6 @@ namespace Flowcast
 
             // SyncGameState
             _gameStateSyncService.CaptureAndSyncSnapshot(_lockstepProvider.CurrentGameFrame);
-        }
-
-        private bool CheckAndRecoverRollback()
-        {
-            if (_isInRecovery)
-            {
-                FinalizeRollback();
-                return false;
-            }
-
-            if (!_gameStateSyncService.IsRollbackPending)
-            {
-                return false;
-            }
-
-            if (!_gameStateSyncService.TryGetLatestSyncedSnapshot(out var entry))
-                return false;
-
-            ulong rollbackStart = entry.Tick;
-            ulong networkTarget = _gameStateSyncService.TargetRecoveryFrame;
-
-            _lockstepProvider.AdjustSimulationSpeed(networkTarget - rollbackStart);
-
-            _targetRecoveryFrame = _gameStateSyncService.ApplyPendingRollback(_lockstepProvider.SimulationSpeedMultiplier);
-            _isInRecovery = true;
-
-            return true;
-        }
-
-        private void FinalizeRollback()
-        {
-            if (_lockstepProvider.CurrentGameFrame < _targetRecoveryFrame)
-            {
-                return;
-            }
-
-            _lockstepProvider.SimulationSpeedMultiplier = 1f;
-            _isInRecovery = false;
-
-            _logger.Log($"[Recovery] Caught up to frame {_targetRecoveryFrame}. Resuming normal speed.");
-        }
-
-        private void ProcessGameFrame() 
-        {
-            var frame = _lockstepProvider.CurrentGameFrame;
-
-            // Process Commands
-            _commandManager.ProcessOnFrame(frame);
-
-            // Update Gameplay
-            _gameUpdatePipeline.ProcessFrame(frame);
-        }
-    }
-
-    public static class CatchupEstimator
-    {
-        public static ulong EstimateTargetFrame(
-            ulong rollbackStartFrame,
-            ulong networkTargetFrame,
-            float speedMultiplier,
-            float gameFps)
-        {
-            if (speedMultiplier <= 1f || rollbackStartFrame >= networkTargetFrame)
-                return networkTargetFrame;
-
-            float gap = networkTargetFrame - rollbackStartFrame;
-
-            // Time in seconds it takes to catch up
-            float catchupTime = gap / (gameFps * (speedMultiplier - 1f));
-
-            // How many more frames will pass on the network during catch-up
-            float estimatedDrift = catchupTime * gameFps;
-
-            return rollbackStartFrame + (ulong)System.Math.Ceiling(gap + estimatedDrift);
         }
     }
 

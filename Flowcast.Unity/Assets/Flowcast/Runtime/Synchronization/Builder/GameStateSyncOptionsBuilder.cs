@@ -58,16 +58,17 @@ namespace Flowcast.Synchronization
             return this;
         }
 
-        public IGameStateSyncRollbackConfigurer UseBinarySerializer(IBinarySerializableGameState gameState)
+        public IGameStateSyncRollbackConfigurer UseBinarySerializer<T>(T gameState)
+            where T : IBinarySerializableGameState, new()
         {
-            Serializer = new BinarySerializer(() => gameState);
+            Serializer = new BinarySerializer<T>(() => gameState);
             return this;
         }
 
         public IGameStateSyncRollbackConfigurer UseJsonSerializer<T>(T gameState, JsonSerializerSettings settings = null)
             where T : ISerializableGameState, new()
         {
-            Serializer = new JsonGameStateSerializer<T>(() => gameState, settings);
+            Serializer = new JsonSerializer<T>(() => gameState, settings);
             return this;
         }
 
@@ -89,7 +90,7 @@ namespace Flowcast.Synchronization
             return this;
         }
 
-        internal void Build()
+        public void Build()
         {
             Hasher ??= new XorHasher();
         }

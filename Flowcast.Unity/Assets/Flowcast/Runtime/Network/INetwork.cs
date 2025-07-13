@@ -37,6 +37,7 @@ namespace Flowcast.Network
     public interface INetworkGameStateSyncService
     {
         void SendStateHash(StateHashReport report);
+        void RequestCommandsHistory();
 
         event Action<SyncStatus> OnSyncStatusReceived;
         event Action<RollbackRequest> OnRollbackRequested;

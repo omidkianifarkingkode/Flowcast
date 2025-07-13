@@ -41,5 +41,7 @@ namespace Flowcast.Lockstep
         event Action OnLockstepTurn;
 
         void AdjustSimulationSpeed(float forGappedFrame);
+
+        void ResetFrameTo(ulong frame);
     }
 }

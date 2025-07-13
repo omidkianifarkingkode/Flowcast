@@ -1,18 +1,21 @@
-﻿using Flowcast.Commons;
-using System;
-using System.IO;
+﻿using System;
+using System.Text;
 using System.Threading.Tasks;
+using Flowcast.Commons;
+using Newtonsoft.Json;
 
 namespace Flowcast.Serialization
 {
-    public class BinarySerializer<T> : IGameStateSerializer<T>
-        where T : IBinarySerializableGameState, new()
+    public class JsonSerializer<T> : IGameStateSerializer<T>
+        where T : ISerializableGameState, new()
     {
         private readonly Func<T> _gameStateFactory;
+        private readonly JsonSerializerSettings _settings;
 
-        public BinarySerializer(Func<T> gameStateFactory)
+        public JsonSerializer(Func<T> gameStateFactory, JsonSerializerSettings settings = default)
         {
             _gameStateFactory = gameStateFactory ?? throw new ArgumentNullException(nameof(gameStateFactory));
+            _settings = settings;
         }
 
         // --- Exception-based methods ---
@@ -20,10 +23,8 @@ namespace Flowcast.Serialization
         public byte[] SerializeSnapshot()
         {
             var gameState = _gameStateFactory();
-            using var stream = new MemoryStream();
-            using var writer = new BinaryWriter(stream);
-            gameState.WriteTo(writer);
-            return stream.ToArray();
+            var json = JsonConvert.SerializeObject(gameState, _settings);
+            return Encoding.UTF8.GetBytes(json);
         }
 
         public ISerializableGameState DeserializeSnapshot(byte[] data)
@@ -42,14 +43,13 @@ namespace Flowcast.Serialization
 
         public void DeserializeInto(byte[] data, T targetInstance)
         {
-            using var stream = new MemoryStream(data);
-            using var reader = new BinaryReader(stream);
-            targetInstance.ReadFrom(reader);
+            var json = Encoding.UTF8.GetString(data);
+            JsonConvert.PopulateObject(json, targetInstance, _settings);
         }
 
         public Result TryDeserializeInto(byte[] data, T targetInstance)
         {
-            return Result.Try(() => DeserializeInto(data, targetInstance), "Binary in-place deserialization failed.");
+            return Result.Try(() => DeserializeInto(data, targetInstance), "JSON in-place deserialization failed.");
         }
 
         public Task<Result> DeserializeIntoAsync(byte[] data, T targetInstance)
@@ -61,23 +61,21 @@ namespace Flowcast.Serialization
 
         public Result<byte[]> TrySerializeSnapshot()
         {
-            return Result<byte[]>.Try(() => SerializeSnapshot(), "Binary serialization failed.");
+            return Result<byte[]>.Try(() => SerializeSnapshot(), "JSON serialization failed.");
         }
 
         public Result<ISerializableGameState> TryDeserializeSnapshot(byte[] data)
         {
-            return Result<ISerializableGameState>.Try(() => DeserializeSnapshot(data), "Binary deserialization failed.");
+            return Result<ISerializableGameState>.Try(() => DeserializeSnapshot(data), "JSON deserialization failed.");
         }
 
         Result<T> IGameStateSerializer<T>.TryDeserializeSnapshot(byte[] data)
         {
             var result = TryDeserializeSnapshot(data);
-
             return result.IsSuccess
                 ? Result<T>.Success((T)result.Value)
                 : Result<T>.Failure(result.Error);
         }
-
 
         // --- Async wrappers ---
 

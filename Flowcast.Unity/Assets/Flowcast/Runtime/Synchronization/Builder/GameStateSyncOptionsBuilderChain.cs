@@ -16,7 +16,7 @@ namespace Flowcast.Synchronization
     public interface IGameStateSyncSnapshotSerializer
     {
         IGameStateSyncRollbackConfigurer SetGameStateSerializer(IGameStateSerializer serializer);
-        IGameStateSyncRollbackConfigurer UseBinarySerializer(IBinarySerializableGameState gameState);
+        IGameStateSyncRollbackConfigurer UseBinarySerializer<T>(T gameState) where T : IBinarySerializableGameState, new();
         IGameStateSyncRollbackConfigurer UseJsonSerializer<T>(T gameState, JsonSerializerSettings settings = null) where T : ISerializableGameState, new();
     }
 

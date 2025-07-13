@@ -4,7 +4,6 @@ using Flowcast.Logging;
 using Flowcast.Network;
 using Flowcast.Serialization;
 using System;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 namespace Flowcast.Synchronization
 {
@@ -18,7 +17,7 @@ namespace Flowcast.Synchronization
         void CaptureAndSyncSnapshot(ulong frame);
         bool TryGetSnapshot(ulong frame, out SnapshotEntry entry);
         bool TryGetLatestSyncedSnapshot(out SnapshotEntry entry);
-        void RollbackToVerifiedFrame();
+        bool ResetToLastSyncedSnapShot(out SnapshotEntry entry);
         ulong ApplyPendingRollback(float speedMultiplier);
     }
 
@@ -41,12 +40,7 @@ namespace Flowcast.Synchronization
         private RollbackRequest _pendingRollbackRequest;
 
 
-        public GameStateSyncService(IGameStateSerializer gameStateSerializer,
-                                    IHasher hasher,
-                                    IRollbackHandler rollbackHandler,
-                                    INetworkGameStateSyncService networkSyncService,
-                                    IGameStateSyncOptions options,
-                                    ILogger logger)
+        public GameStateSyncService(IGameStateSerializer gameStateSerializer, IHasher hasher, IRollbackHandler rollbackHandler, INetworkGameStateSyncService networkSyncService, IGameStateSyncOptions options, ILogger logger)
         {
             _options = options;
             _logger = logger;
@@ -76,10 +70,10 @@ namespace Flowcast.Synchronization
 
             _buffer.Add(entry);
 
-            _networkSyncService.SendStateHash(new StateHashReport 
+            _networkSyncService.SendStateHash(new StateHashReport
             {
                 Frame = frame,
-                Hash = hash 
+                Hash = hash
             });
 
             if (_options.EnableLocalAutoRollback)
@@ -115,21 +109,15 @@ namespace Flowcast.Synchronization
             return false;
         }
 
-        public void RollbackToVerifiedFrame()
+        public bool ResetToLastSyncedSnapShot(out SnapshotEntry entry)
         {
-            for (int i = 0; i < _buffer.Count; i++)
+            if (!TryGetLatestSyncedSnapshot(out entry))
             {
-                var entry = _buffer.GetAt(i);
-                if (entry.IsSynced)
-                {
-                    _rollbackHandler.Rollback(entry);
-                    ClearAfter(entry.Tick);
-
-                    OnRollback?.Invoke(entry.Tick);
-
-                    return;
-                }
+                _buffer.Clear();
+                return false;
             }
+
+            ClearAfter(entry.Tick);
 
             throw new InvalidOperationException("No synced snapshot available for rollback.");
         }
@@ -188,7 +176,7 @@ namespace Flowcast.Synchronization
             _buffer.TrimToLatest(kept);
         }
 
-        private bool CheckStateAndRollback() 
+        private bool CheckStateAndRollback()
         {
             if (NeedsRollback())
             {

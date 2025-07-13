@@ -1,10 +1,5 @@
-﻿using Flowcast.Commons;
-using Flowcast.Data;
-using Flowcast.Commands;
-using Flowcast.Network;
-using Flowcast.Pipeline;
+﻿using Flowcast.Data;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Flowcast.Tests.Runtime
@@ -41,28 +36,28 @@ namespace Flowcast.Tests.Runtime
                     .SetupValidatorFactory(factory =>
                     {
                         factory.AutoMap();
-                       // factory.MapLazy(()=>new SpawnValidator());
+                        // factory.MapLazy(()=>new SpawnValidator());
                     })
                     .SetupProcessorFactory(factory =>
                     {
                         factory.AutoMap();
-                       // factory.MapManual<SpawnCommand, SpawnProcessor>();
+                        // factory.MapManual<SpawnCommand, SpawnProcessor>();
                     }))
                 .SynchronizeGameState(syncSetup => syncSetup
                     .UseDefaultOptions()
                     .UseBinarySerializer(gameState)
-                    .OnRollback((snapshot) => 
+                    .OnRollback<MyGameState>((snapshot) =>
                     {
                         Debug.Log("Rollback");
                     }))
                 .SetupNetworkServices(networkSetup => networkSetup
-                    .UseDummyServer(new() 
+                    .UseDummyServer(new()
                     {
                         BaseLatencyMs = 100,
                         EchoCommands = true,
                     }))
                 .ConfigureSimulationPipeline(piplineSetup => piplineSetup
-                    .HandleStepManually(tick => 
+                    .HandleStepManually(tick =>
                     {
                         Debug.Log("Process on Tick");
                     }))
@@ -74,5 +69,5 @@ namespace Flowcast.Tests.Runtime
         }
     }
 
-    
+
 }
