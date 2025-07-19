@@ -28,6 +28,8 @@ namespace Flowcast.Commands
         /// </summary>
         void RemoveCommandsForFrame(ulong frame);
 
+        void ResetWith(IReadOnlyCollection<ICommand> commands);
+
         /// <summary>
         /// Optional event triggered when remote commands are received.
         /// Useful for debugging, analytics, or custom command routing.

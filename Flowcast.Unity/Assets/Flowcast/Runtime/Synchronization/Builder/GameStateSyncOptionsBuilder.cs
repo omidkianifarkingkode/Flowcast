@@ -1,5 +1,6 @@
 ﻿using Flowcast.Commons;
 using Flowcast.Network;
+using Flowcast.Rollback;
 using Flowcast.Serialization;
 using Newtonsoft.Json;
 using System;

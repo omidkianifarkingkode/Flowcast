@@ -5,18 +5,17 @@ using Flowcast.Logging;
 using Flowcast.Pipeline;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
+using Flowcast.Rollback;
+using static UnityEditor.Progress;
 
 namespace Flowcast
 {
     public interface ILockstepEngine
     {
-        bool IsInRecovery { get; }
-
         ILocalCommandCollector CommandCollector { get; }
         IRemoteCommandChannel CommandChannel { get; }
         IGameUpdatePipeline GameUpdatePipeline { get; }
-        IGameStateSyncService GameStateSyncService { get; }
+        ISnapshotRepository GameStateSyncService { get; }
         IGameStateSerializer GameStateSerializer { get; }
         ILockstepProvider LockstepProvider { get; }
         IPlayerProvider PlayerProvider { get; }
@@ -31,12 +30,11 @@ namespace Flowcast
     {
         public static ILockstepEngine Instance { get; private set; }
 
-        public bool IsInRecovery => _isInRecovery;
-
         public ILocalCommandCollector CommandCollector => _localCommandCollector;
         public IRemoteCommandChannel CommandChannel => _remoteCommandChannel;
         public IGameUpdatePipeline GameUpdatePipeline => _gameUpdatePipeline;
-        public IGameStateSyncService GameStateSyncService => _gameStateSyncService;
+        public ISnapshotRepository GameStateSyncService => _gameStateSyncService;
+        public IRollbackHandler RollbackHandler => _rollbackHandler;
         public IGameStateSerializer GameStateSerializer => _gameStateSerializer;
         public ILockstepProvider LockstepProvider => _lockstepProvider;
         public IPlayerProvider PlayerProvider => _playerProvider;
@@ -46,24 +44,21 @@ namespace Flowcast
         private readonly ILocalCommandCollector _localCommandCollector;
         private readonly IRemoteCommandChannel _remoteCommandChannel;
         private readonly IGameUpdatePipeline _gameUpdatePipeline;
-        private readonly IGameStateSyncService _gameStateSyncService;
-        private readonly IGameStateSerializer _gameStateSerializer;
+        private readonly ISnapshotRepository _gameStateSyncService;
         private readonly IRollbackHandler _rollbackHandler;
+        private readonly IGameStateSerializer _gameStateSerializer;
         private readonly LockstepProviderBase _lockstepProvider;
         private readonly IPlayerProvider _playerProvider;
         private readonly ILogger _logger;
 
         private bool _isTicking;
 
-        private bool _isInRecovery;
-        private ulong _targetRecoveryFrame;
-
         public LockstepEngine(
             ICommandManager commandManager,
             ILocalCommandCollector commandCollector,
             IRemoteCommandChannel commandChannel,
             IGameUpdatePipeline gameUpdatePipeline,
-            IGameStateSyncService gameStateSyncService,
+            ISnapshotRepository gameStateSyncService,
             LockstepProviderBase lockstepProvider,
             ILogger logger,
             IGameStateSerializer gameStateSerializer,
@@ -88,7 +83,7 @@ namespace Flowcast
 
         public void SubmitCommand(ICommand command)
         {
-            if (_isInRecovery)
+            if (_rollbackHandler.IsInRecovery)
             {
                 _logger.LogWarning("Ignoring input during rollback recovery phase.");
                 return;
@@ -113,14 +108,24 @@ namespace Flowcast
         public void Tick()
         {
             // Begin recovery if rollback was requested
-            _rollbackHandler.CheckAndApplyRollback(
+            _rollbackHandler.CheckAndApplyRollback(_lockstepProvider.CurrentGameFrame,
                 onPreparing: () =>
                 {
                     StopTicking();
                 },
-                onStarted: () => 
+                onStarted: (toFrame, commandsHistory) => 
                 {
+                    _remoteCommandChannel.ResetWith(commandsHistory);
+
+                    _lockstepProvider.ResetFrameTo(toFrame);
+
+                    _lockstepProvider.SetFastModeSimulation();
+
                     StartTicking();
+                },
+                onFinished: () => 
+                {
+                    _lockstepProvider.SetNormalModeSimulation();
                 });
 
             if (_isTicking)

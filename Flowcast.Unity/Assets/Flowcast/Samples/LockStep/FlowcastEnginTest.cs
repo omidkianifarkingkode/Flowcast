@@ -32,17 +32,7 @@ namespace Flowcast.Tests.Runtime
                     {
                         Debug.Log("Received: " + command);
                     })
-                    .HandleCommandsOnLockstepTurn()
-                    .SetupValidatorFactory(factory =>
-                    {
-                        factory.AutoMap();
-                        // factory.MapLazy(()=>new SpawnValidator());
-                    })
-                    .SetupProcessorFactory(factory =>
-                    {
-                        factory.AutoMap();
-                        // factory.MapManual<SpawnCommand, SpawnProcessor>();
-                    }))
+                    .HandleCommandsOnLockstepTurn())
                 .SynchronizeGameState(syncSetup => syncSetup
                     .UseDefaultOptions()
                     .UseBinarySerializer(gameState)

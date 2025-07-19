@@ -7,51 +7,27 @@ using System;
 
 namespace Flowcast.Synchronization
 {
-    public interface IGameStateSyncService
+
+    public class SnapshotRepository : ISnapshotRepository
     {
-        event Action<ulong> OnRollback;
-
-        bool IsRollbackPending { get; }
-        ulong TargetRecoveryFrame { get; }
-
-        void CaptureAndSyncSnapshot(ulong frame);
-        bool TryGetSnapshot(ulong frame, out SnapshotEntry entry);
-        bool TryGetLatestSyncedSnapshot(out SnapshotEntry entry);
-        bool ResetToLastSyncedSnapShot(out SnapshotEntry entry);
-        ulong ApplyPendingRollback(float speedMultiplier);
-    }
-
-    public class GameStateSyncService : IGameStateSyncService
-    {
-        public event Action<ulong> OnRollback;
-
-        public bool IsRollbackPending { get; private set; }
-        public ulong TargetRecoveryFrame { get; private set; }
-
         private readonly CircularBuffer<SnapshotEntry> _buffer;
         private readonly IGameStateSerializer _gameStateSerializer;
         private readonly IHasher _hasher;
-        private readonly IRollbackHandler _rollbackHandler;
         private readonly INetworkGameStateSyncService _networkSyncService;
 
         private readonly IGameStateSyncOptions _options;
         private readonly ILogger _logger;
 
-        private RollbackRequest _pendingRollbackRequest;
-
-
-        public GameStateSyncService(IGameStateSerializer gameStateSerializer, IHasher hasher, IRollbackHandler rollbackHandler, INetworkGameStateSyncService networkSyncService, IGameStateSyncOptions options, ILogger logger)
+        public SnapshotRepository(IGameStateSerializer gameStateSerializer, IHasher hasher, INetworkGameStateSyncService networkSyncService, IGameStateSyncOptions options, ILogger logger)
         {
             _options = options;
             _logger = logger;
             _gameStateSerializer = gameStateSerializer;
             _hasher = hasher;
             _buffer = new CircularBuffer<SnapshotEntry>(_options.SnapshotHistoryLimit);
-            _rollbackHandler = rollbackHandler;
             _networkSyncService = networkSyncService;
 
             _networkSyncService.OnSyncStatusReceived += SetSynced;
-            _networkSyncService.OnRollbackRequested += HandleRollbackRequest;
         }
 
         public void CaptureAndSyncSnapshot(ulong frame)
@@ -75,9 +51,6 @@ namespace Flowcast.Synchronization
                 Frame = frame,
                 Hash = hash
             });
-
-            if (_options.EnableLocalAutoRollback)
-                CheckStateAndRollback();
         }
 
         public bool TryGetSnapshot(ulong frame, out SnapshotEntry entry)
@@ -119,28 +92,7 @@ namespace Flowcast.Synchronization
 
             ClearAfter(entry.Tick);
 
-            throw new InvalidOperationException("No synced snapshot available for rollback.");
-        }
-
-        public ulong ApplyPendingRollback(float speedMultiplier)
-        {
-            if (!TryGetLatestSyncedSnapshot(out var entry))
-                throw new InvalidOperationException("No synced snapshot available for rollback.");
-
-            _rollbackHandler.Rollback(entry);
-            ClearAfter(entry.Tick);
-            IsRollbackPending = false;
-
-            TargetRecoveryFrame = CatchupEstimator.EstimateTargetFrame(rollbackStartFrame: entry.Tick,
-                                                                       networkTargetFrame: _pendingRollbackRequest.CurrentNetworkFrame,
-                                                                       speedMultiplier: speedMultiplier,
-                                                                       gameFps: _options.GameFramesPerSecond);
-
-            _logger.Log($"[Recovery] Rolled back to frame {entry.Tick}. Target to catch up: {TargetRecoveryFrame}");
-
-            OnRollback?.Invoke(entry.Tick);
-
-            return TargetRecoveryFrame;
+            return true;
         }
 
         private void SetSynced(SyncStatus syncStatus)
@@ -174,41 +126,6 @@ namespace Flowcast.Synchronization
             }
 
             _buffer.TrimToLatest(kept);
-        }
-
-        private bool CheckStateAndRollback()
-        {
-            if (NeedsRollback())
-            {
-                _logger.LogWarning("State desync detected. Rolling back...");
-                RollbackToVerifiedFrame();
-
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool NeedsRollback()
-        {
-            if (_buffer.Count <= _options.DesyncToleranceFrames)
-                return false;
-
-            // Skip newest N frames
-            for (int i = _options.DesyncToleranceFrames; i < _buffer.Count; i++)
-            {
-                var entry = _buffer.GetAt(i);
-                if (!entry.IsSynced)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private void HandleRollbackRequest(RollbackRequest rollbackRequest)
-        {
-            IsRollbackPending = true;
-            _pendingRollbackRequest = rollbackRequest;
         }
     }
 }

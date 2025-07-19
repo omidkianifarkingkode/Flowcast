@@ -37,10 +37,16 @@ namespace Flowcast.Network
     public interface INetworkGameStateSyncService
     {
         void SendStateHash(StateHashReport report);
-        void RequestCommandsHistory();
 
         event Action<SyncStatus> OnSyncStatusReceived;
+    }
+
+    public interface INetworkRollbackService 
+    {
+        void RequestCommandsHistory();
+
         event Action<RollbackRequest> OnRollbackRequested;
+        event Action<IReadOnlyCollection<ICommand>> OnCommandsHistoryReceived;
     }
 
     public interface INetworkDiagnosticsService
@@ -74,6 +80,7 @@ namespace Flowcast.Network
         INetworkMatchmakingService,
         INetworkCommandTransportService,
         INetworkGameStateSyncService,
+        INetworkRollbackService,
         INetworkDiagnosticsService
     { }
     }

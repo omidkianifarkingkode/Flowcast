@@ -18,7 +18,7 @@ namespace Flowcast.Monitoring
 
         public ulong SegmentInterval = 10;
 
-        public ILockstepEngine Flowcast { get; private set; }
+        public LockstepEngine Flowcast { get; private set; }
 
         private List<FlowcastLogEntry> _logs = new();
 
@@ -44,16 +44,14 @@ namespace Flowcast.Monitoring
             _pingButton.onClick.AddListener(SendPingCommand);
         }
 
-        public void MonitorFlowcast(ILockstepEngine flowcast)
+        public void MonitorFlowcast(LockstepEngine flowcast)
         {
             Flowcast = flowcast;
-
-            var sync = Flowcast.GameStateSyncService;
 
             Flowcast.LockstepProvider.OnLockstepTurn += OnLockstepTurn;
             Flowcast.CommandChannel.OnCommandsReceived += OnCommandsReceived;
             Flowcast.CommandChannel.OnCommandsSent += OnCommandSent;
-            sync.OnRollback += OnRollback;
+            Flowcast.RollbackHandler.OnRollbackPrepared += OnRollback;
 
             // Optional: hook into command collector dispatch
 

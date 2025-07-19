@@ -4,6 +4,7 @@
     {
         public ulong Frame { get; set; }
         public uint Hash { get; set; }
+        public long PlayerId { get; set; }
     }
 
     public class SyncStatus

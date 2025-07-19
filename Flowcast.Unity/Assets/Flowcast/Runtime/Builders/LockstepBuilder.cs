@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using ILogger = Flowcast.Logging.ILogger;
+using Flowcast.Rollback;
 
 namespace Flowcast.Builders
 {
@@ -99,10 +100,7 @@ namespace Flowcast.Builders
             _gameUpdatePipelineBuilder ??= new();
             IGameUpdatePipeline pipeline = _gameUpdatePipelineBuilder.Build();
 
-            var rollbackHandler = new RollbackHandler(_gameStateSyncBuilder.Serializer, _logger, _gameStateSyncBuilder.Options);
-            IGameStateSyncService syncService = new GameStateSyncService(_gameStateSyncBuilder.Serializer, _gameStateSyncBuilder.Hasher, rollbackHandler, _networkBuilder.SimulationSyncService, _gameStateSyncBuilder.Options, _logger);
             var lockstepProvider = new LockstepProviderUpdate(_gameStateSyncBuilder.Options, _logger);
-
             IFrameProvider frameProvider = lockstepProvider;
             IIdGenerator idGenerator = new SequentialIdGenerator();
 
@@ -112,12 +110,15 @@ namespace Flowcast.Builders
             ILocalCommandCollector localCommandCollector = new LocalCommandCollector(commandValidatorFactory, frameProvider, idGenerator);
             ICommandManager commandManager = new CommandManager(_commandOptions, localCommandCollector, remoteCommandChannel, commandProcessorFactory, _logger);
 
+            ISnapshotRepository snapshotRepository = new SnapshotRepository(_gameStateSyncBuilder.Serializer, _gameStateSyncBuilder.Hasher, _networkBuilder.SimulationSyncService, _gameStateSyncBuilder.Options, _logger);
+            IRollbackHandler rollbackHandler = new RollbackHandler(_gameStateSyncBuilder.Serializer, snapshotRepository, _networkBuilder.RollbackService, _logger, _gameStateSyncBuilder.Options);
+
             var engine = new LockstepEngine(
                 commandManager,
                 localCommandCollector,
                 remoteCommandChannel,
                 pipeline,
-                syncService,
+                snapshotRepository,
                 lockstepProvider,
                 _logger,
                 _gameStateSyncBuilder.Serializer,

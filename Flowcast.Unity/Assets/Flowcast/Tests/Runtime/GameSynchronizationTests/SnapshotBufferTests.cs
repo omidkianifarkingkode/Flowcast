@@ -30,7 +30,7 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
     public class SnapshotBufferTests
     {
         private SampleGameState _gameState;
-        private GameStateSyncService _syncService;
+        private SnapshotRepository _snapshotRepository;
         private IGameStateSerializer<SampleGameState> _serializer;
         private DummyNetworkServer _network;
         private GameStateSyncOptions _options;
@@ -52,8 +52,7 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
             var hasher = new XorHasher();
             var logger = new UnityLogger();
 
-            var rollbackHandler = new RollbackHandler(_serializer, logger, _options);
-            _syncService = new GameStateSyncService(_serializer, hasher, rollbackHandler, _network, _options, logger);
+            _snapshotRepository = new SnapshotRepository(_serializer, hasher, _network, _options, logger);
         }
 
         [Test]
@@ -62,9 +61,9 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
             _gameState.HP = 100;
             _gameState.Gold = 250;
 
-            _syncService.CaptureAndSyncSnapshot(10);
+            _snapshotRepository.CaptureAndSyncSnapshot(10);
 
-            Assert.IsTrue(_syncService.TryGetSnapshot(10, out var snapshot));
+            Assert.IsTrue(_snapshotRepository.TryGetSnapshot(10, out var snapshot));
             var state = _serializer.DeserializeSnapshot(snapshot.Data);
             Assert.AreEqual(100, state.HP);
             Assert.AreEqual(250, state.Gold);
@@ -77,20 +76,20 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
             {
                 _gameState.HP = (int)i;
                 _gameState.Gold = (int)(i * 10);
-                _syncService.CaptureAndSyncSnapshot(i);
+                _snapshotRepository.CaptureAndSyncSnapshot(i);
             }
 
             // The oldest 5 entries should be evicted
-            Assert.IsFalse(_syncService.TryGetSnapshot(0, out _));
-            Assert.IsFalse(_syncService.TryGetSnapshot(1, out _));
-            Assert.IsTrue(_syncService.TryGetSnapshot(SnapshotLimit + 4, out var latest));
+            Assert.IsFalse(_snapshotRepository.TryGetSnapshot(0, out _));
+            Assert.IsFalse(_snapshotRepository.TryGetSnapshot(1, out _));
+            Assert.IsTrue(_snapshotRepository.TryGetSnapshot(SnapshotLimit + 4, out var latest));
 
             var state = _serializer.DeserializeSnapshot(latest.Data);
             Assert.AreEqual(SnapshotLimit + 4, (ulong)state.HP);
 
             for (ulong i = 0; i < SnapshotLimit + 5; i++)
             {
-                if (!_syncService.TryGetSnapshot(i, out var snapshot))
+                if (!_snapshotRepository.TryGetSnapshot(i, out var snapshot))
                     continue;
 
                 var data = _serializer.DeserializeSnapshot(snapshot.Data);

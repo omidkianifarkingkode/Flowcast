@@ -27,7 +27,7 @@ namespace Flowcast.Lockstep
         /// Multiplier for game simulation speed. 1.0 = real time. >1.0 = faster. <1.0 = slower.
         /// Used for rollback catch-up and testing.
         /// </summary>
-        float SimulationSpeedMultiplier { get; set; }
+        float SimulationSpeedMultiplier { get; }
 
 
         /// <summary>
@@ -40,7 +40,9 @@ namespace Flowcast.Lockstep
         /// </summary>
         event Action OnLockstepTurn;
 
-        void AdjustSimulationSpeed(float forGappedFrame);
+        public void SetFastModeSimulation();
+
+        public void SetNormalModeSimulation();
 
         void ResetFrameTo(ulong frame);
     }

@@ -7,7 +7,7 @@ namespace Flowcast.Network
     public class DummyNetworkServerOptions
     {
         /// <summary>
-        /// Base round-trip latency in milliseconds (client → server → client).
+        /// Base one-way latency in milliseconds (e.g., client → server).
         /// </summary>
         public int BaseLatencyMs = 80;
 
@@ -39,13 +39,23 @@ namespace Flowcast.Network
         public int RollbackChancePercent = 5;
 
         /// <summary>
-        /// Computes simulated latency with jitter.
+        /// Computes simulated one-way latency (half of round-trip), with jitter.
         /// </summary>
         public TimeSpan GetRandomLatency()
         {
             int jitter = UnityEngine.Random.Range(-LatencyJitterMs, LatencyJitterMs);
             int total = Math.Max(0, BaseLatencyMs + jitter);
             return TimeSpan.FromMilliseconds(total / 2); // half-latency per direction
+        }
+
+        /// <summary>
+        /// Computes simulated round-trip, with jitter.
+        /// </summary>
+        public TimeSpan GetRandomRTT()
+        {
+            int jitter = UnityEngine.Random.Range(-LatencyJitterMs, LatencyJitterMs);
+            int total = Math.Max(0, BaseLatencyMs + jitter);
+            return TimeSpan.FromMilliseconds(total);
         }
 
         /// <summary>

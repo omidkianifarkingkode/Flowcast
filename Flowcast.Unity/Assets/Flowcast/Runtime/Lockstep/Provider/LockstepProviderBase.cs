@@ -17,7 +17,7 @@ namespace Flowcast.Lockstep
         public float SimulationSpeedMultiplier
         {
             get => _simulationSpeedMultiplier;
-            set => _simulationSpeedMultiplier = Mathf.Max(0, value);
+            private set => _simulationSpeedMultiplier = Mathf.Max(0, value);
         }
         private float _simulationSpeedMultiplier = 1;
 
@@ -55,14 +55,21 @@ namespace Flowcast.Lockstep
             CurrentGameFrame++;
         }
 
-        public void AdjustSimulationSpeed(float forGappedFrame) 
+        public void SetFastModeSimulation() 
         {
-            float speed = forGappedFrame >= Settings.FarRollbackThreshold ? 
-                Settings.MaxCatchupSpeed : Settings.MinCatchupSpeed;
+            _simulationSpeedMultiplier = Settings.MaxCatchupSpeed;
+        }
 
-            _simulationSpeedMultiplier = speed;
+        public void SetNormalModeSimulation()
+        {
+            _simulationSpeedMultiplier = 1;
         }
 
         public ulong GetCurrentFrame() => CurrentGameFrame;
+
+        public void ResetFrameTo(ulong frame)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

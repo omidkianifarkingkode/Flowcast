@@ -1,19 +1,17 @@
 ﻿using Flowcast.Network;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 namespace Flowcast.Editor
 {
-    [CustomEditor(typeof(DummyNetworkServer))]
+    [CustomEditor(typeof(DummerServerRunner))]
     public class DummyNetworkServerEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
 
-            var dummy = (DummyNetworkServer)target;
+            var dummy = (DummerServerRunner)target;
 
             GUILayout.Space(10);
             GUILayout.Label("Runtime Tools", EditorStyles.boldLabel);
@@ -21,10 +19,10 @@ namespace Flowcast.Editor
             if (Application.isPlaying)
             {
                 if (GUILayout.Button("🔁 Send Ping"))
-                    dummy.Editor_SendPing();
+                    dummy.Server.Editor_SendPing();
 
                 if (GUILayout.Button("📥 Receive Rollback"))
-                    dummy.Editor_RequestRollback();
+                    dummy.Server.Editor_RequestRollback();
             }
             else
             {
