@@ -31,7 +31,7 @@ namespace Flowcast.Rollback
         private RollbackRequest _pendingRollbackRequest;
         private ulong _targetRecoveryFrame;
 
-        public RollbackHandler(IGameStateSerializer serializer, ISnapshotRepository snapshotRepository, INetworkRollbackService networkService, ILogger logger, IGameStateSyncOptions options)
+        public RollbackHandler(IGameStateSerializer serializer, ISnapshotRepository snapshotRepository, INetworkRollbackService networkService, IGameStateSyncOptions options, ILogger logger)
         {
             _serializer = serializer;
             _snapshotRepository = snapshotRepository;
@@ -69,7 +69,7 @@ namespace Flowcast.Rollback
 
             _prepareRollbackCallback.Invoke();
 
-            OnRollbackPrepared?.Invoke(_pendingRollbackRequest.CurrentNetworkFrame);
+            OnRollbackPrepared?.Invoke(_pendingRollbackRequest.CurrentServerFrame);
 
             _networkService.RequestCommandsHistory();
         }
@@ -90,7 +90,7 @@ namespace Flowcast.Rollback
 
             _startRollbackCallback.Invoke(snapshotTick, commands);
 
-            _options.OnRollback?.Invoke(snapshotData);
+            _options.OnRollback?.Invoke(snapshotData, _targetRecoveryFrame);
 
             OnRollbackStarted?.Invoke(snapshotTick);
         }
@@ -100,7 +100,7 @@ namespace Flowcast.Rollback
             if (frame < _targetRecoveryFrame)
                 return;
 
-            _logger.Log($"[Recovery] Caught up to frame {_targetRecoveryFrame}. Resuming normal speed.");
+            _logger.Log($"[Recovery] Caught up to frame {_targetRecoveryFrame}.");
 
             State = RollbackState.None;
 
@@ -117,7 +117,7 @@ namespace Flowcast.Rollback
 
         private ulong EstimateTargetFrame(ulong rollbackStartFrame)
         {
-            var networkTargetFrame = _pendingRollbackRequest.CurrentNetworkFrame;
+            var networkTargetFrame = _pendingRollbackRequest.CurrentServerFrame;
             var speedMultiplier = _options.MaxCatchupSpeed;
             var gameFps = _options.GameFramesPerSecond;
 

@@ -40,9 +40,10 @@ namespace Flowcast.Lockstep
         /// </summary>
         event Action OnLockstepTurn;
 
-        public void SetFastModeSimulation();
+        void Tick();
+        void SetFastModeSimulation();
 
-        public void SetNormalModeSimulation();
+        void SetNormalModeSimulation();
 
         void ResetFrameTo(ulong frame);
     }

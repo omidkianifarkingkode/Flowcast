@@ -64,9 +64,9 @@ namespace Flowcast.Network
             SimulatePing().Forget();
         }
 
-        public void RequestRollback()
+        public void RequestRollback(ulong currentServerFrame)
         {
-            SimulateRollback().Forget();
+            SimulateRollback(currentServerFrame).Forget();
         }
 
         public void RequestCommandsHistory()
@@ -88,6 +88,8 @@ namespace Flowcast.Network
             // Store command on the simulated server
             foreach (var cmd in commands)
             {
+                cmd.Frame += 10;
+
                 if (!_commandHistory.TryGetValue(cmd.Frame, out var frameCommands))
                 {
                     frameCommands = new List<ICommand>();
@@ -141,6 +143,9 @@ namespace Flowcast.Network
                 isSynced = playerHashes.Values.All(h => h == firstHash);
             }
 
+            if(report.Frame > 40)
+                isSynced= false;
+
             // Notify client of sync status
             OnSyncStatusReceived?.Invoke(new SyncStatus
             {
@@ -153,12 +158,11 @@ namespace Flowcast.Network
             {
                 OnRollbackRequested?.Invoke(new RollbackRequest
                 {
-                    CurrentNetworkFrame = report.Frame,
+                    CurrentServerFrame = report.Frame,
                     Reason = "Hash mismatch detected"
                 });
             }
         }
-
 
         private async UniTaskVoid SimulateRequestCommandsHistory()
         {
@@ -180,7 +184,6 @@ namespace Flowcast.Network
             OnCommandsHistoryReceived?.Invoke(allCommands);
         }
 
-
         private async UniTaskVoid SimulatePing()
         {
             await UniTask.Delay(Options.GetRandomLatency());
@@ -189,13 +192,16 @@ namespace Flowcast.Network
             OnPingResult?.Invoke(TimeSpan.FromMilliseconds(Options.BaseLatencyMs));
         }
 
-        private async UniTaskVoid SimulateRollback()
+        private async UniTaskVoid SimulateRollback(ulong currentServerFrame)
         {
             await UniTask.Delay(Options.GetRandomLatency());
             await UniTask.SwitchToMainThread();
 
             if (Options.ShouldDropPacket()) return;
-            OnRollbackRequested?.Invoke(new RollbackRequest());
+            OnRollbackRequested?.Invoke(new RollbackRequest() 
+            {
+                CurrentServerFrame = currentServerFrame
+            });
         }
 
         public Task RequestMatchAsync(string gameMode, object customData = null)
@@ -206,7 +212,6 @@ namespace Flowcast.Network
 #if UNITY_EDITOR
         // Convenience for triggering from editor
         public void Editor_SendPing() => SendPing();
-        public void Editor_RequestRollback() => RequestRollback();
 #endif
     }
 }

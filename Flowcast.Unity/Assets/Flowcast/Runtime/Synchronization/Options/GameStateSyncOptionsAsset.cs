@@ -37,7 +37,7 @@ namespace Flowcast.Synchronization
         [field: SerializeField]
         public bool EnableRollbackLog { get; set; } = false;
 
-        public Action<ISerializableGameState> OnRollback { get; set; }
+        public Action<ISerializableGameState, ulong> OnRollback { get; set; }
     }
 
     

@@ -15,7 +15,7 @@
 
     public class RollbackRequest
     {
-        public ulong CurrentNetworkFrame { get; set; }
+        public ulong CurrentServerFrame { get; set; }
         public string Reason { get; set; }
     }
 }

@@ -14,12 +14,7 @@ namespace Flowcast.Lockstep
         public ulong CurrentLockstepTurn { get; protected set; }
         public ulong SimulationTimeTicks => CurrentGameFrame * (ulong)(1000 / Settings.GameFramesPerSecond);
 
-        public float SimulationSpeedMultiplier
-        {
-            get => _simulationSpeedMultiplier;
-            private set => _simulationSpeedMultiplier = Mathf.Max(0, value);
-        }
-        private float _simulationSpeedMultiplier = 1;
+        public float SimulationSpeedMultiplier { get; private set; } = 1;
 
         public event Action OnGameFrame;
         public event Action OnLockstepTurn;
@@ -57,19 +52,21 @@ namespace Flowcast.Lockstep
 
         public void SetFastModeSimulation() 
         {
-            _simulationSpeedMultiplier = Settings.MaxCatchupSpeed;
+            SimulationSpeedMultiplier = Settings.MaxCatchupSpeed;
         }
 
         public void SetNormalModeSimulation()
         {
-            _simulationSpeedMultiplier = 1;
+            SimulationSpeedMultiplier = 1;
         }
 
         public ulong GetCurrentFrame() => CurrentGameFrame;
 
-        public void ResetFrameTo(ulong frame)
+        public virtual void ResetFrameTo(ulong frame)
         {
-            throw new NotImplementedException();
+            CurrentGameFrame = frame;
+            CurrentLockstepTurn = frame / (ulong)Settings.GameFramesPerLockstepTurn;
         }
+
     }
 }

@@ -20,6 +20,7 @@ namespace Flowcast.Serialization
         public byte[] SerializeSnapshot()
         {
             var gameState = _gameStateFactory();
+            var estimatedSize = Math.Max(_gameStateFactory().GetEstimatedSize(), 128); // fallback to 128 bytes
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
             gameState.WriteTo(writer);

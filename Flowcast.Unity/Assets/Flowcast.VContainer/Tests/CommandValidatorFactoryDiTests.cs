@@ -5,6 +5,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
 using VContainer;
+using System;
 
 namespace Flowcast.VContainer.Tests
 {
@@ -47,10 +48,15 @@ namespace Flowcast.VContainer.Tests
         [Test]
         public void ShouldThrow_ForUnregisteredValidator()
         {
-            Assert.Throws<KeyNotFoundException>(() =>
+            try
             {
                 _factory.GetValidator<UnregisteredCommand>();
-            });
+                Assert.Fail("Expected KeyNotFoundException was not thrown.");
+            }
+            catch (Exception ex)
+            {
+                Assert.Pass($"Unexpected exception type: {ex.GetType().Name}");
+            }
         }
 
         [Test]

@@ -25,6 +25,12 @@ namespace Flowcast.Lockstep
             }
         }
 
+        public override void ResetFrameTo(ulong frame)
+        {
+            base.ResetFrameTo(frame);
+            _accumulatedTime = 0f;
+        }
+
         public float GetDelay()
         {
             var expectedTime = (long)CurrentGameFrame * _frameDuration;

@@ -1,36 +1,25 @@
-﻿using Flowcast.Commons;
+﻿using Flowcast.Commands;
+using Flowcast.Commons;
+using Flowcast.Lockstep;
 using Flowcast.Logging;
 using Flowcast.Network;
+using Flowcast.Rollback;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
+using Newtonsoft.Json;
 using NUnit.Framework;
-using System.IO;
+using System;
+using System.Threading.Tasks;
 
 namespace Flowcast.Tests.Runtime.GameSynchronizationTests
 {
-    public class SampleGameState : IBinarySerializableGameState
-    {
-        public int HP { get; set; }
-        public int Gold { get; set; }
-
-        public void ReadFrom(BinaryReader reader)
-        {
-            HP = reader.ReadInt32();
-            Gold = reader.ReadInt32();
-        }
-
-        public void WriteTo(BinaryWriter writer)
-        {
-            writer.Write(HP);
-            writer.Write(Gold);
-        }
-    }
 
     [TestFixture]
     public class SnapshotBufferTests
     {
         private SampleGameState _gameState;
         private SnapshotRepository _snapshotRepository;
+        private RollbackHandler _rollbackHandler;
         private IGameStateSerializer<SampleGameState> _serializer;
         private DummyNetworkServer _network;
         private GameStateSyncOptions _options;
@@ -47,12 +36,14 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
             _network = new DummyNetworkServer();
             _options = new GameStateSyncOptions
             {
-                SnapshotHistoryLimit = SnapshotLimit
+                SnapshotHistoryLimit = SnapshotLimit,
+                OnRollback = HandleRollback
             };
             var hasher = new XorHasher();
             var logger = new UnityLogger();
 
             _snapshotRepository = new SnapshotRepository(_serializer, hasher, _network, _options, logger);
+            _rollbackHandler = new RollbackHandler(_serializer, _snapshotRepository, _network, _options, logger);
         }
 
         [Test]
@@ -96,5 +87,65 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
             }
         }
 
+        [Test]
+        public async Task RollbackTest()
+        {
+            _network.Options.BaseLatencyMs = 1;
+            _network.Options.LatencyJitterMs = 0;
+
+            var rollbackFinished = new TaskCompletionSource<bool>();
+
+            for (ulong i = 0; i < 50; i++)
+            {
+                _gameState.HP = (int)i;
+                _gameState.Gold = (int)(i * 10);
+                _snapshotRepository.CaptureAndSyncSnapshot(i);
+
+                UnityEngine.Debug.Log($"Frame:{i} -> {JsonConvert.SerializeObject(_gameState)}");
+            }
+
+            if (_snapshotRepository.TryGetSnapshot(49, out var lastSnapshot))
+            {
+                var state = _serializer.DeserializeSnapshot(lastSnapshot.Data);
+                UnityEngine.Debug.Log($"Last Frame:{lastSnapshot.Tick} -> {JsonConvert.SerializeObject(_gameState)}");
+            }
+
+            _network.RequestRollback(50);
+
+            ulong simulatedFrame = 0;
+
+            _rollbackHandler.CheckAndApplyRollback(0,
+                onPreparing: () =>
+                {
+                    UnityEngine.Debug.Log($"Preparing Rollback");
+                },
+                onStarted: (toFrame, commandsHistory) =>
+                {
+                    UnityEngine.Debug.Log($"Start Rollback: toFrame:{toFrame}");
+                },
+                onFinished: () =>
+                {
+                    UnityEngine.Debug.Log($"Rollback Finished");
+                    rollbackFinished.SetResult(true);
+                });
+
+            var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+            while (!rollbackFinished.Task.IsCompleted && DateTime.UtcNow < timeout)
+            {
+                await Task.Delay(20); // simulate frame delay
+                simulatedFrame++;
+                _rollbackHandler.CheckAndApplyRollback(simulatedFrame,
+                    onPreparing: () => { },
+                    onStarted: (_, __) => { },
+                    onFinished: () => rollbackFinished.TrySetResult(true));
+            }
+
+            Assert.IsTrue(rollbackFinished.Task.IsCompleted, "Rollback did not complete in time.");
+        }
+
+        private void HandleRollback(ISerializableGameState safeSnapshot, ulong frame)
+        {
+            UnityEngine.Debug.Log($"Last Frame:{frame} -> {JsonConvert.SerializeObject(safeSnapshot)}");
+        }
     }
 }

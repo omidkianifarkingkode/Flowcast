@@ -34,19 +34,19 @@ namespace Flowcast.Synchronization
             return this;
         }
 
-        public IGameStateSyncOptionalSettings OnRollback(Action<ISerializableGameState> onRollback)
+        public IGameStateSyncOptionalSettings OnRollback(Action<ISerializableGameState, ulong> onRollback)
         {
             Options.OnRollback = onRollback;
 
             return this;
         }
 
-        public IGameStateSyncOptionalSettings OnRollback<T>(Action<T> onRollback) where T : ISerializableGameState
+        public IGameStateSyncOptionalSettings OnRollback<T>(Action<T, ulong> onRollback) where T : ISerializableGameState
         {
-            Options.OnRollback = state =>
+            Options.OnRollback = (state,frame) =>
             {
                 if (state is T typed)
-                    onRollback(typed);
+                    onRollback(typed,frame);
                 else
                     throw new InvalidCastException($"Rollback state is not of expected type {typeof(T).Name}");
             };

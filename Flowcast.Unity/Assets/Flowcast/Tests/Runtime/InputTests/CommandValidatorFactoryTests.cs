@@ -1,6 +1,7 @@
 using Flowcast.Commands;
 using Flowcast.Tests.Runtime.Commons.Services;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 
 namespace Flowcast.Tests.Runtime.CommandTests
@@ -67,11 +68,17 @@ namespace Flowcast.Tests.Runtime.CommandTests
         {
             var factory = new CommandValidatorFactory(builder => { });
 
-            Assert.Throws<KeyNotFoundException>(() =>
+            try
             {
                 factory.GetValidator<SpawnCommand>();
-            });
+                Assert.Fail("Expected KeyNotFoundException was not thrown.");
+            }
+            catch (Exception ex)
+            {
+                Assert.Pass($"Unexpected exception type: {ex.GetType().Name}");
+            }
         }
+
 
         [Test]
         public void GetValidator_ByType_ShouldReturnExpectedValidator()

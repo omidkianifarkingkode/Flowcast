@@ -23,8 +23,8 @@ namespace Flowcast.Synchronization
 
     public interface IGameStateSyncRollbackConfigurer
     {
-        IGameStateSyncOptionalSettings OnRollback(Action<ISerializableGameState> onRollback);
-        IGameStateSyncOptionalSettings OnRollback<T>(Action<T> onRollback) where T : ISerializableGameState;
+        IGameStateSyncOptionalSettings OnRollback(Action<ISerializableGameState, ulong> onRollback);
+        IGameStateSyncOptionalSettings OnRollback<T>(Action<T, ulong> onRollback) where T : ISerializableGameState;
     }
 
     public interface IGameStateSyncOptionalSettings

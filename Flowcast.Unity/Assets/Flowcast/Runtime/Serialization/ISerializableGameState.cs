@@ -18,6 +18,12 @@ namespace Flowcast.Serialization
     {
         void WriteTo(BinaryWriter writer);
         void ReadFrom(BinaryReader reader);
+
+        /// <summary>
+        /// Estimated size in bytes when serialized.
+        /// Used for efficient MemoryStream preallocation.
+        /// </summary>
+        int GetEstimatedSize();
     }
 }
 

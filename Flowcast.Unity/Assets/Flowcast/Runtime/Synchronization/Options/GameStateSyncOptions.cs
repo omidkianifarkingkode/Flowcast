@@ -24,6 +24,6 @@ namespace Flowcast.Synchronization
         public bool EnableRollbackLog { get; set; } = false;
 
         [Newtonsoft.Json.JsonIgnore]
-        public Action<ISerializableGameState> OnRollback { get; set; }
+        public Action<ISerializableGameState, ulong> OnRollback { get; set; }
     }
 }

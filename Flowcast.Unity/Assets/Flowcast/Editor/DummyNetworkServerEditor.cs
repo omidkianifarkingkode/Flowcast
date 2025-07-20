@@ -22,7 +22,7 @@ namespace Flowcast.Editor
                     dummy.Server.Editor_SendPing();
 
                 if (GUILayout.Button("📥 Receive Rollback"))
-                    dummy.Server.Editor_RequestRollback();
+                    dummy.Server.RequestRollback(0);
             }
             else
             {

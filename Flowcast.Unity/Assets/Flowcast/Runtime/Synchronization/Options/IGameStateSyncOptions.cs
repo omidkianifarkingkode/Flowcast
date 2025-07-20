@@ -29,7 +29,7 @@ namespace Flowcast.Synchronization
         /// <summary>
         /// Hook to apply deserialized game state during rollback.
         /// </summary>
-        Action<ISerializableGameState> OnRollback { get; set; }
+        Action<ISerializableGameState, ulong> OnRollback { get; set; }
     }
 
     

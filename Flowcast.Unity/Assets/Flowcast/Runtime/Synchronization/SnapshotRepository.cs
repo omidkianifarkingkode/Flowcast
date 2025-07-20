@@ -13,21 +13,21 @@ namespace Flowcast.Synchronization
         private readonly CircularBuffer<SnapshotEntry> _buffer;
         private readonly IGameStateSerializer _gameStateSerializer;
         private readonly IHasher _hasher;
-        private readonly INetworkGameStateSyncService _networkSyncService;
+        private readonly INetworkGameStateSyncService _networkService;
 
         private readonly IGameStateSyncOptions _options;
         private readonly ILogger _logger;
 
-        public SnapshotRepository(IGameStateSerializer gameStateSerializer, IHasher hasher, INetworkGameStateSyncService networkSyncService, IGameStateSyncOptions options, ILogger logger)
+        public SnapshotRepository(IGameStateSerializer gameStateSerializer, IHasher hasher, INetworkGameStateSyncService networkService, IGameStateSyncOptions options, ILogger logger)
         {
             _options = options;
             _logger = logger;
             _gameStateSerializer = gameStateSerializer;
             _hasher = hasher;
             _buffer = new CircularBuffer<SnapshotEntry>(_options.SnapshotHistoryLimit);
-            _networkSyncService = networkSyncService;
+            _networkService = networkService;
 
-            _networkSyncService.OnSyncStatusReceived += SetSynced;
+            _networkService.OnSyncStatusReceived += SetSynced;
         }
 
         public void CaptureAndSyncSnapshot(ulong frame)
@@ -46,7 +46,7 @@ namespace Flowcast.Synchronization
 
             _buffer.Add(entry);
 
-            _networkSyncService.SendStateHash(new StateHashReport
+            _networkService.SendStateHash(new StateHashReport
             {
                 Frame = frame,
                 Hash = hash

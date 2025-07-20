@@ -47,7 +47,7 @@ namespace Flowcast
         private readonly ISnapshotRepository _gameStateSyncService;
         private readonly IRollbackHandler _rollbackHandler;
         private readonly IGameStateSerializer _gameStateSerializer;
-        private readonly LockstepProviderBase _lockstepProvider;
+        private readonly ILockstepProvider _lockstepProvider;
         private readonly IPlayerProvider _playerProvider;
         private readonly ILogger _logger;
 
@@ -59,7 +59,8 @@ namespace Flowcast
             IRemoteCommandChannel commandChannel,
             IGameUpdatePipeline gameUpdatePipeline,
             ISnapshotRepository gameStateSyncService,
-            LockstepProviderBase lockstepProvider,
+            IRollbackHandler rollbackHandler,
+            ILockstepProvider lockstepProvider,
             ILogger logger,
             IGameStateSerializer gameStateSerializer,
             IPlayerProvider playerProvider)
@@ -71,6 +72,7 @@ namespace Flowcast
             _remoteCommandChannel = commandChannel;
             _gameUpdatePipeline = gameUpdatePipeline;
             _gameStateSyncService = gameStateSyncService;
+            _rollbackHandler = rollbackHandler;
             _lockstepProvider = lockstepProvider;
             _logger = logger;
 

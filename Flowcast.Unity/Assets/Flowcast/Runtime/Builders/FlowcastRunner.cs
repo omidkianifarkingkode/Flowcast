@@ -13,7 +13,7 @@ namespace Flowcast.Builders
         private void OnEnable()
         {
             _statusUI = GetComponent<FlowcastStatsUI>();
-            _monitor = FindAnyObjectByType<Monitor>();
+           // _monitor = FindAnyObjectByType<Monitor>();
         }
 
         public void SetEngine(LockstepEngine engine)
@@ -21,7 +21,7 @@ namespace Flowcast.Builders
             _engine = engine;
             _engine.StartTicking();
             _statusUI.SetEngine(engine);
-            _monitor.MonitorFlowcast(engine);
+            //_monitor.MonitorFlowcast(engine);
         }
 
         private void Update()

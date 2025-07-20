@@ -89,7 +89,8 @@ namespace Flowcast.Builders
             if (_networkBuilder == null)
                 throw new InvalidOperationException("Network must be configured before building.");
 
-            _gameStateSyncBuilder.Options = _matchInfo.GameSettings;
+            if (_matchInfo.GameSettings is not null)
+                _gameStateSyncBuilder.Options = _matchInfo.GameSettings;
 
             _logger ??= new UnityLogger();
 
@@ -100,7 +101,7 @@ namespace Flowcast.Builders
             _gameUpdatePipelineBuilder ??= new();
             IGameUpdatePipeline pipeline = _gameUpdatePipelineBuilder.Build();
 
-            var lockstepProvider = new LockstepProviderUpdate(_gameStateSyncBuilder.Options, _logger);
+            ILockstepProvider lockstepProvider = new LockstepProviderUpdate(_gameStateSyncBuilder.Options, _logger);
             IFrameProvider frameProvider = lockstepProvider;
             IIdGenerator idGenerator = new SequentialIdGenerator();
 
@@ -110,8 +111,19 @@ namespace Flowcast.Builders
             ILocalCommandCollector localCommandCollector = new LocalCommandCollector(commandValidatorFactory, frameProvider, idGenerator);
             ICommandManager commandManager = new CommandManager(_commandOptions, localCommandCollector, remoteCommandChannel, commandProcessorFactory, _logger);
 
-            ISnapshotRepository snapshotRepository = new SnapshotRepository(_gameStateSyncBuilder.Serializer, _gameStateSyncBuilder.Hasher, _networkBuilder.SimulationSyncService, _gameStateSyncBuilder.Options, _logger);
-            IRollbackHandler rollbackHandler = new RollbackHandler(_gameStateSyncBuilder.Serializer, snapshotRepository, _networkBuilder.RollbackService, _logger, _gameStateSyncBuilder.Options);
+            ISnapshotRepository snapshotRepository = new SnapshotRepository(
+                gameStateSerializer: _gameStateSyncBuilder.Serializer,
+                hasher: _gameStateSyncBuilder.Hasher,
+                networkService: _networkBuilder.SimulationSyncService,
+                options: _gameStateSyncBuilder.Options,
+                logger: _logger);
+
+            IRollbackHandler rollbackHandler = new RollbackHandler(
+                serializer: _gameStateSyncBuilder.Serializer,
+                snapshotRepository: snapshotRepository,
+                networkService: _networkBuilder.RollbackService,
+                options: _gameStateSyncBuilder.Options,
+                logger: _logger);
 
             var engine = new LockstepEngine(
                 commandManager,
@@ -119,6 +131,7 @@ namespace Flowcast.Builders
                 remoteCommandChannel,
                 pipeline,
                 snapshotRepository,
+                rollbackHandler,
                 lockstepProvider,
                 _logger,
                 _gameStateSyncBuilder.Serializer,
