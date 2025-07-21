@@ -11,12 +11,12 @@ namespace Flowcast.Synchronization
 
         public int GameFramesPerLockstepTurn { get; set; } = 5;
         
-        public int SnapshotHistoryLimit { get; set; } = 20;
+        public int SnapshotHistoryLimit { get; set; } = 50;
 
         public int DesyncToleranceFrames { get; set; } = 5;
 
         public float MinCatchupSpeed { get; set; } = 1.5f;
-        public float MaxCatchupSpeed { get; set; } = 5.0f;
+        public float MaxCatchupSpeed { get; set; } = 10.0f;
         public int FarRollbackThreshold { get; set; } = 20;
 
         public bool EnableLocalAutoRollback { get; set; } = false;

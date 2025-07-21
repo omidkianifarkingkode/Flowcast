@@ -8,6 +8,14 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
         public int HP { get; set; }
         public int Gold { get; set; }
 
+        public ISerializableGameState CreateDefault()
+        {
+            return new SampleGameState() 
+            {
+                HP = 100, Gold = 100
+            };
+        }
+
         public int GetEstimatedSize()
         {
             return /*HP*/sizeof(int) + /*Gold*/sizeof(int);

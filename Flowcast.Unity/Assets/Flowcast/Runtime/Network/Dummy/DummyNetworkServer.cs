@@ -35,6 +35,8 @@ namespace Flowcast.Network
         // Frame → PlayerId → Hash
         private readonly Dictionary<ulong, Dictionary<long, uint>> _stateHashes = new();
 
+        public bool setHashSynce = true;
+
 
         public void Connect(string serverAddress)
         {
@@ -136,15 +138,15 @@ namespace Flowcast.Network
             playerHashes[report.PlayerId] = report.Hash;
 
             // Check if all hashes for this frame match
-            bool isSynced = true;
+            bool isSynced = setHashSynce;
             if (playerHashes.Count > 1)
             {
                 var firstHash = playerHashes.Values.First();
                 isSynced = playerHashes.Values.All(h => h == firstHash);
             }
 
-            if(report.Frame > 40)
-                isSynced= false;
+            if (report.Frame > 100)
+                isSynced = false;
 
             // Notify client of sync status
             OnSyncStatusReceived?.Invoke(new SyncStatus

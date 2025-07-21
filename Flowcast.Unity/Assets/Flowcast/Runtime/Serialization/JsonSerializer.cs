@@ -93,5 +93,21 @@ namespace Flowcast.Serialization
         {
             return Task.FromResult(((IGameStateSerializer<T>)this).TryDeserializeSnapshot(data));
         }
+
+
+        public ISerializableGameState CreateDefault()
+        {
+            return _gameStateFactory().CreateDefault();
+        }
+
+        T IGameStateSerializer<T>.CreateDefault()
+        {
+            var instance = _gameStateFactory().CreateDefault();
+
+            if (instance is T typed)
+                return typed;
+
+            throw new InvalidCastException($"CreateDefault did not return expected type {typeof(T).Name}");
+        }
     }
 }

@@ -8,6 +8,7 @@ namespace Flowcast.Serialization
     /// </summary>
     public interface ISerializableGameState
     {
+        ISerializableGameState CreateDefault();
     }
 
     /// <summary>

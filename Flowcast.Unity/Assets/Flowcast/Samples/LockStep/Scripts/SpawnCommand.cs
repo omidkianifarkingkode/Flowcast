@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class SpawnCommand : BaseCommand
 {
-    public string UnitType { get; set; }
+    public CharacterType UnitType { get; set; }
     public Vector2 Position { get; set; }
 
-    public SpawnCommand(Vector2 position, string unitType)
+    public SpawnCommand(Vector2 position, CharacterType unitType)
     {
         Position = position;
         UnitType = unitType;

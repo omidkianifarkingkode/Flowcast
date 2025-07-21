@@ -64,9 +64,9 @@ namespace Flowcast.Commands
             {
                 var processor = _commandProcessorFactory.GetProcessor(command.GetType());
 
-                _options.OnCommandReceived?.Invoke(command);
-
                 processor?.Process(command);
+
+                _options.OnCommandReceived?.Invoke(command);
             }
         }
     }

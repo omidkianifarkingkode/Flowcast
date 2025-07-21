@@ -80,7 +80,7 @@ namespace Flowcast.Rollback
                 return;
 
             var snapshotTick = snapshotEntry is null ? 0 : snapshotEntry.Value.Tick;
-            var snapshotData = snapshotEntry is null ? null : _serializer.DeserializeSnapshot(snapshotEntry.Value.Data);
+            var snapshotData = snapshotEntry is null ? _serializer.CreateDefault() : _serializer.DeserializeSnapshot(snapshotEntry.Value.Data);
 
             State = RollbackState.Started;
 

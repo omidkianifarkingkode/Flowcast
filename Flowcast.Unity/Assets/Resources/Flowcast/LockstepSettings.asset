@@ -14,3 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <GameFramesPerSecond>k__BackingField: 20
   <GameFramesPerLockstepTurn>k__BackingField: 5
+  <MinCatchupSpeed>k__BackingField: 1.5
+  <MaxCatchupSpeed>k__BackingField: 10
+  <FarRollbackThreshold>k__BackingField: 20

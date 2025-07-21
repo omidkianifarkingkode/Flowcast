@@ -16,6 +16,8 @@ namespace Flowcast.Serialization
 
         Task<Result<byte[]>> TrySerializeSnapshotAsync();
         Task<Result<ISerializableGameState>> TryDeserializeSnapshotAsync(byte[] data);
+
+        ISerializableGameState CreateDefault();
     }
 
     /// <summary>
@@ -30,6 +32,7 @@ namespace Flowcast.Serialization
         void DeserializeInto(byte[] data, T targetInstance);
         Result TryDeserializeInto(byte[] data, T targetInstance);
         Task<Result> DeserializeIntoAsync(byte[] data, T targetInstance);
+        new T CreateDefault();
     }
 }
 
