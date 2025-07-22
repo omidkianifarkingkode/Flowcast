@@ -1,22 +1,46 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
+[ExecuteAlways]
 public class PathHelper : MonoBehaviour 
 {
-    public LineRenderer line;
+    [SerializeField] LineRenderer line;
+    [SerializeField] List<Transform> waypoints = new();
 
-    public List<Transform> waypoints = new();
+    public List<Vector2> Path => waypoints.Select(wp => (Vector2)wp.position).ToList();
+    public Vector2 FirstPoint => waypoints.FirstOrDefault()?.position ?? Vector2.zero;
+    public int WaypointCount => waypoints.Count;
 
     private void Awake()
     {
-        // Collect all child transforms as waypoints
+        UpdateWaypoints();
+        DrawPath();
+    }
+
+    private void OnValidate()
+    {
+        UpdateWaypoints();
+        DrawPath();
+    }
+
+    private void Update()
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            DrawPath(); 
+        }
+#endif
+    }
+
+    public void UpdateWaypoints()
+    {
         waypoints.Clear();
         foreach (Transform child in transform)
         {
             waypoints.Add(child);
         }
-
-        DrawPath();
     }
 
     private void DrawPath()
@@ -37,22 +61,6 @@ public class PathHelper : MonoBehaviour
             return waypoints[index].position;
         return Vector3.zero;
     }
-
-    public Vector2 GetFirstPoint() => waypoints[0].position;
-
-    public List<Vector2> GetPathPoints()
-    {
-        List<Vector2> pathPoints = new();
-
-        foreach (Transform point in transform)
-        {
-            pathPoints.Add(point.position);
-        }
-
-        return pathPoints;
-    }
-
-    public int GetWaypointCount() => waypoints.Count;
 
     private void OnDrawGizmos()
     {

@@ -1,9 +1,8 @@
 ﻿using Flowcast.Commands;
-using Flowcast.Lockstep;
-using Flowcast.Logging;
 using Flowcast.Network;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
+using LogKit;
 using System;
 using System.Collections.Generic;
 
@@ -74,7 +73,7 @@ namespace Flowcast.Rollback
             _networkService.RequestCommandsHistory();
         }
 
-        private void StartRollback(IReadOnlyCollection<ICommand> commands, SnapshotEntry? snapshotEntry = null) 
+        private void StartRollback(IReadOnlyCollection<ICommand> commands, SnapshotEntry? snapshotEntry = null)
         {
             if (State != RollbackState.Preparing)
                 return;

@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "UniTask",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "LogKit.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

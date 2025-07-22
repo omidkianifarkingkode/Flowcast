@@ -3342,7 +3342,15 @@ LineRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Positions: []
+  m_Positions:
+  - {x: -8, y: 3, z: 0}
+  - {x: 8, y: 3, z: 0}
+  - {x: 8, y: 1, z: 0}
+  - {x: 0, y: 1, z: 0}
+  - {x: 0, y: -1, z: 0}
+  - {x: -8, y: -1, z: 0}
+  - {x: -8, y: -3, z: 0}
+  - {x: 8, y: -3, z: 0}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1
@@ -5191,6 +5199,7 @@ GameObject:
   - component: {fileID: 1846933863}
   - component: {fileID: 1846933862}
   - component: {fileID: 1846933864}
+  - component: {fileID: 1846933865}
   m_Layer: 0
   m_Name: GameRunner
   m_TagString: Untagged
@@ -5257,6 +5266,34 @@ MonoBehaviour:
     HPDecayRate: 5
     Prefab: {fileID: 8772679362734068939, guid: 3f6e04dc9bd976947aa33ed90c76d6ab, type: 3}
   pathHelper: {fileID: 1292911052}
+--- !u!114 &1846933865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1846933861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fffb5ce984153464ab1fc9f192428c74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localPlayerId: 1
+  localPlayerName: Player1
+  remotePlayerName: Player2
+  ticksPerSecond: 50
+  tickDuration: 0.02
+  baseLatencyMs: 100
+  echoCommands: 1
+  onCommandReceived:
+    m_PersistentCalls:
+      m_Calls: []
+  onTick:
+    m_PersistentCalls:
+      m_Calls: []
+  onRollback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1899600831
 GameObject:
   m_ObjectHideFlags: 0

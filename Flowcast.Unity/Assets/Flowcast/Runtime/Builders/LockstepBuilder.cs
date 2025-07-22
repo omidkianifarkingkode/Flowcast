@@ -2,22 +2,22 @@
 using Flowcast.Data;
 using Flowcast.Commands;
 using Flowcast.Lockstep;
-using Flowcast.Logging;
 using Flowcast.Network;
 using Flowcast.Pipeline;
 using Flowcast.Synchronization;
 using System;
 using System.Linq;
 using UnityEngine;
-using ILogger = Flowcast.Logging.ILogger;
 using Flowcast.Rollback;
+using LogKit;
+using ILogger = LogKit.ILogger;
+using LogKit.Bootstrap;
 
 namespace Flowcast.Builders
 {
     public class LockstepBuilder : IRequireMatchInfo, IRequireCommand, IRequireGameState, IRequireNetwork, IRequirePipline, IOptionalSettings
     {
         private MatchInfo _matchInfo;
-        private ILogger _logger;
 
         private CommandOptions _commandOptions;
         private GameStateSyncOptionsBuilder _gameStateSyncBuilder;
@@ -72,12 +72,6 @@ namespace Flowcast.Builders
             return this;
         }
 
-        public IOptionalSettings SetLogger(ILogger logger)
-        {
-            _logger = logger;
-            return this;
-        }
-
         public ILockstepEngine BuildAndStart()
         {
             if (_commandOptions == null)
@@ -92,8 +86,6 @@ namespace Flowcast.Builders
             if (_matchInfo.GameSettings is not null)
                 _gameStateSyncBuilder.Options = _matchInfo.GameSettings;
 
-            _logger ??= new UnityLogger();
-
             var playerProvider = new PlayerProvider(
                 _matchInfo.LocalPlayerId,
                 _matchInfo.Players.Select(x => x.PlayerId).ToArray());
@@ -101,29 +93,31 @@ namespace Flowcast.Builders
             _gameUpdatePipelineBuilder ??= new();
             IGameUpdatePipeline pipeline = _gameUpdatePipelineBuilder.Build();
 
-            ILockstepProvider lockstepProvider = new LockstepProviderUpdate(_gameStateSyncBuilder.Options, _logger);
+            ILockstepProvider lockstepProvider = new LockstepProviderUpdate(_gameStateSyncBuilder.Options, CreateLogger("Lockstep"));
             IFrameProvider frameProvider = lockstepProvider;
             IIdGenerator idGenerator = new SequentialIdGenerator();
 
+            var commandLogger = CreateLogger("Command");
             ICommandValidatorFactory commandValidatorFactory = new CommandValidatorFactory(_commandOptions.ValidatorFactoryOptions);
             ICommandProcessorFactory commandProcessorFactory = new CommandProcessorFactory(_commandOptions.CommandFactoryOptions);
-            IRemoteCommandChannel remoteCommandChannel = new RemoteCommandChannel(_networkBuilder.CommandTransportService);
+            IRemoteCommandChannel remoteCommandChannel = new RemoteCommandChannel(_networkBuilder.CommandTransportService, commandLogger);
             ILocalCommandCollector localCommandCollector = new LocalCommandCollector(commandValidatorFactory, frameProvider, idGenerator);
-            ICommandManager commandManager = new CommandManager(_commandOptions, localCommandCollector, remoteCommandChannel, commandProcessorFactory, _logger);
+            ICommandManager commandManager = new CommandManager(_commandOptions, localCommandCollector, remoteCommandChannel, 
+                commandProcessorFactory, commandLogger);
 
             ISnapshotRepository snapshotRepository = new SnapshotRepository(
                 gameStateSerializer: _gameStateSyncBuilder.Serializer,
                 hasher: _gameStateSyncBuilder.Hasher,
                 networkService: _networkBuilder.SimulationSyncService,
                 options: _gameStateSyncBuilder.Options,
-                logger: _logger);
+                logger: CreateLogger("Snapshot"));
 
             IRollbackHandler rollbackHandler = new RollbackHandler(
                 serializer: _gameStateSyncBuilder.Serializer,
                 snapshotRepository: snapshotRepository,
                 networkService: _networkBuilder.RollbackService,
                 options: _gameStateSyncBuilder.Options,
-                logger: _logger);
+                logger: CreateLogger("Rollback"));
 
             var engine = new LockstepEngine(
                 commandManager,
@@ -133,7 +127,7 @@ namespace Flowcast.Builders
                 snapshotRepository,
                 rollbackHandler,
                 lockstepProvider,
-                _logger,
+                CreateLogger("Engine"),
                 _gameStateSyncBuilder.Serializer,
                 playerProvider
             );
@@ -142,6 +136,40 @@ namespace Flowcast.Builders
             flowcastRunner.SetEngine(engine);
 
             return engine;
+        }
+
+        public ILogger CreateLogger(string moduleName, Action<LoggerOptions> overrideOptions = null)
+        {
+            return LoggerFactory.Create($"Flowcast:{moduleName}", options =>
+            {
+                var defaults = LoggerBootstrapper.DefaultOptions;
+
+                // Fallback defaults if LoggerBootstrapper was not initialized
+                if (defaults != null)
+                {
+                    options.EnableUnitySink = defaults.EnableUnitySink;
+                    options.EnableFileSink = defaults.EnableFileSink;
+                    options.MinimumLogLevel = defaults.MinimumLogLevel;
+                    options.IncludeTimestamp = defaults.IncludeTimestamp;
+                    options.LogFormat = defaults.LogFormat;
+                    options.MaxLength = defaults.MaxLength;
+                    options.MaxLogFiles= defaults.MaxLogFiles;
+                    options.Color = "cyan";
+
+                    options.LevelColors.Clear();
+                    foreach (var colorPair in defaults.LevelColors)
+                    {
+                        options.LevelColors.Add(new LoggerOptions.LogLevelColor
+                        {
+                            Level = colorPair.Level,
+                            Color = colorPair.Color
+                        });
+                    }
+                }
+
+                // Apply optional customizations last
+                overrideOptions?.Invoke(options);
+            });
         }
     }
 }

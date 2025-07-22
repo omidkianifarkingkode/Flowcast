@@ -13,6 +13,7 @@ public class GameState : IBinarySerializableGameState
             w.Write((int)character.Type);
             w.Write(character.Health);
             w.WriteVector2(character.Position);
+            w.Write(character.PathIndex);
         });
     }
 
@@ -22,14 +23,15 @@ public class GameState : IBinarySerializableGameState
         {
             Type = (CharacterType)r.ReadInt32(),
             Health = r.ReadInt32(),
-            Position = r.ReadVector2()
+            Position = r.ReadVector2(),
+            PathIndex = r.ReadInt32(),
         });
     }
 
     public int GetEstimatedSize()
     {
-        // 1 int (enum) + 1 int (health) + 2 floats (Vector2)
-        int perCharacterSize = sizeof(int) + sizeof(int) + sizeof(float) * 2;
+        // 1 int (enum) + 1 int (health) + 2 floats (Vector2) + 1 int (pathIndex)
+        int perCharacterSize = sizeof(int) + sizeof(int) + sizeof(float) * 2 + sizeof(int);
 
         // 1 int for the list count + per-character size * number of characters
         return sizeof(int) + characters.Count * perCharacterSize;

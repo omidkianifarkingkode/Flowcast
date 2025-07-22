@@ -1,4 +1,4 @@
-﻿using ILogger = Flowcast.Logging.ILogger;
+﻿using LogKit;
 
 namespace Flowcast.Lockstep
 {

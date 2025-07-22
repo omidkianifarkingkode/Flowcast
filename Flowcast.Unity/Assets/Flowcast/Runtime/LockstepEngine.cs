@@ -1,15 +1,15 @@
-﻿using Flowcast.Data;
-using Flowcast.Commands;
+﻿using Flowcast.Commands;
+using Flowcast.Data;
 using Flowcast.Lockstep;
-using Flowcast.Logging;
 using Flowcast.Pipeline;
+using Flowcast.Rollback;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
-using Flowcast.Rollback;
-using static UnityEditor.Progress;
+using ILogger = LogKit.ILogger;
 
 namespace Flowcast
 {
+
     public interface ILockstepEngine
     {
         ILocalCommandCollector CommandCollector { get; }
@@ -115,7 +115,7 @@ namespace Flowcast
                 {
                     StopTicking();
                 },
-                onStarted: (toFrame, commandsHistory) => 
+                onStarted: (toFrame, commandsHistory) =>
                 {
                     _remoteCommandChannel.ResetWith(commandsHistory);
 
@@ -125,7 +125,7 @@ namespace Flowcast
 
                     StartTicking();
                 },
-                onFinished: () => 
+                onFinished: () =>
                 {
                     _lockstepProvider.SetNormalModeSimulation();
                 });

@@ -1,4 +1,4 @@
-﻿using Flowcast.Logging;
+﻿using LogKit;
 using System.Collections;
 using UnityEngine;
 
@@ -26,7 +26,7 @@ namespace Flowcast.Lockstep
         private void Start()
         {
             var settings = LockstepSettingsAsset.Instance;
-            Lockstep = new LockstepProviderUpdate(settings, new UnityLogger());
+            Lockstep = new LockstepProviderUpdate(settings, LoggerFactory.Create("Core"));
 
             Lockstep.OnGameFrame += () => _gameFrames++;
             Lockstep.OnLockstepTurn += () => _lockstepTurns++;

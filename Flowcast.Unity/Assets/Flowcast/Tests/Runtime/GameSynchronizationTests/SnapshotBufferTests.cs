@@ -1,11 +1,10 @@
-﻿using Flowcast.Commands;
-using Flowcast.Commons;
-using Flowcast.Lockstep;
-using Flowcast.Logging;
+﻿using Flowcast.Commons;
 using Flowcast.Network;
 using Flowcast.Rollback;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
+using LogKit;
+using LogKit.Bootstrap;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
@@ -40,7 +39,8 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
                 OnRollback = HandleRollback
             };
             var hasher = new XorHasher();
-            var logger = new UnityLogger();
+            LoggerBootstrapper.Initialize();
+            var logger = LoggerFactory.Create("Snapshot");
 
             _snapshotRepository = new SnapshotRepository(_serializer, hasher, _network, _options, logger);
             _rollbackHandler = new RollbackHandler(_serializer, _snapshotRepository, _network, _options, logger);

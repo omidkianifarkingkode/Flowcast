@@ -50,62 +50,17 @@ public class GameSimulation : MonoBehaviour
             ServerStartTimeUtc = DateTime.UtcNow,
         };
 
-        flowcast = FlowcastBuilder.CreateLockstep()
-                .SetMatchInfo(matchInfo)
-                .ConfigureCommandSystem(command => command
-                    .OnCommandReceived(command =>
-                    {
-                        Debug.Log("Received: " + command);
-                        HandleSpawnCommand(command);
-                    })
-                    .HandleCommandsOnGameFrame())
-                .SynchronizeGameState(syncSetup => syncSetup
-                    .UseDefaultOptions()
-                    .UseBinarySerializer(GameState)
-                    .OnRollback<GameState>((snapshot, frame) =>
-                    {
-                        Debug.Log("Rollback");
-                        HandleRollback();
-                    }))
-                .SetupNetworkServices(networkSetup => networkSetup
-                    .UseDummyServer(new()
-                    {
-                        BaseLatencyMs = 100,
-                        EchoCommands = true,
-                    }))
-                .ConfigureSimulationPipeline(piplineSetup => piplineSetup
-                    .HandleStepManually(tick =>
-                    {
-                        this.tick = tick;
-                        lockstepline.Tick(tick);
-                        Tick(0.02f);
-                    }))
-                .BuildAndStart();
+        var lockstepInitializer = GetComponent<LockstepInitializer>();
+        lockstepInitializer.onCommandReceived.AddListener(HandleCommandReceived);
+        lockstepInitializer.onRollback.AddListener(HandleRollback);
+        lockstepInitializer.onTick.AddListener(HandleTick);
+        flowcast = lockstepInitializer.InitializeAsBinary(GameState, matchInfo);
 
         timeline.StartTimer();
         lockstepline.Initialize(50);
     }
 
-    private void HandleRollback()
-    {
-        foreach (var character in charactersView)
-            Destroy(character.gameObject);
-
-        charactersView.Clear();
-
-        characters.Clear();
-
-        foreach (var character in GameState.characters) 
-        {
-            if (!factory.TrySpawnCharacter(character, out var presenter, out var view))
-                return;
-
-            characters.Add(presenter);
-            charactersView.Add(view);
-        }
-    }
-
-    private void HandleSpawnCommand(ICommand command)
+    private void ProcessSpawnCommand(ICommand command)
     {
         if (command is SpawnCommand spawnCommand)
         {
@@ -123,7 +78,7 @@ public class GameSimulation : MonoBehaviour
         charactersView.Add(view);
     }
 
-    public void Tick(float deltaTime)
+    private void Tick(float deltaTime)
     {
         foreach (var character in characters)
             character.Tick(deltaTime);
@@ -140,14 +95,14 @@ public class GameSimulation : MonoBehaviour
 
     private void HandleSpawnArcherButton()
     {
-        var spawnCommand = new SpawnCommand(pathHelper.GetFirstPoint(), CharacterType.Archer);
+        var spawnCommand = new SpawnCommand(pathHelper.FirstPoint, CharacterType.Archer);
 
         flowcast.SubmitCommand(spawnCommand);
     }
 
     private void HandleSpawnWarriorButton()
     {
-        var spawnCommand = new SpawnCommand(pathHelper.GetFirstPoint(), CharacterType.Warrior);
+        var spawnCommand = new SpawnCommand(pathHelper.FirstPoint, CharacterType.Warrior);
 
         flowcast.SubmitCommand(spawnCommand);
     }
@@ -157,5 +112,38 @@ public class GameSimulation : MonoBehaviour
         server ??= FindObjectOfType<DummerServerRunner>().Server;
 
         server.RequestRollback(tick + 10);
+    }
+
+    public void HandleTick(TickWrapper bundle)
+    {
+        tick = bundle.Tick;
+        lockstepline.Tick(bundle.Tick);
+        Tick(0.02f);
+    }
+
+    public void HandleRollback(RollbackWrapper bundle)
+    {
+        Debug.Log($"Rollback at Tick: {bundle.Tick}, State Type: {bundle.State?.GetType().Name}");
+
+        foreach (var character in charactersView)
+            Destroy(character.gameObject);
+
+        charactersView.Clear();
+
+        characters.Clear();
+
+        foreach (var character in GameState.characters)
+        {
+            if (!factory.TrySpawnCharacter(character, out var presenter, out var view))
+                return;
+
+            characters.Add(presenter);
+            charactersView.Add(view);
+        }
+    }
+
+    public void HandleCommandReceived(CommandWrapper bundle) 
+    {
+        ProcessSpawnCommand(bundle.Command);
     }
 }

@@ -12,6 +12,11 @@ public class SpawnCommand : BaseCommand
         Position = position;
         UnitType = unitType;
     }
+
+    public override string ToString()
+    {
+        return $"Spawn {UnitType} at {Position}";
+    }
 }
 
 //public class SpawnValidator : ICommandValidator<SpawnCommand>

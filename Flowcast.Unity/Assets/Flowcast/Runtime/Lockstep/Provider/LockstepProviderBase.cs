@@ -1,7 +1,5 @@
-﻿using FixedMathSharp;
-using System;
-using UnityEngine;
-using ILogger = Flowcast.Logging.ILogger;
+﻿using System;
+using ILogger = LogKit.ILogger;
 
 namespace Flowcast.Lockstep
 {
@@ -40,7 +38,7 @@ namespace Flowcast.Lockstep
         {
             if (CurrentGameFrame % (ulong)Settings.GameFramesPerLockstepTurn == 0)
             {
-               // Logger.Log($"[LockstepTurn] {CurrentLockstepTurn}");
+                // Logger.Log($"[LockstepTurn] {CurrentLockstepTurn}");
                 OnLockstepTurn?.Invoke();
                 CurrentLockstepTurn++;
             }
@@ -50,7 +48,7 @@ namespace Flowcast.Lockstep
             CurrentGameFrame++;
         }
 
-        public void SetFastModeSimulation() 
+        public void SetFastModeSimulation()
         {
             SimulationSpeedMultiplier = Settings.MaxCatchupSpeed;
         }

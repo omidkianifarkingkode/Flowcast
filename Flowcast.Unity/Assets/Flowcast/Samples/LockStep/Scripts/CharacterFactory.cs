@@ -22,9 +22,9 @@ public class CharacterFactory : MonoBehaviour
             return false;
         }
 
-        data = new CharacterData { Type = characterType, Health = character.HP, Position = pathHelper.GetFirstPoint() };
+        data = new CharacterData { Type = characterType, Health = character.HP, Position = pathHelper.FirstPoint };
 
-        presenter = new CharacterPresenter(data, pathHelper.GetPathPoints(), character);
+        presenter = new CharacterPresenter(data, pathHelper.Path, character);
 
         view = Instantiate(character.Prefab, data.Position, Quaternion.identity);
         view.Init(presenter);
@@ -45,7 +45,7 @@ public class CharacterFactory : MonoBehaviour
             return false;
         }
 
-        presenter = new CharacterPresenter(data, pathHelper.GetPathPoints(), character);
+        presenter = new CharacterPresenter(data, pathHelper.Path, character);
 
         view = Instantiate(character.Prefab, data.Position, Quaternion.identity);
         view.Init(presenter);

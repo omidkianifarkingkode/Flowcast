@@ -1,7 +1,9 @@
 ﻿using Flowcast.Commands;
 using Flowcast.Synchronization;
+using LogKit;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Flowcast.Network
 {
@@ -9,15 +11,17 @@ namespace Flowcast.Network
     {
         private readonly Dictionary<ulong, List<ICommand>> _commandBuffer = new();
         private readonly INetworkCommandTransportService _networkService;
-
-        public RemoteCommandChannel(INetworkCommandTransportService commandTransportService)
-        {
-            _networkService = commandTransportService;
-            _networkService.OnCommandsReceived += ReceiveCommands;
-        }
+        private readonly ILogger _logger;
 
         public event Action<IReadOnlyCollection<ICommand>> OnCommandsReceived;
         public event Action<IReadOnlyCollection<ICommand>> OnCommandsSent;
+
+        public RemoteCommandChannel(INetworkCommandTransportService commandTransportService, ILogger logger)
+        {
+            _networkService = commandTransportService;
+            _networkService.OnCommandsReceived += ReceiveCommands;
+            _logger = logger;
+        }
 
         public void SendCommands(IReadOnlyCollection<ICommand> commands)
         {
@@ -42,6 +46,7 @@ namespace Flowcast.Network
         public void ResetWith(IReadOnlyCollection<ICommand> commands)
         {
             _commandBuffer.Clear();
+
             AddCommands(commands);
         }
 
@@ -62,7 +67,15 @@ namespace Flowcast.Network
                     _commandBuffer[command.Frame] = list;
                 }
 
+                if (list.Any(existing => existing.Id == command.Id))
+                    continue; // Duplicate: skip
+
                 list.Add(command);
+            }
+
+            if (commands.Count > 0)
+            {
+                _logger?.LogRemoteCommandReceive(commands);
             }
         }
     }

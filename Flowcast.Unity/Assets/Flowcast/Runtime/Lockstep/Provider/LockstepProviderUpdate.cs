@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using ILogger = Flowcast.Logging.ILogger;
+using ILogger = LogKit.ILogger;
 
 namespace Flowcast.Lockstep
 {

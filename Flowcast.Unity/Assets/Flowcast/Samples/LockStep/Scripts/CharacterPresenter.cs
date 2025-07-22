@@ -20,20 +20,12 @@ public class CharacterPresenter
         _staticData = staticData;
 
         _path = new Queue<Vector2>();
-        Vector2 currentPosition = Data.Position;
 
-        bool started = false;
+        int index = 0;
         foreach (var point in pathPoints)
         {
-            if (!started && Vector2.Distance(point, currentPosition) < 0.1f)
-            {
-                started = true;
-            }
-
-            if (started || Vector2.Distance(currentPosition, point) > 0.1f)
-            {
+            if (index++ >= Data.PathIndex)
                 _path.Enqueue(point);
-            }
         }
 
         SetNextTarget();
@@ -59,6 +51,7 @@ public class CharacterPresenter
         else
         {
             Data.Position = _currentTarget;
+            Data.PathIndex++;
             SetNextTarget();
         }
 

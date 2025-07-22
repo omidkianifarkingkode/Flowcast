@@ -1,9 +1,8 @@
 ﻿using Flowcast.Collections;
 using Flowcast.Commons;
-using Flowcast.Logging;
 using Flowcast.Network;
 using Flowcast.Serialization;
-using System;
+using LogKit;
 
 namespace Flowcast.Synchronization
 {

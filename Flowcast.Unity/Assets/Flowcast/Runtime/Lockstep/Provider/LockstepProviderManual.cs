@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using ILogger = Flowcast.Logging.ILogger;
+﻿using LogKit;
+using System.Diagnostics;
 
 namespace Flowcast.Lockstep
 {
