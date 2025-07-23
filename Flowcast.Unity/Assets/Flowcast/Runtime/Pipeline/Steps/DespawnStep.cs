@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System;
+using FixedMathSharp;
 
 namespace Flowcast.Pipeline
 {
@@ -22,7 +23,7 @@ namespace Flowcast.Pipeline
         public void Remove(IDespawnable unit) => _units.Remove(unit);
         public void Clear() => _units.Clear();
 
-        public void ProcessFrame(ulong frame)
+        public void ProcessFrame(ulong frame, Fixed64 deltaTime)
         {
             for (int i = _units.Count - 1; i >= 0; i--)
             {

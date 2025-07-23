@@ -8,14 +8,22 @@ public class CharacterView : MonoBehaviour
     {
         Presenter = presenter;
         Presenter.OnReachedTarget = HandleReachedTarget;
-        transform.position = Presenter.Data.Position;
+        transform.position = new Vector3(
+            (float)Presenter.Data.Position.x,
+            (float)Presenter.Data.Position.y,
+            transform.position.z
+        );
     }
 
     private void Update()
     {
         if (Presenter == null) return;
 
-        transform.position = Presenter.Data.Position;
+        transform.position = new Vector3(
+            (float)Presenter.Data.Position.x,
+            (float)Presenter.Data.Position.y,
+            transform.position.z
+        );
     }
 
     private void HandleReachedTarget()

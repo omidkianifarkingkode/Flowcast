@@ -1,4 +1,5 @@
-﻿using Flowcast.Serialization;
+﻿using FixedMathSharp;
+using Flowcast.Serialization;
 using System.Collections.Generic;
 using System.IO;
 
@@ -11,8 +12,9 @@ public class GameState : IBinarySerializableGameState
         writer.WriteList(characters, (w, character) =>
         {
             w.Write((int)character.Type);
-            w.Write(character.Health);
-            w.WriteVector2(character.Position);
+            w.Write(character.Health.m_rawValue);
+            w.Write(character.Position.x.m_rawValue);
+            w.Write(character.Position.y.m_rawValue);
             w.Write(character.PathIndex);
         });
     }
@@ -22,8 +24,8 @@ public class GameState : IBinarySerializableGameState
         characters = reader.ReadList(r => new CharacterData
         {
             Type = (CharacterType)r.ReadInt32(),
-            Health = r.ReadInt32(),
-            Position = r.ReadVector2(),
+            Health = Fixed64.FromRaw(r.ReadInt64()),
+            Position = new Vector2d(r.ReadInt64(), r.ReadInt64()),
             PathIndex = r.ReadInt32(),
         });
     }

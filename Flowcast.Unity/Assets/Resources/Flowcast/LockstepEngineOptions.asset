@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc104a017c59ba40a99db866895f847, type: 3}
+  m_Name: LockstepEngineOptions
+  m_EditorClassIdentifier: 
+  <GameFramesPerSecond>k__BackingField: 50
+  <GameFramesPerLockstepTurn>k__BackingField: 5
+  _minRecoverySpeed: 2
+  _maxRecoverySpeed: 10
+  <FarRecoveryThreshold>k__BackingField: 20
+  <SnapshotHistoryLimit>k__BackingField: 20
+  <DesyncToleranceFrames>k__BackingField: 5
+  <EnableLocalAutoRollback>k__BackingField: 0
+  <EnableRollbackLog>k__BackingField: 0

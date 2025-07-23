@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FixedMathSharp;
+using System;
 using System.Collections.Generic;
 
 namespace Flowcast.Pipeline
@@ -9,7 +10,7 @@ namespace Flowcast.Pipeline
     /// </summary>
     public interface IGameUpdatePipeline 
     {
-        public void ProcessFrame(ulong frame);
+        public void ProcessFrame(ulong frame, Fixed64 deltaTime);
     }
     
     public class GameUpdatePipeline : IGameUpdatePipeline
@@ -21,25 +22,25 @@ namespace Flowcast.Pipeline
             _steps = steps;
         }
 
-        public void ProcessFrame(ulong frame)
+        public void ProcessFrame(ulong frame, Fixed64 deltaTime)
         {
             foreach (var system in _steps)
-                system.ProcessFrame(frame);
+                system.ProcessFrame(frame, deltaTime);
         }
     }
 
     public class SimpleGameUpdatePipeline : IGameUpdatePipeline
     {
-        private readonly Action<ulong> _onTick;
+        private readonly Action<ulong,Fixed64> _onTick;
 
-        public SimpleGameUpdatePipeline(Action<ulong> onTick)
+        public SimpleGameUpdatePipeline(Action<ulong, Fixed64> onTick)
         {
             _onTick = onTick ?? throw new ArgumentNullException(nameof(onTick));
         }
 
-        public void ProcessFrame(ulong frame)
+        public void ProcessFrame(ulong frame, Fixed64 deltaTime)
         {
-            _onTick(frame);
+            _onTick(frame, deltaTime);
         }
     }
 

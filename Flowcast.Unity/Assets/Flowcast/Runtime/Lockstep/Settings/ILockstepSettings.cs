@@ -1,4 +1,6 @@
-﻿namespace Flowcast.Lockstep
+﻿using FixedMathSharp;
+
+namespace Flowcast.Lockstep
 {
     public interface ILockstepSettings
     {
@@ -12,8 +14,8 @@
         /// </summary>
         int GameFramesPerLockstepTurn { get; }
 
-        float MinCatchupSpeed { get; }      // e.g., 1.5f
-        float MaxCatchupSpeed { get; }      // e.g., 5.0f
-        int FarRollbackThreshold { get; }   // e.g., 20 frames
+        Fixed64 MinRecoverySpeed { get; }      // e.g., 1.5f
+        Fixed64 MaxRecoverySpeed { get; }      // e.g., 5.0f
+        int FarRecoveryThreshold { get; }   // e.g., 20 frames
     }
 }

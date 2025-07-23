@@ -1,4 +1,5 @@
-﻿using Flowcast.Commands;
+﻿using FixedMathSharp;
+using Flowcast.Commands;
 using Flowcast.Network;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
@@ -117,21 +118,28 @@ namespace Flowcast.Rollback
         private ulong EstimateTargetFrame(ulong rollbackStartFrame)
         {
             var networkTargetFrame = _pendingRollbackRequest.CurrentServerFrame;
-            var speedMultiplier = _options.MaxCatchupSpeed;
-            var gameFps = _options.GameFramesPerSecond;
+            var speedMultiplier = _options.MaxRecoverySpeed;
+            var gameFps = (Fixed64)_options.GameFramesPerSecond;
 
-            if (speedMultiplier <= 1f || rollbackStartFrame >= networkTargetFrame)
+            if (speedMultiplier <= Fixed64.One || rollbackStartFrame >= networkTargetFrame)
                 return networkTargetFrame;
 
-            float gap = networkTargetFrame - rollbackStartFrame;
+            var gap = (Fixed64)(long)(networkTargetFrame - rollbackStartFrame);
 
             // Time in seconds it takes to catch up
-            float catchupTime = gap / (gameFps * (speedMultiplier - 1f));
+            var catchupTime = gap / (gameFps * (speedMultiplier - Fixed64.One));
 
             // How many more frames will pass on the network during catch-up
-            float estimatedDrift = catchupTime * gameFps;
+            var estimatedDrift = catchupTime * gameFps;
 
-            return rollbackStartFrame + (ulong)Math.Ceiling(gap + estimatedDrift);
+            var estimatedTotal = gap + estimatedDrift;
+
+            // Manual ceiling of Fixed64 to ulong
+            long intPart = estimatedTotal.m_rawValue >> 32;
+            bool hasFraction = (estimatedTotal.m_rawValue & 0xFFFFFFFFL) != 0;
+            if (hasFraction) intPart += 1;
+
+            return rollbackStartFrame + (ulong)intPart;
         }
 
         private void HandleRollbackRequest(RollbackRequest request)

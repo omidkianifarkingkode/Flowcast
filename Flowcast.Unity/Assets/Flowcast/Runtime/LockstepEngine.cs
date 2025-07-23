@@ -5,12 +5,13 @@ using Flowcast.Pipeline;
 using Flowcast.Rollback;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
+using System;
 using ILogger = LogKit.ILogger;
 
 namespace Flowcast
 {
 
-    public interface ILockstepEngine
+    public interface ILockstepEngine : ILockstepScheduler
     {
         ILocalCommandCollector CommandCollector { get; }
         IRemoteCommandChannel CommandChannel { get; }
@@ -33,10 +34,11 @@ namespace Flowcast
         public ILocalCommandCollector CommandCollector => _localCommandCollector;
         public IRemoteCommandChannel CommandChannel => _remoteCommandChannel;
         public IGameUpdatePipeline GameUpdatePipeline => _gameUpdatePipeline;
-        public ISnapshotRepository GameStateSyncService => _gameStateSyncService;
+        public ISnapshotRepository GameStateSyncService => _snapshotRepository;
         public IRollbackHandler RollbackHandler => _rollbackHandler;
         public IGameStateSerializer GameStateSerializer => _gameStateSerializer;
         public ILockstepProvider LockstepProvider => _lockstepProvider;
+        public ILockstepScheduler LockstepScheduler => _scheduler;
         public IPlayerProvider PlayerProvider => _playerProvider;
         public ILogger Logger => _logger;
 
@@ -44,10 +46,11 @@ namespace Flowcast
         private readonly ILocalCommandCollector _localCommandCollector;
         private readonly IRemoteCommandChannel _remoteCommandChannel;
         private readonly IGameUpdatePipeline _gameUpdatePipeline;
-        private readonly ISnapshotRepository _gameStateSyncService;
+        private readonly ISnapshotRepository _snapshotRepository;
         private readonly IRollbackHandler _rollbackHandler;
         private readonly IGameStateSerializer _gameStateSerializer;
         private readonly ILockstepProvider _lockstepProvider;
+        private readonly LockstepScheduler _scheduler;
         private readonly IPlayerProvider _playerProvider;
         private readonly ILogger _logger;
 
@@ -58,9 +61,10 @@ namespace Flowcast
             ILocalCommandCollector commandCollector,
             IRemoteCommandChannel commandChannel,
             IGameUpdatePipeline gameUpdatePipeline,
-            ISnapshotRepository gameStateSyncService,
+            ISnapshotRepository snapshotRepository,
             IRollbackHandler rollbackHandler,
             ILockstepProvider lockstepProvider,
+            LockstepScheduler lockstepScheduler,
             ILogger logger,
             IGameStateSerializer gameStateSerializer,
             IPlayerProvider playerProvider)
@@ -71,9 +75,10 @@ namespace Flowcast
             _localCommandCollector = commandCollector;
             _remoteCommandChannel = commandChannel;
             _gameUpdatePipeline = gameUpdatePipeline;
-            _gameStateSyncService = gameStateSyncService;
+            _snapshotRepository = snapshotRepository;
             _rollbackHandler = rollbackHandler;
             _lockstepProvider = lockstepProvider;
+            _scheduler = lockstepScheduler;
             _logger = logger;
 
             // Hook up event-driven "sagas"
@@ -97,6 +102,9 @@ namespace Flowcast
                 _logger.LogWarning($"Command rejected: {result.Error}");
         }
 
+        public void Schedule(Action action, int delayMs) => _scheduler.Schedule(action, delayMs);
+        public void Schedule(ulong frame, Action action) => _scheduler.Schedule(frame, action);
+
         public void StartTicking()
         {
             _isTicking = true;
@@ -117,6 +125,8 @@ namespace Flowcast
                 },
                 onStarted: (toFrame, commandsHistory) =>
                 {
+                    _scheduler.ResetToFrame(toFrame);
+
                     _remoteCommandChannel.ResetWith(commandsHistory);
 
                     _lockstepProvider.ResetFrameTo(toFrame);
@@ -137,12 +147,15 @@ namespace Flowcast
         private void OrchestrateGameFrame()
         {
             var frame = _lockstepProvider.CurrentGameFrame;
+            var deltaTime = _lockstepProvider.FixedDeltaTime;
+
+            _scheduler.UpdateFrame(frame);
 
             // Process Commands
             _commandManager.ProcessOnFrame(frame);
 
             // Update Gameplay
-            _gameUpdatePipeline.ProcessFrame(frame);
+            _gameUpdatePipeline.ProcessFrame(frame, deltaTime);
         }
 
         private void OrchestrateLockstepTurn()
@@ -153,7 +166,7 @@ namespace Flowcast
             _commandManager.ProcessOnLockstep(step);
 
             // SyncGameState
-            _gameStateSyncService.CaptureAndSyncSnapshot(_lockstepProvider.CurrentGameFrame);
+            _snapshotRepository.CaptureAndSyncSnapshot(_lockstepProvider.CurrentGameFrame);
         }
     }
 

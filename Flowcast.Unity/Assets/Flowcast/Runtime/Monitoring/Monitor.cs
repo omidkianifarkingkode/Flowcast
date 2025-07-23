@@ -152,7 +152,7 @@ namespace Flowcast.Monitoring
                 Flowcast.LockstepProvider.CurrentGameFrame,
                 currentTurn,
                 Flowcast.LockstepProvider.SimulationTimeTicks / 1000f,
-                Flowcast.LockstepProvider.SimulationSpeedMultiplier
+                (float)Flowcast.LockstepProvider.SimulationSpeedMultiplier
             );
         }
 

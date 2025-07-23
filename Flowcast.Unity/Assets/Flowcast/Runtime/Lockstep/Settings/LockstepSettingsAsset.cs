@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using FixedMathSharp;
+using UnityEngine;
 
 namespace Flowcast.Lockstep
 {
-    [CreateAssetMenu(fileName = FileName, menuName = CreateAssetMenuPath)]
+    [CreateAssetMenu(fileName = FileName)]
     public partial class LockstepSettingsAsset : ScriptableObject, ILockstepSettings
     {
         public const string FileName = "LockstepSettings";
@@ -27,8 +28,10 @@ namespace Flowcast.Lockstep
 
         [field: SerializeField] public int GameFramesPerLockstepTurn { get; set; } = 5;
 
-        [field: SerializeField] public float MinCatchupSpeed { get; set; } = 1.5f; 
-        [field: SerializeField] public float MaxCatchupSpeed { get; set; } = 5.0f; 
-        [field: SerializeField] public int FarRollbackThreshold { get; set; } = 20;
+        public Fixed64 MinRecoverySpeed => (Fixed64)_minCatchupSpeed;
+        [SerializeField] float _minCatchupSpeed = 2;
+        public Fixed64 MaxRecoverySpeed => (Fixed64)_maxCatchupSpeed;
+        [SerializeField] float _maxCatchupSpeed = 10;
+        [field: SerializeField] public int FarRecoveryThreshold { get; set; } = 20;
     }
 }

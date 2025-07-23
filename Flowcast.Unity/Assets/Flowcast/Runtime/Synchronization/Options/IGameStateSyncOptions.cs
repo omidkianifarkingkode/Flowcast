@@ -31,6 +31,4 @@ namespace Flowcast.Synchronization
         /// </summary>
         Action<ISerializableGameState, ulong> OnRollback { get; set; }
     }
-
-    
 }

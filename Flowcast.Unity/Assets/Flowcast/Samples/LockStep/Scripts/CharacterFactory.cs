@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using FixedMathSharp;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.TextCore.Text;
 
 public class CharacterFactory : MonoBehaviour
 {
-    [SerializeField] CharacterStaticData archer;
-    [SerializeField] CharacterStaticData warrior;
+    [SerializeField] CharacterStaticData[] characters;
 
     [SerializeField] PathHelper pathHelper;
 
@@ -22,11 +21,11 @@ public class CharacterFactory : MonoBehaviour
             return false;
         }
 
-        data = new CharacterData { Type = characterType, Health = character.HP, Position = pathHelper.FirstPoint };
+        data = new CharacterData { Type = characterType, Health = character.HP, Position = pathHelper.FirstPoint.ToVector2d() };
 
         presenter = new CharacterPresenter(data, pathHelper.Path, character);
 
-        view = Instantiate(character.Prefab, data.Position, Quaternion.identity);
+        view = Instantiate(character.Prefab, data.Position.ToVector3(), Quaternion.identity);
         view.Init(presenter);
         presenter.SetView(view);
 
@@ -47,7 +46,7 @@ public class CharacterFactory : MonoBehaviour
 
         presenter = new CharacterPresenter(data, pathHelper.Path, character);
 
-        view = Instantiate(character.Prefab, data.Position, Quaternion.identity);
+        view = Instantiate(character.Prefab, data.Position.ToVector3(), Quaternion.identity);
         view.Init(presenter);
         presenter.SetView(view);
 
@@ -56,18 +55,6 @@ public class CharacterFactory : MonoBehaviour
 
     private CharacterStaticData GetCharacter(CharacterType characterType)
     {
-        CharacterStaticData unit = null;
-
-        switch (characterType)
-        {
-            case CharacterType.Archer:
-                unit = archer;
-                break;
-            case CharacterType.Warrior:
-                unit = warrior;
-                break;
-        }
-
-        return unit;
+        return characters.FirstOrDefault(x => x.Name == characterType);
     }
 }

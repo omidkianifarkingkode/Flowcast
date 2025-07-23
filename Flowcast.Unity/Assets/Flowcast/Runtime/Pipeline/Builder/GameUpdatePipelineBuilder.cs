@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FixedMathSharp;
+using System;
 using System.Collections.Generic;
 
 namespace Flowcast.Pipeline
@@ -7,7 +8,7 @@ namespace Flowcast.Pipeline
     {
         void UseDefaultSteps();
         void UseCustomSteps(Action<CustomPipelineBuilder> stepSteup);
-        void HandleStepManually(Action<ulong> onTickOnly);
+        void HandleStepManually(Action<ulong, Fixed64> onTickOnly);
     }
 
     public class CustomPipelineBuilder
@@ -31,7 +32,7 @@ namespace Flowcast.Pipeline
     public class GameUpdatePipelineBuilder : IGameUpdatePipelineBuilder
     {
         private List<ISimulationStep> _steps;
-        private Action<ulong> _simpleTick;
+        private Action<ulong, Fixed64> _simpleTick;
 
         public void UseDefaultSteps()
         {
@@ -55,7 +56,7 @@ namespace Flowcast.Pipeline
             _steps = new(piplineBuilder.Build());
         }
 
-        public void HandleStepManually(Action<ulong> onTickOnly)
+        public void HandleStepManually(Action<ulong, Fixed64> onTickOnly)
         {
             _simpleTick = onTickOnly;
         }

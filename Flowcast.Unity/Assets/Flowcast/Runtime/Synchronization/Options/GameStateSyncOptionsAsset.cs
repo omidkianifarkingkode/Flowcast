@@ -1,4 +1,5 @@
-﻿using Flowcast.Serialization;
+﻿using FixedMathSharp;
+using Flowcast.Serialization;
 using System;
 using UnityEngine;
 
@@ -22,12 +23,13 @@ namespace Flowcast.Synchronization
         [field: SerializeField]
         public int DesyncToleranceFrames { get; set; } = 5;
 
+        public Fixed64 MinRecoverySpeed => (Fixed64)_minCatchupSpeed;
+        [SerializeField] float _minCatchupSpeed = 2;
+        public Fixed64 MaxRecoverySpeed => (Fixed64)_maxCatchupSpeed;
+        [SerializeField] float _maxCatchupSpeed = 10;
+
         [field: SerializeField] 
-        public float MinCatchupSpeed { get; set; } = 1.5f;
-        [field: SerializeField] 
-        public float MaxCatchupSpeed { get; set; } = 5.0f;
-        [field: SerializeField] 
-        public int FarRollbackThreshold { get; set; } = 20;
+        public int FarRecoveryThreshold { get; set; } = 20;
 
         [Tooltip("Whether the client is allowed to auto-rollback without explicit server instruction.")]
         [field: SerializeField]

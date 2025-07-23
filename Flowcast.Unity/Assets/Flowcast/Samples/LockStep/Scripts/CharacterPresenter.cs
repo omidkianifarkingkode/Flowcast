@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using FixedMathSharp;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CharacterPresenter
@@ -9,8 +10,8 @@ public class CharacterPresenter
     private CharacterStaticData _staticData;
     public System.Action OnReachedTarget;
 
-    private Queue<Vector2> _path;
-    private Vector2 _currentTarget;
+    private Queue<Vector2d> _path;
+    private Vector2d _currentTarget;
 
     public bool HasReached;
 
@@ -19,13 +20,13 @@ public class CharacterPresenter
         Data = data;
         _staticData = staticData;
 
-        _path = new Queue<Vector2>();
+        _path = new Queue<Vector2d>();
 
         int index = 0;
         foreach (var point in pathPoints)
         {
             if (index++ >= Data.PathIndex)
-                _path.Enqueue(point);
+                _path.Enqueue(point.ToVector2d());
         }
 
         SetNextTarget();
@@ -36,16 +37,16 @@ public class CharacterPresenter
         View = view;
     }
 
-    public void Tick(float deltaTime)
+    public void Tick(Fixed64 deltaTime)
     {
         if (HasReached) return;
 
-        float distanceToMove = _staticData.MoveSpeed * deltaTime;
-        float distanceToTarget = Vector2.Distance(Data.Position, _currentTarget);
+        var distanceToMove = _staticData.MoveSpeed * deltaTime;
+        var distanceToTarget = Vector2d.Distance(Data.Position, _currentTarget);
 
         if (distanceToTarget > distanceToMove)
         {
-            Vector2 direction = (_currentTarget - Data.Position).normalized;
+            Vector2d direction = (_currentTarget - Data.Position).Normal;
             Data.Position += direction * distanceToMove;
         }
         else
@@ -55,8 +56,8 @@ public class CharacterPresenter
             SetNextTarget();
         }
 
-        Data.Health -= Mathf.RoundToInt(_staticData.HPDecayRate * deltaTime);
-        Data.Health = Mathf.Max(0, Data.Health);
+        Data.Health -= _staticData.HPDecayRate * deltaTime;
+        Data.Health = Data.Health < Fixed64.Zero ? Fixed64.Zero : Data.Health;
     }
 
     private void SetNextTarget()

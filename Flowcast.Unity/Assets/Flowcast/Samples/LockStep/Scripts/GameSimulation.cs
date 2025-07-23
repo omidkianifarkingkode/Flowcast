@@ -7,11 +7,12 @@ using Flowcast.Commands;
 using System.Collections.Generic;
 using Flowcast.Network;
 using System.Linq;
+using FixedMathSharp;
 
 public class GameSimulation : MonoBehaviour
 {
-    public Button spawnUnit1Button;
-    public Button spawnUnit2Button;
+    public Button spawnArcherButton;
+    public Button spawnWarriorButton;
     public Button rollbackButton;
 
     public CharacterFactory factory;
@@ -28,11 +29,10 @@ public class GameSimulation : MonoBehaviour
     private DummyNetworkServer server;
     private ulong tick;
 
-
     private void Awake()
     {
-        spawnUnit1Button.onClick.AddListener(HandleSpawnArcherButton);
-        spawnUnit2Button.onClick.AddListener(HandleSpawnWarriorButton);
+        spawnArcherButton.onClick.AddListener(HandleSpawnArcherButton);
+        spawnWarriorButton.onClick.AddListener(HandleSpawnWarriorButton);
         rollbackButton.onClick.AddListener(HandleRollbackButton);
     }
 
@@ -51,10 +51,10 @@ public class GameSimulation : MonoBehaviour
         };
 
         var lockstepInitializer = GetComponent<LockstepInitializer>();
-        lockstepInitializer.onCommandReceived.AddListener(HandleCommandReceived);
-        lockstepInitializer.onRollback.AddListener(HandleRollback);
-        lockstepInitializer.onTick.AddListener(HandleTick);
-        flowcast = lockstepInitializer.InitializeAsBinary(GameState, matchInfo);
+        lockstepInitializer.OnCommandReceived.AddListener(HandleCommandReceived);
+        lockstepInitializer.OnRollback.AddListener(HandleRollback);
+        lockstepInitializer.OnTick.AddListener(HandleTick);
+        flowcast = lockstepInitializer.Initialize(GameState, matchInfo);
 
         timeline.StartTimer();
         lockstepline.Initialize(50);
@@ -78,7 +78,7 @@ public class GameSimulation : MonoBehaviour
         charactersView.Add(view);
     }
 
-    private void Tick(float deltaTime)
+    private void Tick(Fixed64 deltaTime)
     {
         foreach (var character in characters)
             character.Tick(deltaTime);
@@ -118,7 +118,7 @@ public class GameSimulation : MonoBehaviour
     {
         tick = bundle.Tick;
         lockstepline.Tick(bundle.Tick);
-        Tick(0.02f);
+        Tick(bundle.DeltaTime);
     }
 
     public void HandleRollback(RollbackWrapper bundle)

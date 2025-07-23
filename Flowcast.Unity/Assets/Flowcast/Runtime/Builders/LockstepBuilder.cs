@@ -119,17 +119,20 @@ namespace Flowcast.Builders
                 options: _gameStateSyncBuilder.Options,
                 logger: CreateLogger("Rollback"));
 
+            LockstepScheduler lockstepScheduler = new LockstepScheduler(_gameStateSyncBuilder.Options);
+
             var engine = new LockstepEngine(
-                commandManager,
-                localCommandCollector,
-                remoteCommandChannel,
-                pipeline,
-                snapshotRepository,
-                rollbackHandler,
-                lockstepProvider,
-                CreateLogger("Engine"),
-                _gameStateSyncBuilder.Serializer,
-                playerProvider
+                 commandManager: commandManager,
+                 commandCollector: localCommandCollector,
+                 commandChannel: remoteCommandChannel,
+                 gameUpdatePipeline: pipeline,
+                 snapshotRepository: snapshotRepository,
+                 rollbackHandler: rollbackHandler,
+                 lockstepProvider: lockstepProvider,
+                 lockstepScheduler: lockstepScheduler,
+                 logger: CreateLogger("Engine"),
+                 gameStateSerializer: _gameStateSyncBuilder.Serializer,
+                 playerProvider: playerProvider
             );
 
             var flowcastRunner = new GameObject("Flowcast Engin", typeof(FlowcastRunner)).GetComponent<FlowcastRunner>();

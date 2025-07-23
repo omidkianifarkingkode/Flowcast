@@ -1,8 +1,10 @@
-﻿namespace Flowcast.Pipeline
+﻿using FixedMathSharp;
+
+namespace Flowcast.Pipeline
 {
     public interface IMovable
     {
-        void Move(ulong frame);
+        void Move(ulong frame, Fixed64 deltaTime);
     }
 
 }

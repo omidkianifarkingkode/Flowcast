@@ -4,7 +4,8 @@
     "references": [
         "UniTask",
         "Unity.TextMeshPro",
-        "LogKit.Runtime"
+        "LogKit.Runtime",
+        "FixedMathSharp.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

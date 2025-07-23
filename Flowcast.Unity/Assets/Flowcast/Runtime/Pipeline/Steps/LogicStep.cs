@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using FixedMathSharp;
+using System.Collections.Generic;
 
 namespace Flowcast.Pipeline
 {
@@ -10,11 +11,11 @@ namespace Flowcast.Pipeline
         public void Remove(ILogicUnit unit) => _units.Remove(unit);
         public void Clear() => _units.Clear();
 
-        public void ProcessFrame(ulong frameNumber)
+        public void ProcessFrame(ulong frame, Fixed64 deltaTime)
         {
             foreach (var unit in _units)
             {
-                unit.ExecuteLogic(frameNumber);
+                unit.ExecuteLogic(frame, deltaTime);
             }
         }
     }

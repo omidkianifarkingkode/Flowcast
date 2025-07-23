@@ -1063,7 +1063,7 @@ GameObject:
   - component: {fileID: 625999859}
   - component: {fileID: 625999858}
   m_Layer: 5
-  m_Name: Submit Unit 2 Button
+  m_Name: Spawn Warrior Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2282,7 +2282,7 @@ GameObject:
   - component: {fileID: 899564041}
   - component: {fileID: 899564040}
   m_Layer: 5
-  m_Name: Submit Unit 1 Button
+  m_Name: Spawn Archer Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5219,8 +5219,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98b42cdac4a782b44a64634945e60f92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnUnit1Button: {fileID: 899564040}
-  spawnUnit2Button: {fileID: 625999858}
+  spawnArcherButton: {fileID: 899564040}
+  spawnWarriorButton: {fileID: 625999858}
   rollbackButton: {fileID: 1622486597}
   factory: {fileID: 1846933864}
   timeline: {fileID: 1580604995}
@@ -5255,16 +5255,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   archer:
     Name: 1
-    HP: 100
-    MoveSpeed: 3
-    HPDecayRate: 5
     Prefab: {fileID: 8772679362734068939, guid: b8947559829d1c74597c2b3ba1666b16, type: 3}
+    _hp: 200
+    _moveSpeed: 1
+    _hpDecayRate: 5
   warrior:
     Name: 3
-    HP: 250
-    MoveSpeed: 1
-    HPDecayRate: 5
     Prefab: {fileID: 8772679362734068939, guid: 3f6e04dc9bd976947aa33ed90c76d6ab, type: 3}
+    _hp: 100
+    _moveSpeed: 3
+    _hpDecayRate: 5
   pathHelper: {fileID: 1292911052}
 --- !u!114 &1846933865
 MonoBehaviour:

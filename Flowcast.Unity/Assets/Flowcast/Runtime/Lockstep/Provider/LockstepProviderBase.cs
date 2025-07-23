@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FixedMathSharp;
+using System;
 using ILogger = LogKit.ILogger;
 
 namespace Flowcast.Lockstep
@@ -12,10 +13,15 @@ namespace Flowcast.Lockstep
         public ulong CurrentLockstepTurn { get; protected set; }
         public ulong SimulationTimeTicks => CurrentGameFrame * (ulong)(1000 / Settings.GameFramesPerSecond);
 
-        public float SimulationSpeedMultiplier { get; private set; } = 1;
+        public Fixed64 SimulationSpeedMultiplier { get; private set; } = Fixed64.One;
+
+        public Fixed64 FixedDeltaTime => _fixedDeltaTime;
+        public Fixed64 DeltaTime { get; protected set; }
 
         public event Action OnGameFrame;
         public event Action OnLockstepTurn;
+
+        private Fixed64 _fixedDeltaTime;
 
         protected LockstepProviderBase(ILockstepSettings settings, ILogger logger)
         {
@@ -36,6 +42,8 @@ namespace Flowcast.Lockstep
         /// </summary>
         protected void Step()
         {
+            _fixedDeltaTime = (Fixed64.One / Settings.GameFramesPerSecond) * SimulationSpeedMultiplier;
+
             if (CurrentGameFrame % (ulong)Settings.GameFramesPerLockstepTurn == 0)
             {
                 // Logger.Log($"[LockstepTurn] {CurrentLockstepTurn}");
@@ -50,12 +58,12 @@ namespace Flowcast.Lockstep
 
         public void SetFastModeSimulation()
         {
-            SimulationSpeedMultiplier = Settings.MaxCatchupSpeed;
+            SimulationSpeedMultiplier = Settings.MaxRecoverySpeed;
         }
 
         public void SetNormalModeSimulation()
         {
-            SimulationSpeedMultiplier = 1;
+            SimulationSpeedMultiplier = Fixed64.One;
         }
 
         public ulong GetCurrentFrame() => CurrentGameFrame;

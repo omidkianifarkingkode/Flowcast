@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using FixedMathSharp;
+using System.Collections.Generic;
 
 namespace Flowcast.Pipeline
 {
@@ -9,10 +10,10 @@ namespace Flowcast.Pipeline
 
         public void AddSubStep(ISimulationStep step) => _subSteps.Add(step);
 
-        public void ProcessFrame(ulong frame)
+        public void ProcessFrame(ulong frame, Fixed64 deltaTime)
         {
             foreach (var step in _subSteps)
-                step.ProcessFrame(frame);
+                step.ProcessFrame(frame, deltaTime);
         }
 
         public void Add(T unit)

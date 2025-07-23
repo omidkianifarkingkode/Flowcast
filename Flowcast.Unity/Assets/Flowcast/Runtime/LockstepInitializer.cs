@@ -1,4 +1,5 @@
-﻿using Flowcast.Commands;
+﻿using FixedMathSharp;
+using Flowcast.Commands;
 using Flowcast.Data;
 using Flowcast.Serialization;
 using System;
@@ -31,10 +32,12 @@ namespace Flowcast
     public class TickWrapper
     {
         public ulong Tick;
+        public Fixed64 DeltaTime;
 
-        public TickWrapper(ulong tick)
+        public TickWrapper(ulong tick, Fixed64 deltaTime)
         {
             Tick = tick;
+            DeltaTime = deltaTime;
         }
     }
 
@@ -54,24 +57,28 @@ namespace Flowcast
     public class LockstepInitializer : MonoBehaviour
     {
         [Header("Match Setup")]
-        public int localPlayerId = 1;
-        public string localPlayerName = "Player1";
-        public string remotePlayerName = "Player2";
+        [SerializeField] int localPlayerId = 1;
+        [SerializeField] string localPlayerName = "Player1";
+        [SerializeField] string remotePlayerName = "Player2";
 
         [Header("Lockstep Settings")]
-        public int ticksPerSecond = 50;
-        public float tickDuration = 0.02f;
+        [SerializeField] int ticksPerSecond = 50;
+        [SerializeField] float tickDuration = 0.02f;
 
         [Header("Dummy Network Settings")]
-        public int baseLatencyMs = 100;
-        public bool echoCommands = true;
+        [SerializeField] int baseLatencyMs = 100;
+        [SerializeField] bool echoCommands = true;
 
         [Header("Callbacks")]
-        public CommandEvent onCommandReceived;
-        public TickEvent onTick;
-        public RollbackEvent onRollback;
+        [SerializeField] CommandEvent onCommandReceived;
+        [SerializeField] TickEvent onTick;
+        [SerializeField] RollbackEvent onRollback;
 
-        public ILockstepEngine Initialize<T>(T gameState, MatchInfo matchInfo) where T : ISerializableGameState, new()
+        public CommandEvent OnCommandReceived => onCommandReceived;
+        public TickEvent OnTick => onTick;
+        public RollbackEvent OnRollback => onRollback;
+
+        public ILockstepEngine Initialize<T>(T gameState, MatchInfo matchInfo) where T : IBinarySerializableGameState, new()
         {
             var flowcast = FlowcastBuilder.CreateLockstep()
                 .SetMatchInfo(matchInfo)
@@ -79,34 +86,7 @@ namespace Flowcast
                     .OnCommandReceived(cmd => onCommandReceived?.Invoke(new CommandWrapper(cmd)))
                     .HandleCommandsOnGameFrame())
                 .SynchronizeGameState(syncSetup => syncSetup
-                    .UseDefaultOptions()
-                    .UseJsonSerializer(gameState)
-                    .OnRollback<T>((snapshot, frame) => onRollback?.Invoke(new RollbackWrapper(frame, snapshot))))
-                .SetupNetworkServices(networkSetup => networkSetup
-                    .UseDummyServer(new()
-                    {
-                        BaseLatencyMs = baseLatencyMs,
-                        EchoCommands = echoCommands,
-                    }))
-                .ConfigureSimulationPipeline(pipelineSetup => pipelineSetup
-                    .HandleStepManually(tick =>
-                    {
-                        onTick?.Invoke(new TickWrapper(tick));
-                    }))
-                .BuildAndStart();
-
-            return flowcast;
-        }
-
-        public ILockstepEngine InitializeAsBinary<T>(T gameState, MatchInfo matchInfo) where T : IBinarySerializableGameState, new()
-        {
-            var flowcast = FlowcastBuilder.CreateLockstep()
-                .SetMatchInfo(matchInfo)
-                .ConfigureCommandSystem(command => command
-                    .OnCommandReceived(cmd => onCommandReceived?.Invoke(new CommandWrapper(cmd)))
-                    .HandleCommandsOnGameFrame())
-                .SynchronizeGameState(syncSetup => syncSetup
-                    .UseDefaultOptions()
+                    .LoadOptionsFromResources()
                     .UseBinarySerializer(gameState)
                     .OnRollback<T>((snapshot, frame) => onRollback?.Invoke(new RollbackWrapper(frame, snapshot))))
                 .SetupNetworkServices(networkSetup => networkSetup
@@ -116,9 +96,9 @@ namespace Flowcast
                         EchoCommands = echoCommands,
                     }))
                 .ConfigureSimulationPipeline(pipelineSetup => pipelineSetup
-                    .HandleStepManually(tick =>
+                    .HandleStepManually((tick,deltaTime) =>
                     {
-                        onTick?.Invoke(new TickWrapper(tick));
+                        onTick?.Invoke(new TickWrapper(tick, deltaTime));
                     }))
                 .BuildAndStart();
 

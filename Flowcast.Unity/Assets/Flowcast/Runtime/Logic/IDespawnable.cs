@@ -1,4 +1,6 @@
-﻿namespace Flowcast.Pipeline
+﻿using FixedMathSharp;
+
+namespace Flowcast.Pipeline
 {
     public interface IDespawnable 
     {
@@ -7,24 +9,24 @@
 
     public interface ISpawnable
     {
-        bool ShouldSpawn(ulong frame);
-        void OnSpawned(ulong frame);
+        bool ShouldSpawn(ulong frame, Fixed64 deltaTime);
+        void OnSpawned(ulong frame, Fixed64 deltaTime);
     }
 
     public interface IPathfindable
     {
-        bool NeedsNewPath(ulong frame);
+        bool NeedsNewPath(ulong frame, Fixed64 deltaTime);
         void CalculatePath();
     }
 
     public interface ICollidable
     {
-        void CheckCollision(ulong frame);
+        void CheckCollision(ulong frame, Fixed64 deltaTime);
     }
 
     public interface ILogicUnit
     {
-        void ExecuteLogic(ulong frame);
+        void ExecuteLogic(ulong frame, Fixed64 deltaTime);
     }
 
 }

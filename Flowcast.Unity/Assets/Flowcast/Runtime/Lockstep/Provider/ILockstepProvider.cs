@@ -1,4 +1,5 @@
-﻿using Flowcast.Commons;
+﻿using FixedMathSharp;
+using Flowcast.Commons;
 using System;
 
 namespace Flowcast.Lockstep
@@ -27,7 +28,19 @@ namespace Flowcast.Lockstep
         /// Multiplier for game simulation speed. 1.0 = real time. >1.0 = faster. <1.0 = slower.
         /// Used for rollback catch-up and testing.
         /// </summary>
-        float SimulationSpeedMultiplier { get; }
+        Fixed64 SimulationSpeedMultiplier { get; }
+
+        /// <summary>
+        /// Fixed simulation delta time per game frame in seconds. Scaled by SimulationSpeedMultiplier.
+        /// Equivalent to Time.fixedDeltaTime.
+        /// </summary>
+        Fixed64 FixedDeltaTime { get; }
+
+        /// <summary>
+        /// The actual simulation time that was advanced in the most recent Step().
+        /// Equivalent to Time.deltaTime in lockstep context.
+        /// </summary>
+        Fixed64 DeltaTime { get; }
 
 
         /// <summary>
@@ -41,6 +54,7 @@ namespace Flowcast.Lockstep
         event Action OnLockstepTurn;
 
         void Tick();
+
         void SetFastModeSimulation();
 
         void SetNormalModeSimulation();

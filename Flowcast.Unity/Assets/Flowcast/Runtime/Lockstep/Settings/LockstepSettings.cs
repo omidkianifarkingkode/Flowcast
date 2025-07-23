@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FixedMathSharp;
+using System;
 using UnityEngine;
 
 namespace Flowcast.Lockstep
@@ -10,8 +11,8 @@ namespace Flowcast.Lockstep
 
         public int GameFramesPerLockstepTurn { get; set; } = 5;
 
-        public float MinCatchupSpeed { get; set; } = 1.5f;
-        public float MaxCatchupSpeed { get; set; } = 5.0f;
-        public int FarRollbackThreshold { get; set; } = 20;
+        public Fixed64 MinRecoverySpeed { get; set; } = Fixed64.Two;
+        public Fixed64 MaxRecoverySpeed { get; set; } = Fixed64.One * 10;
+        public int FarRecoveryThreshold { get; set; } = 20;
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Flowcast.Pipeline
+﻿using FixedMathSharp;
+
+namespace Flowcast.Pipeline
 {
     /// <summary>
     /// Handles deterministic, per-frame game logic (e.g., movement, pathfinding).
@@ -6,7 +8,7 @@
     /// </summary>
     public interface ISimulationStep
     {
-        void ProcessFrame(ulong frameNumber);
+        void ProcessFrame(ulong frameNumber, Fixed64 deltaTime);
     }
 
     public interface ISimulationStep<T> : ISimulationStep
