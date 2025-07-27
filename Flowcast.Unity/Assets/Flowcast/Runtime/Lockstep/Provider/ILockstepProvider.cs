@@ -31,7 +31,7 @@ namespace Flowcast.Lockstep
         Fixed64 SimulationSpeedMultiplier { get; }
 
         /// <summary>
-        /// Fixed simulation delta time per game frame in seconds. Scaled by SimulationSpeedMultiplier.
+        /// Fixed simulation delta time per game frame in seconds.
         /// Equivalent to Time.fixedDeltaTime.
         /// </summary>
         Fixed64 FixedDeltaTime { get; }
@@ -40,7 +40,7 @@ namespace Flowcast.Lockstep
         /// The actual simulation time that was advanced in the most recent Step().
         /// Equivalent to Time.deltaTime in lockstep context.
         /// </summary>
-        Fixed64 DeltaTime { get; }
+        double DeltaTime { get; }
 
 
         /// <summary>

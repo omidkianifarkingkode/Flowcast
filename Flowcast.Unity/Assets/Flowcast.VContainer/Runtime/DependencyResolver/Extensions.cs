@@ -1,5 +1,6 @@
 ﻿using Flowcast.Commands;
 using Flowcast.Lockstep;
+using Flowcast.Options;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -68,10 +69,10 @@ namespace Flowcast.VContainer
 
         private static void RegisterLockstepSettings(IContainerBuilder builder)
         {
-            var settings = Resources.Load<LockstepSettingsAsset>(LockstepSettingsAsset.ResourceLoadPath);
+            var settings = Resources.Load<LockstepEngineOptionsAsset>(LockstepEngineOptionsAsset.ResourceLoadPath);
             if (settings == null)
             {
-                Debug.LogError($"LockstepSettingsAsset could not be found at Resources/{LockstepSettingsAsset.ResourceLoadPath}");
+                Debug.LogError($"LockstepSettingsAsset could not be found at Resources/{LockstepEngineOptionsAsset.ResourceLoadPath}");
             }
             else
             {

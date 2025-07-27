@@ -1,10 +1,10 @@
-﻿using Flowcast.Lockstep;
+﻿using FixedMathSharp;
 using Flowcast.Serialization;
 using System;
 
 namespace Flowcast.Synchronization
 {
-    public interface IGameStateSyncOptions : ILockstepSettings
+    public interface IGameStateSyncOptions
     {
         /// <summary>
         /// Maximum number of snapshots to store in the circular buffer.
@@ -30,5 +30,12 @@ namespace Flowcast.Synchronization
         /// Hook to apply deserialized game state during rollback.
         /// </summary>
         Action<ISerializableGameState, ulong> OnRollback { get; set; }
+
+        /// <summary>
+        /// Callback invoked on each simulation tick (frame) during normal execution.
+        /// Useful for injecting custom logic or hooks without modifying the main pipeline.
+        /// </summary>
+        Action<ulong, Fixed64> OnStep { get; set; }
+
     }
 }

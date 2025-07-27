@@ -1,12 +1,19 @@
 ﻿using Flowcast.Commands;
 using Flowcast.Data;
 using Flowcast.Network;
-using Flowcast.Pipeline;
+using Flowcast.Options;
 using Flowcast.Synchronization;
 using System;
 
 namespace Flowcast.Builders
 {
+    public interface IRequireConfiguration
+    {
+        IRequireMatchInfo ConfigureWithDefault();
+        IRequireMatchInfo ConfigureFromResources(string resourcePath = LockstepEngineOptionsAsset.ResourceLoadPath);
+        IRequireMatchInfo ConfigureWithCustomOptions(ILockstepEngineOptions options);
+    }
+
     public interface IRequireMatchInfo
     {
         IRequireCommand SetMatchInfo(MatchInfo matchInfo);
@@ -19,17 +26,12 @@ namespace Flowcast.Builders
 
     public interface IRequireGameState
     {
-        IRequireNetwork SynchronizeGameState(Action<IGameStateSyncOptionsBuilder> gameState);
+        IRequireNetwork SynchronizeGameState(Action<IGameStateSyncSnapshotSerializer> gameState);
     }
 
     public interface IRequireNetwork
     {
-        public IRequirePipline SetupNetworkServices(Action<INetworkBuilder> network);
-    }
-
-    public interface IRequirePipline
-    {
-        IOptionalSettings ConfigureSimulationPipeline(Action<IGameUpdatePipelineBuilder> pipeline);
+        public IOptionalSettings SetupNetworkServices(Action<INetworkBuilder> network);
     }
 
     public interface IOptionalSettings

@@ -4,7 +4,7 @@ namespace Flowcast
 {
     public static class FlowcastBuilder 
     {
-        public static IRequireMatchInfo CreateLockstep()
+        public static IRequireConfiguration CreateLockstep()
         {
             return new LockstepBuilder();
         }

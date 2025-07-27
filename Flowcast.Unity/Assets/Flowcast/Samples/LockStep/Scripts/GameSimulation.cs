@@ -57,7 +57,7 @@ public class GameSimulation : MonoBehaviour
         flowcast = lockstepInitializer.Initialize(GameState, matchInfo);
 
         timeline.StartTimer();
-        lockstepline.Initialize(50);
+        lockstepline.Initialize(flowcast.Options.GameFramesPerSecond);
     }
 
     private void ProcessSpawnCommand(ICommand command)
@@ -78,10 +78,11 @@ public class GameSimulation : MonoBehaviour
         charactersView.Add(view);
     }
 
-    private void Tick(Fixed64 deltaTime)
+    private void Tick()
     {
+        //Debug.Log($"Fixed:{flowcast.LockstepProvider.FixedDeltaTime}, n:{flowcast.LockstepProvider.DeltaTime}");
         foreach (var character in characters)
-            character.Tick(deltaTime);
+            character.Tick(flowcast.LockstepProvider.FixedDeltaTime);
 
         var charactersToRemove = characters.Where(x => x.HasReached).ToList();
 
@@ -118,7 +119,6 @@ public class GameSimulation : MonoBehaviour
     {
         tick = bundle.Tick;
         lockstepline.Tick(bundle.Tick);
-        Tick(bundle.DeltaTime);
     }
 
     public void HandleRollback(RollbackWrapper bundle)
@@ -144,6 +144,12 @@ public class GameSimulation : MonoBehaviour
 
     public void HandleCommandReceived(CommandWrapper bundle) 
     {
+        if (bundle.Command.Frame < flowcast.LockstepProvider.CurrentGameFrame)
+        {
+            Debug.LogWarning("Late Command");
+            return;
+        }
+
         ProcessSpawnCommand(bundle.Command);
     }
 }

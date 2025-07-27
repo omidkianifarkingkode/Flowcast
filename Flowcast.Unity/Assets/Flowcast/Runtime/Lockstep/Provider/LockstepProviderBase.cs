@@ -1,5 +1,6 @@
 ﻿using FixedMathSharp;
 using System;
+using System.Diagnostics;
 using ILogger = LogKit.ILogger;
 
 namespace Flowcast.Lockstep
@@ -15,13 +16,13 @@ namespace Flowcast.Lockstep
 
         public Fixed64 SimulationSpeedMultiplier { get; private set; } = Fixed64.One;
 
-        public Fixed64 FixedDeltaTime => _fixedDeltaTime;
-        public Fixed64 DeltaTime { get; protected set; }
+        public Fixed64 FixedDeltaTime { get; }
+        public double DeltaTime { get; private set; }
 
         public event Action OnGameFrame;
         public event Action OnLockstepTurn;
 
-        private Fixed64 _fixedDeltaTime;
+        private Stopwatch _stepTimer;
 
         protected LockstepProviderBase(ILockstepSettings settings, ILogger logger)
         {
@@ -30,6 +31,9 @@ namespace Flowcast.Lockstep
 
             if (Settings.GameFramesPerSecond <= 0)
                 throw new ArgumentException("GameFramesPerSecond must be > 0.");
+
+            FixedDeltaTime = Fixed64.One / Settings.GameFramesPerSecond;
+            _stepTimer = Stopwatch.StartNew();
         }
 
         /// <summary>
@@ -42,7 +46,9 @@ namespace Flowcast.Lockstep
         /// </summary>
         protected void Step()
         {
-            _fixedDeltaTime = (Fixed64.One / Settings.GameFramesPerSecond) * SimulationSpeedMultiplier;
+            var now = _stepTimer.Elapsed;
+            _stepTimer.Restart();
+            DeltaTime = now.TotalSeconds;
 
             if (CurrentGameFrame % (ulong)Settings.GameFramesPerLockstepTurn == 0)
             {

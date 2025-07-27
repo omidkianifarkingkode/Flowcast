@@ -1,6 +1,7 @@
 ﻿using FixedMathSharp;
 using Flowcast.Commands;
 using Flowcast.Network;
+using Flowcast.Options;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
 using LogKit;
@@ -15,7 +16,7 @@ namespace Flowcast.Rollback
         private readonly ISnapshotRepository _snapshotRepository;
         private readonly INetworkRollbackService _networkService;
         private readonly ILogger _logger;
-        private readonly IGameStateSyncOptions _options;
+        private readonly ILockstepEngineOptions _options;
 
         public bool IsInRecovery => State != RollbackState.None;
         public RollbackState State { get; private set; }
@@ -31,7 +32,7 @@ namespace Flowcast.Rollback
         private RollbackRequest _pendingRollbackRequest;
         private ulong _targetRecoveryFrame;
 
-        public RollbackHandler(IGameStateSerializer serializer, ISnapshotRepository snapshotRepository, INetworkRollbackService networkService, IGameStateSyncOptions options, ILogger logger)
+        public RollbackHandler(IGameStateSerializer serializer, ISnapshotRepository snapshotRepository, INetworkRollbackService networkService, ILockstepEngineOptions options, ILogger logger)
         {
             _serializer = serializer;
             _snapshotRepository = snapshotRepository;

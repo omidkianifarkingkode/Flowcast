@@ -34,5 +34,6 @@ namespace Flowcast.Options
         [field: SerializeField] public bool EnableRollbackLog { get; set; } = false;
 
         public Action<ISerializableGameState, ulong> OnRollback { get; set; }
+        public Action<ulong, Fixed64> OnStep { get; set; }
     }
 }

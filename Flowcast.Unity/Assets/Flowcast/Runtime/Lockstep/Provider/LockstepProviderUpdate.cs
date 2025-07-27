@@ -21,7 +21,6 @@ namespace Flowcast.Lockstep
 
             while (_accumulatedTime >= _frameDuration)
             {
-                DeltaTime = _frameDuration * SimulationSpeedMultiplier;
                 Step();
                 _accumulatedTime -= _frameDuration;
             }

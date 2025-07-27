@@ -1,11 +1,14 @@
 ﻿using FixedMathSharp;
+using FlowPipeline;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharacterPresenter
+public class CharacterPresenter : IMovable, IDespawnable
 {
     public CharacterData Data { get; private set; }
     public CharacterView View { get; internal set; }
+
+    public bool ShouldDespawn => HasReached;
 
     private CharacterStaticData _staticData;
     public System.Action OnReachedTarget;
@@ -13,7 +16,7 @@ public class CharacterPresenter
     private Queue<Vector2d> _path;
     private Vector2d _currentTarget;
 
-    public bool HasReached;
+    private bool HasReached;
 
     public CharacterPresenter(CharacterData data, IEnumerable<Vector2> pathPoints, CharacterStaticData staticData)
     {
@@ -32,12 +35,31 @@ public class CharacterPresenter
         SetNextTarget();
     }
 
-    public void SetView(CharacterView view) 
+    public void SetView(CharacterView view)
     {
         View = view;
     }
 
     public void Tick(Fixed64 deltaTime)
+    {
+        Data.Health -= _staticData.HPDecayRate * deltaTime;
+        Data.Health = Data.Health < Fixed64.Zero ? Fixed64.Zero : Data.Health;
+    }
+
+    private void SetNextTarget()
+    {
+        if (_path.Count > 0)
+        {
+            _currentTarget = _path.Dequeue();
+        }
+        else
+        {
+            HasReached = true;
+            OnReachedTarget?.Invoke();
+        }
+    }
+
+    public void Move(ulong frame, Fixed64 deltaTime)
     {
         if (HasReached) return;
 
@@ -55,22 +77,26 @@ public class CharacterPresenter
             Data.PathIndex++;
             SetNextTarget();
         }
-
-        Data.Health -= _staticData.HPDecayRate * deltaTime;
-        Data.Health = Data.Health < Fixed64.Zero ? Fixed64.Zero : Data.Health;
     }
 
-    private void SetNextTarget()
+    public void RegisterStep(IFlowStep<IMovable> step)
     {
-        if (_path.Count > 0)
-        {
-            _currentTarget = _path.Dequeue();
-        }
-        else
-        {
-            HasReached = true;
-            OnReachedTarget?.Invoke();
-        }
+        step.Add(this);
+    }
+
+    public void UnregisterStep(IFlowStep<IMovable> step)
+    {
+        step.Remove(this);
+    }
+
+    public void RegisterStep(IFlowStep<IDespawnable> step)
+    {
+        step.Add(this);
+    }
+
+    public void UnregisterStep(IFlowStep<IDespawnable> step)
+    {
+        step.Remove(this);
     }
 }
 

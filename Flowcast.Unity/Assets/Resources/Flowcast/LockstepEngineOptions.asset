@@ -9,13 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1bc104a017c59ba40a99db866895f847, type: 3}
+  m_Script: {fileID: 11500000, guid: d6b6441784b6d4542991c8cbd01c2493, type: 3}
   m_Name: LockstepEngineOptions
   m_EditorClassIdentifier: 
   <GameFramesPerSecond>k__BackingField: 50
   <GameFramesPerLockstepTurn>k__BackingField: 5
   _minRecoverySpeed: 2
-  _maxRecoverySpeed: 10
+  _maxRecoverySpeed: 5
   <FarRecoveryThreshold>k__BackingField: 20
   <SnapshotHistoryLimit>k__BackingField: 20
   <DesyncToleranceFrames>k__BackingField: 5

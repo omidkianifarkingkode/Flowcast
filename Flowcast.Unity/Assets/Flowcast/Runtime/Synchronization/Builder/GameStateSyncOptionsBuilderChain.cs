@@ -4,21 +4,20 @@ using Flowcast.Rollback;
 using Flowcast.Serialization;
 using Newtonsoft.Json;
 using System;
+using FixedMathSharp;
 
 namespace Flowcast.Synchronization
 {
-    public interface IGameStateSyncOptionsBuilder
-    {
-        IGameStateSyncSnapshotSerializer UseDefaultOptions();
-        IGameStateSyncSnapshotSerializer LoadOptionsFromResources(string resourcePath = "GameStateSyncOptions");
-        IGameStateSyncSnapshotSerializer UseCustomOptions(IGameStateSyncOptions options);
-    }
-
     public interface IGameStateSyncSnapshotSerializer
     {
-        IGameStateSyncRollbackConfigurer SetGameStateSerializer(IGameStateSerializer serializer);
-        IGameStateSyncRollbackConfigurer UseBinarySerializer<T>(T gameState) where T : IBinarySerializableGameState, new();
-        IGameStateSyncRollbackConfigurer UseJsonSerializer<T>(T gameState, JsonSerializerSettings settings = null) where T : ISerializableGameState, new();
+        IGameStepConfigurer SetGameStateSerializer(IGameStateSerializer serializer);
+        IGameStepConfigurer UseBinarySerializer<T>(T gameState) where T : IBinarySerializableGameState, new();
+        IGameStepConfigurer UseJsonSerializer<T>(T gameState, JsonSerializerSettings settings = null) where T : ISerializableGameState, new();
+    }
+
+    public interface IGameStepConfigurer
+    {
+        IGameStateSyncRollbackConfigurer OnStep(Action<ulong, Fixed64> onStep);
     }
 
     public interface IGameStateSyncRollbackConfigurer

@@ -1,4 +1,5 @@
 ﻿using Flowcast.Lockstep;
+using Flowcast.Options;
 using Flowcast.Synchronization;
 using System;
 
@@ -13,6 +14,6 @@ namespace Flowcast.Data
 
         public DateTime ServerStartTimeUtc { get; set; }
 
-        public GameStateSyncOptions GameSettings { get; set; }
+        public ILockstepEngineOptions GameSettings { get; set; }
     }
 }

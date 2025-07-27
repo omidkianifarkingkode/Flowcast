@@ -1,7 +1,8 @@
-﻿using Flowcast.Commands;
+﻿using FixedMathSharp;
+using Flowcast.Commands;
 using Flowcast.Data;
 using Flowcast.Lockstep;
-using Flowcast.Pipeline;
+using Flowcast.Options;
 using Flowcast.Rollback;
 using Flowcast.Serialization;
 using Flowcast.Synchronization;
@@ -13,9 +14,10 @@ namespace Flowcast
 
     public interface ILockstepEngine : ILockstepScheduler
     {
+        ILockstepEngineOptions Options { get; }
+
         ILocalCommandCollector CommandCollector { get; }
         IRemoteCommandChannel CommandChannel { get; }
-        IGameUpdatePipeline GameUpdatePipeline { get; }
         ISnapshotRepository GameStateSyncService { get; }
         IGameStateSerializer GameStateSerializer { get; }
         ILockstepProvider LockstepProvider { get; }
@@ -23,17 +25,17 @@ namespace Flowcast
         ILogger Logger { get; }
 
         void SubmitCommand(ICommand command);
-        void StartTicking(); // Begin simulation
-        void StopTicking();  // Optional for pause/leave
+        void StartTicking();
+        void StopTicking();
     }
 
     public class LockstepEngine : ILockstepEngine
     {
         public static ILockstepEngine Instance { get; private set; }
 
+        public ILockstepEngineOptions Options { get; }
         public ILocalCommandCollector CommandCollector => _localCommandCollector;
         public IRemoteCommandChannel CommandChannel => _remoteCommandChannel;
-        public IGameUpdatePipeline GameUpdatePipeline => _gameUpdatePipeline;
         public ISnapshotRepository GameStateSyncService => _snapshotRepository;
         public IRollbackHandler RollbackHandler => _rollbackHandler;
         public IGameStateSerializer GameStateSerializer => _gameStateSerializer;
@@ -42,10 +44,11 @@ namespace Flowcast
         public IPlayerProvider PlayerProvider => _playerProvider;
         public ILogger Logger => _logger;
 
+        public Fixed64 FixedDeltaTime => _lockstepProvider.FixedDeltaTime;
+
         private readonly ICommandManager _commandManager;
         private readonly ILocalCommandCollector _localCommandCollector;
         private readonly IRemoteCommandChannel _remoteCommandChannel;
-        private readonly IGameUpdatePipeline _gameUpdatePipeline;
         private readonly ISnapshotRepository _snapshotRepository;
         private readonly IRollbackHandler _rollbackHandler;
         private readonly IGameStateSerializer _gameStateSerializer;
@@ -60,21 +63,20 @@ namespace Flowcast
             ICommandManager commandManager,
             ILocalCommandCollector commandCollector,
             IRemoteCommandChannel commandChannel,
-            IGameUpdatePipeline gameUpdatePipeline,
             ISnapshotRepository snapshotRepository,
             IRollbackHandler rollbackHandler,
             ILockstepProvider lockstepProvider,
             LockstepScheduler lockstepScheduler,
             ILogger logger,
             IGameStateSerializer gameStateSerializer,
-            IPlayerProvider playerProvider)
+            IPlayerProvider playerProvider,
+            ILockstepEngineOptions options)
         {
             Instance = this;
 
             _commandManager = commandManager;
             _localCommandCollector = commandCollector;
             _remoteCommandChannel = commandChannel;
-            _gameUpdatePipeline = gameUpdatePipeline;
             _snapshotRepository = snapshotRepository;
             _rollbackHandler = rollbackHandler;
             _lockstepProvider = lockstepProvider;
@@ -86,6 +88,7 @@ namespace Flowcast
             _lockstepProvider.OnLockstepTurn += OrchestrateLockstepTurn;
             _gameStateSerializer = gameStateSerializer;
             _playerProvider = playerProvider;
+            Options = options;
         }
 
         public void SubmitCommand(ICommand command)
@@ -155,7 +158,7 @@ namespace Flowcast
             _commandManager.ProcessOnFrame(frame);
 
             // Update Gameplay
-            _gameUpdatePipeline.ProcessFrame(frame, deltaTime);
+            Options.OnStep(frame, deltaTime);
         }
 
         private void OrchestrateLockstepTurn()

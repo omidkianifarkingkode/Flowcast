@@ -4,7 +4,7 @@ using System;
 
 namespace Flowcast.Options
 {
-    public class LockstepEngineOptions : ILockstepEngineOptions 
+    public class LockstepEngineOptions : ILockstepEngineOptions
     {
         public int GameFramesPerSecond { get; set; } = 50;
         public int GameFramesPerLockstepTurn { get; set; } = 5;
@@ -21,5 +21,19 @@ namespace Flowcast.Options
 
         [Newtonsoft.Json.JsonIgnore]
         public Action<ISerializableGameState, ulong> OnRollback { get; set; }
+        public Action<ulong, Fixed64> OnStep { get; set; }
+
+        public static LockstepEngineOptions Default => new LockstepEngineOptions 
+        {
+            GameFramesPerSecond = 50,
+            GameFramesPerLockstepTurn = 5,
+            MinRecoverySpeed = Fixed64.Two,
+            MaxRecoverySpeed = Fixed64.One,
+            FarRecoveryThreshold = 20,
+            SnapshotHistoryLimit = 50,
+            DesyncToleranceFrames = 5,
+            EnableLocalAutoRollback = true,
+            EnableRollbackLog = true
+        };
     }
 }
