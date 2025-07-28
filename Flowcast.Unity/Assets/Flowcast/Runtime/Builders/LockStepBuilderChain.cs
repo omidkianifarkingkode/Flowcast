@@ -10,7 +10,7 @@ namespace Flowcast.Builders
     public interface IRequireConfiguration
     {
         IRequireMatchInfo ConfigureWithDefault();
-        IRequireMatchInfo ConfigureFromResources(string resourcePath = LockstepEngineOptionsAsset.ResourceLoadPath);
+        IRequireMatchInfo ConfigureFromResources();
         IRequireMatchInfo ConfigureWithCustomOptions(ILockstepEngineOptions options);
     }
 

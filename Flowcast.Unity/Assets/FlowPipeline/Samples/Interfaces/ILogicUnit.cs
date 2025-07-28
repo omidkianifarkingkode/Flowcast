@@ -1,9 +1,9 @@
-﻿using FixedMathSharp;
+﻿using Flowcast.FlowPipeline;
 
 namespace FlowPipeline
 {
     public interface ILogicUnit
     {
-        void ExecuteLogic(ulong tick, Fixed64 deltaTime);
+        void ExecuteLogic(SimulationContext context);
     }
 }

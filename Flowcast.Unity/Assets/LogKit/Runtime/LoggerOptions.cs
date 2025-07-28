@@ -7,7 +7,7 @@ namespace LogKit
     [System.Serializable]
     public class LoggerOptions
     {
-        public string Prefix = "Flowcast";
+        public string Prefix = "";
         public int MaxLength = 1024;
         public LogLevel MinimumLogLevel = LogLevel.Debug;
         [SerializeField] private Color _color = UnityEngine.Color.white;

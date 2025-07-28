@@ -1,14 +1,14 @@
-﻿using FixedMathSharp;
+﻿using Flowcast.FlowPipeline;
 
 namespace FlowPipeline
 {
-    public class LogicStep : FlowStep<ILogicUnit>
+    public class LogicStep : FlowStep<ILogicUnit, SimulationContext>
     {
-        public override void Process(ulong tick, Fixed64 deltaTime)
+        public override void Process(SimulationContext context)
         {
-            foreach (var unit in _units)
+            foreach (var unit in _entities)
             {
-                unit.ExecuteLogic(tick, deltaTime);
+                unit.ExecuteLogic(context);
             }
         }
     }

@@ -1,16 +1,16 @@
-﻿using FixedMathSharp;
+﻿using Flowcast.FlowPipeline;
 
 namespace FlowPipeline
 {
-    public class SpawningStep : FlowStep<ISpawnable>
+    public class SpawningStep : FlowStep<ISpawnable, SimulationContext>
     {
-        public override void Process(ulong frame, Fixed64 deltaTime)
+        public override void Process(SimulationContext context)
         {
-            foreach (var unit in _units)
+            foreach (var unit in _entities)
             {
-                if (unit.ShouldSpawn(frame, deltaTime))
+                if (unit.ShouldSpawn(context))
                 {
-                    unit.OnSpawned(frame, deltaTime);
+                    unit.OnSpawned(context);
                 }
             }
         }

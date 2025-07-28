@@ -10,10 +10,10 @@ namespace Flowcast.Lockstep
     [CustomEditor(typeof(LockstepEngineOptionsAsset))]
     public class LockstepEngineOptionsAssetEditor : Editor
     {
-        public const string DefaultFileName = "LockstepEngineOptions.asset";
+        public const string DefaultFileName = LockstepEngineOptionsAsset.FileName + ".asset";
         public const string AssetFolderPath = "Assets/Resources/Flowcast/";
         public const string AssetFullPath = AssetFolderPath + DefaultFileName;
-        public const string CreateAssetMenuPath = "Flowcast/Create Lockstep Engine Settings Asset";
+        public const string CreateAssetMenuPath = "Window/Flowcast/Create Lockstep Engine Settings Asset";
 
         private bool _lockstepFoldout = true;
         private bool _rollbackFoldout = true;

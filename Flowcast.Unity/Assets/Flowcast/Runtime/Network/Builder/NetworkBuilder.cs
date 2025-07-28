@@ -21,6 +21,7 @@ namespace Flowcast.Network
         public void UseDummyServer(DummyNetworkServerOptions options = default)
         {
             var runner = new GameObject("Dummy Server", typeof(DummerServerRunner)).GetComponent<DummerServerRunner>();
+            options ??= new DummyNetworkServerOptions();
             runner.Create(options);
 
             ConnectionService = runner.Server;

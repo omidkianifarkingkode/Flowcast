@@ -701,13 +701,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffb5ce984153464ab1fc9f192428c74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  localPlayerId: 1
-  localPlayerName: Player1
-  remotePlayerName: Player2
-  ticksPerSecond: 50
-  tickDuration: 0.02
-  baseLatencyMs: 100
-  echoCommands: 1
   onCommandReceived:
     m_PersistentCalls:
       m_Calls: []
@@ -4879,22 +4872,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1687561803}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3dd70411c626c1243a63d0e17eaa430f, type: 3}
+  m_Script: {fileID: 11500000, guid: 47ae7d2e49da9e34b9f4fdb0b40f4834, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _steps:
-  - _typeName: FlowPipeline.CollisionStep, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
-  - _typeName: FlowPipeline.PathfindingStep, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
-  - _typeName: FlowPipeline.MovementStep, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
-  - _typeName: FlowPipeline.CollisionStep, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
-  - _typeName: FlowPipeline.LogicStep, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
-  - _typeName: FlowPipeline.DespawningStep, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
 --- !u!1 &1732860320
 GameObject:
   m_ObjectHideFlags: 0
@@ -5389,6 +5369,7 @@ MonoBehaviour:
   timeline: {fileID: 1580604995}
   lockstepline: {fileID: 1839159524}
   pathHelper: {fileID: 1292911052}
+  lockstepInitializer: {fileID: 387135209}
 --- !u!4 &1846933863
 Transform:
   m_ObjectHideFlags: 0
@@ -5430,6 +5411,7 @@ MonoBehaviour:
     _moveSpeed: 3
     _hpDecayRate: 5
   pathHelper: {fileID: 1292911052}
+  pipelineBuilder: {fileID: 1687561805}
 --- !u!1 &1899600831
 GameObject:
   m_ObjectHideFlags: 0

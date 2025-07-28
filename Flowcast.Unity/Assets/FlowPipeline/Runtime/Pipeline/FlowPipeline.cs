@@ -1,6 +1,4 @@
-﻿using FixedMathSharp;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace FlowPipeline
@@ -9,41 +7,39 @@ namespace FlowPipeline
     /// Deterministic execution pipeline that processes game logic in a fixed order.
     /// Each handler type (movement, pathfinding, etc.) is processed in a hardcoded sequence.
     /// </summary>
-    public interface IFlowPipeline
+    public interface IFlowPipeline<TContext> where TContext : struct
     {
-        IFlowStep<T> GetStep<T>();
-        public void ProcessFrame(ulong frame, Fixed64 deltaTime);
+        bool TryGetStep<TUnit>(out IFlowStep<TUnit, TContext> step);
+        public void ProcessFrame(TContext context);
     }
 
-    public class FlowPipeline : IFlowPipeline
+    public class FlowPipeline<TContext> : IFlowPipeline<TContext> where TContext : struct
     {
-        private readonly List<IFlowStep> _steps = new();
+        private readonly List<IFlowStep<TContext>> _steps = new();
 
-        public FlowPipeline(List<IFlowStep> steps)
+        public FlowPipeline(IEnumerable<IFlowStep<TContext>> steps)
         {
-            _steps = steps;
+            _steps = steps.ToList();
         }
 
-        public IFlowStep<T> GetStep<T>()
+        public bool TryGetStep<TEntity>(out IFlowStep<TEntity, TContext> step)
         {
-            foreach (var step in _steps)
+            foreach (var s in _steps)
             {
-                // Check if the step is of the correct type
-                if (step is IFlowStep<T> typedStep)
+                if (s is IFlowStep<TEntity, TContext> typed)
                 {
-                    return typedStep;
+                    step = typed;
+                    return true;
                 }
             }
-
-            // If no step of type T is found, throw an exception or return null
-            throw new InvalidOperationException($"No step found for type {typeof(T).Name}");
+            step = default;
+            return false;
         }
 
-
-        public void ProcessFrame(ulong frame, Fixed64 deltaTime)
+        public void ProcessFrame(TContext contenxt)
         {
             foreach (var system in _steps)
-                system.Process(frame, deltaTime);
+                system.Process(contenxt);
         }
     }
 }

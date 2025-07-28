@@ -1,11 +1,11 @@
-﻿using FixedMathSharp;
+﻿using Flowcast.FlowPipeline;
 
 namespace FlowPipeline
 {
     public interface ISpawnable
     {
-        bool ShouldSpawn(ulong frame, Fixed64 deltaTime);
-        void OnSpawned(ulong frame, Fixed64 deltaTime);
+        bool ShouldSpawn(SimulationContext context);
+        void OnSpawned(SimulationContext context);
     }
 
 }

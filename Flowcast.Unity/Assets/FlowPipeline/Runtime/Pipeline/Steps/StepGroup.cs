@@ -1,38 +1,38 @@
-﻿using FixedMathSharp;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace FlowPipeline
 {
-    public class StepGroup<T> : IFlowStep<T>
+    public class StepGroup<TEntity, TContext> : IFlowStep<TEntity, TContext>
+        where TContext : struct
     {
-        private readonly List<IFlowStep> _subSteps = new();
+        private readonly List<IFlowStep<TContext>> _subSteps = new();
 
-        public void AddSubStep(IFlowStep step) => _subSteps.Add(step);
+        public void AddSubStep(IFlowStep<TContext> step) => _subSteps.Add(step);
 
-        public void Process(ulong frame, Fixed64 deltaTime)
+        public void Process(TContext context)
         {
             foreach (var step in _subSteps)
-                step.Process(frame, deltaTime);
+                step.Process(context);
         }
 
-        public void Add(T unit)
+        public void Add(TEntity entity)
         {
             foreach (var step in _subSteps)
-                if (step is IFlowStep<T> typed)
-                    typed.Add(unit);
+                if (step is IFlowStep<TEntity, TContext> typed)
+                    typed.Add(entity);
         }
 
-        public void Remove(T unit)
+        public void Remove(TEntity entity)
         {
             foreach (var step in _subSteps)
-                if (step is IFlowStep<T> typed)
-                    typed.Remove(unit);
+                if (step is IFlowStep<TEntity, TContext> typed)
+                    typed.Remove(entity);
         }
 
         public void Clear()
         {
             foreach (var step in _subSteps)
-                if (step is IFlowStep<T> typed)
+                if (step is IFlowStep<TEntity, TContext> typed)
                     typed.Clear();
         }
     }

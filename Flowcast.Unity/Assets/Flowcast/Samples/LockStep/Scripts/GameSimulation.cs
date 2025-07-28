@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Flowcast.Network;
 using System.Linq;
 using FixedMathSharp;
+using Flowcast.FlowPipeline;
 
 public class GameSimulation : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class GameSimulation : MonoBehaviour
     public Timeline timeline;
     public Lockstepline lockstepline;
     public PathHelper pathHelper;
+    public LockstepInitializer lockstepInitializer;
 
     public GameState GameState { get; } = new();
 
@@ -50,7 +52,6 @@ public class GameSimulation : MonoBehaviour
             ServerStartTimeUtc = DateTime.UtcNow,
         };
 
-        var lockstepInitializer = GetComponent<LockstepInitializer>();
         lockstepInitializer.OnCommandReceived.AddListener(HandleCommandReceived);
         lockstepInitializer.OnRollback.AddListener(HandleRollback);
         lockstepInitializer.OnTick.AddListener(HandleTick);
@@ -80,11 +81,7 @@ public class GameSimulation : MonoBehaviour
 
     private void Tick()
     {
-        //Debug.Log($"Fixed:{flowcast.LockstepProvider.FixedDeltaTime}, n:{flowcast.LockstepProvider.DeltaTime}");
-        foreach (var character in characters)
-            character.Tick(flowcast.LockstepProvider.FixedDeltaTime);
-
-        var charactersToRemove = characters.Where(x => x.HasReached).ToList();
+        var charactersToRemove = characters.Where(x => x.ShouldDespawn).ToList();
 
         foreach (var character in charactersToRemove)
         {
@@ -119,6 +116,7 @@ public class GameSimulation : MonoBehaviour
     {
         tick = bundle.Tick;
         lockstepline.Tick(bundle.Tick);
+        Tick();
     }
 
     public void HandleRollback(RollbackWrapper bundle)

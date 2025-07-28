@@ -1,14 +1,14 @@
-﻿using FixedMathSharp;
+﻿using Flowcast.FlowPipeline;
 
 namespace FlowPipeline
 {
-    public class PathfindingStep : FlowStep<IPathfindable>
+    public class PathfindingStep : FlowStep<IPathfindable, SimulationContext>
     {
-        public override void Process(ulong tick, Fixed64 delta)
+        public override void Process(SimulationContext context)
         {
-            foreach (var unit in _units)
+            foreach (var unit in _entities)
             {
-                if (unit.NeedsNewPath(tick, delta))
+                if (unit.NeedsNewPath(context))
                     unit.CalculatePath();
             }
         }

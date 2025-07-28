@@ -1,14 +1,14 @@
-﻿using FixedMathSharp;
+﻿using Flowcast.FlowPipeline;
 
 namespace FlowPipeline
 {
-    public class MovementStep : FlowStep<IMovable>
+    public class MovementStep : FlowStep<IMovable, SimulationContext>
     {
-        public override void Process(ulong tick, Fixed64 delta)
+        public override void Process(SimulationContext context)
         {
-            foreach (var unit in _units)
+            foreach (var unit in _entities)
             {
-                unit.Move(tick, delta);
+                unit.Move(context);
             }
         }
     }

@@ -22,7 +22,7 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
         private RollbackHandler _rollbackHandler;
         private IGameStateSerializer<SampleGameState> _serializer;
         private DummyNetworkServer _network;
-        private LockstepEngineOptionsAsset _options;
+        private LockstepEngineOptions _options;
 
         private const int SnapshotLimit = 10;
 
@@ -34,7 +34,7 @@ namespace Flowcast.Tests.Runtime.GameSynchronizationTests
             //_serializer = new JsonSerializer<SampleGameState>(() => _gameState, default);
             _serializer = new BinarySerializer<SampleGameState>(() => _gameState);
             _network = new DummyNetworkServer();
-            _options = new LockstepEngineOptionsAsset
+            _options = new LockstepEngineOptions
             {
                 SnapshotHistoryLimit = SnapshotLimit,
                 OnRollback = HandleRollback

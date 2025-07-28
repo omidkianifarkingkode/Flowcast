@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using Flowcast.FlowPipeline;
 using System;
-using FixedMathSharp;
+using System.Collections.Generic;
 
 namespace FlowPipeline
 {
-    public class DespawningStep : FlowStep<IDespawnable>
+    public class DespawningStep : FlowStep<IDespawnable, SimulationContext>
     {
         private readonly List<Action<IDespawnable>> _unregisterCallbacks = new();
 
-        public void RegisterUnlinker<T>(IFlowStep<T> step) where T : class
+        public void RegisterUnlinker<T>(IFlowStep<T, SimulationContext> step) where T : class
         {
             _unregisterCallbacks.Add(unit =>
             {
@@ -17,17 +17,17 @@ namespace FlowPipeline
             });
         }
 
-        public override void Process(ulong frame, Fixed64 deltaTime)
+        public override void Process(SimulationContext context)
         {
-            for (int i = _units.Count - 1; i >= 0; i--)
+            for (int i = _entities.Count - 1; i >= 0; i--)
             {
-                var unit = _units[i];
+                var unit = _entities[i];
                 if (unit.ShouldDespawn)
                 {
                     foreach (var unlink in _unregisterCallbacks)
                         unlink(unit);
 
-                    _units.RemoveAt(i);
+                    _entities.RemoveAt(i);
                 }
             }
         }

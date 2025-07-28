@@ -6,7 +6,13 @@ namespace Flowcast.FlowPipeline
     public class LockstepPipelineBridge : MonoBehaviour
     {
         [SerializeField] private LockstepInitializer lockstepInitializer;
-        [SerializeField] private FlowPipelineBuilder flowPipelineInitializer;
+        [SerializeField] private LockstepPipelineBuilder flowPipelineInitializer;
+
+        private void Awake()
+        {
+            lockstepInitializer ??= FindAnyObjectByType<LockstepInitializer>();
+            flowPipelineInitializer ??= FindAnyObjectByType<LockstepPipelineBuilder>();
+        }
 
         private void OnEnable()
         {
@@ -26,7 +32,8 @@ namespace Flowcast.FlowPipeline
 
         private void OnLockstepTick(TickWrapper bundle)
         {
-            flowPipelineInitializer.Execute(bundle.Tick, bundle.DeltaTime);
+            var context = new SimulationContext(bundle.Tick, bundle.DeltaTime);
+            flowPipelineInitializer.Pipeline.ProcessFrame(context);
         }
     }
 }

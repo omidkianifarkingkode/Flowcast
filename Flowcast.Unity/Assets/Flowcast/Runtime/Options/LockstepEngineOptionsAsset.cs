@@ -10,6 +10,18 @@ namespace Flowcast.Options
         public const string FileName = "LockstepEngineOptions";
         public const string ResourceLoadPath = "Flowcast/" + FileName;
 
+        private static LockstepEngineOptionsAsset _instance;
+
+        public static LockstepEngineOptionsAsset Load() 
+        {
+            _instance ??= Resources.Load<LockstepEngineOptionsAsset>(ResourceLoadPath);
+
+            if (_instance == null)
+                throw new MissingReferenceException($"LockstepSettingsAsset could not be found at Resources/{ResourceLoadPath}");
+
+            return _instance;
+        }
+
         [field: SerializeField] public int GameFramesPerSecond { get; set; } = 50;
 
         [field: SerializeField] public int GameFramesPerLockstepTurn { get; set; } = 5;

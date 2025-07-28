@@ -1,16 +1,17 @@
 ﻿using FixedMathSharp;
+using Flowcast.FlowPipeline;
 using FlowPipeline;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharacterPresenter : IMovable, IDespawnable
+public class CharacterPresenter : ISpawnable, IMovable, IDespawnable
 {
     public CharacterData Data { get; private set; }
     public CharacterView View { get; internal set; }
 
     public bool ShouldDespawn => HasReached;
 
-    private CharacterStaticData _staticData;
+    private readonly CharacterStaticData _staticData;
     public System.Action OnReachedTarget;
 
     private Queue<Vector2d> _path;
@@ -59,11 +60,11 @@ public class CharacterPresenter : IMovable, IDespawnable
         }
     }
 
-    public void Move(ulong frame, Fixed64 deltaTime)
+    public void Move(SimulationContext context)
     {
         if (HasReached) return;
 
-        var distanceToMove = _staticData.MoveSpeed * deltaTime;
+        var distanceToMove = _staticData.MoveSpeed * context.DeltaTime;
         var distanceToTarget = Vector2d.Distance(Data.Position, _currentTarget);
 
         if (distanceToTarget > distanceToMove)
@@ -79,24 +80,21 @@ public class CharacterPresenter : IMovable, IDespawnable
         }
     }
 
-    public void RegisterStep(IFlowStep<IMovable> step)
+    public void RegisterPipline(IFlowPipeline<SimulationContext> pipeline)
     {
-        step.Add(this);
+        if (pipeline.TryGetStep<IMovable>(out var movementStep))
+            movementStep.Add(this);
+        if (pipeline.TryGetStep<IDespawnable>(out var despawningStep))
+            despawningStep.Add(this);
     }
 
-    public void UnregisterStep(IFlowStep<IMovable> step)
+    public bool ShouldSpawn(SimulationContext context)
     {
-        step.Remove(this);
+        return true;
     }
 
-    public void RegisterStep(IFlowStep<IDespawnable> step)
+    public void OnSpawned(SimulationContext context)
     {
-        step.Add(this);
-    }
-
-    public void UnregisterStep(IFlowStep<IDespawnable> step)
-    {
-        step.Remove(this);
     }
 }
 

@@ -31,9 +31,9 @@ namespace Flowcast.Builders
             return this;
         }
 
-        public IRequireMatchInfo ConfigureFromResources(string resourcePath = LockstepEngineOptionsAsset.ResourceLoadPath)
+        public IRequireMatchInfo ConfigureFromResources()
         {
-            _configuration = Resources.Load<LockstepEngineOptionsAsset>(resourcePath);
+            _configuration = LockstepEngineOptionsAsset.Load();
 
             return this;
         }

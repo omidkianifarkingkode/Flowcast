@@ -4,27 +4,27 @@ using System;
 
 namespace FlowPipeline
 {
-    public class FlowStep<T> : IFlowStep<T>
+    public class FlowStep<TEntity, TContext> : IFlowStep<TEntity, TContext> where TContext : struct
     {
-        protected readonly List<T> _units = new();
-        protected readonly Action<T, ulong, Fixed64> _processUnit;
+        protected readonly List<TEntity> _entities = new();
+        protected readonly Action<TEntity, TContext> _processEntity;
 
         public FlowStep() { }
 
-        public FlowStep(Action<T, ulong, Fixed64> processUnit)
+        public FlowStep(Action<TEntity, TContext> processEntity)
         {
-            _processUnit = processUnit ?? throw new ArgumentNullException(nameof(processUnit));
+            _processEntity = processEntity ?? throw new ArgumentNullException(nameof(processEntity));
         }
 
-        public virtual void Add(T unit) => _units.Add(unit);
-        public virtual void Remove(T unit) => _units.Remove(unit);
-        public virtual void Clear() => _units.Clear();
+        public virtual void Add(TEntity entity) => _entities.Add(entity);
+        public virtual void Remove(TEntity entity) => _entities.Remove(entity);
+        public virtual void Clear() => _entities.Clear();
 
-        public virtual void Process(ulong tick, Fixed64 delta)
+        public virtual void Process(TContext context)
         {
-            foreach (var unit in _units)
+            foreach (var entity in _entities)
             {
-                _processUnit(unit, tick, delta);
+                _processEntity(entity, context);
             }
         }
     }

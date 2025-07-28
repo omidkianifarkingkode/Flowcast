@@ -1,9 +1,9 @@
-﻿using FixedMathSharp;
+﻿using Flowcast.FlowPipeline;
 
 namespace FlowPipeline
 {
     public interface ICollidable
     {
-        void CheckCollision(ulong frame, Fixed64 deltaTime);
+        void CheckCollision(SimulationContext context);
     }
 }

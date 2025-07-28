@@ -69,17 +69,9 @@ namespace Flowcast.VContainer
 
         private static void RegisterLockstepSettings(IContainerBuilder builder)
         {
-            var settings = Resources.Load<LockstepEngineOptionsAsset>(LockstepEngineOptionsAsset.ResourceLoadPath);
-            if (settings == null)
-            {
-                Debug.LogError($"LockstepSettingsAsset could not be found at Resources/{LockstepEngineOptionsAsset.ResourceLoadPath}");
-            }
-            else
-            {
-                builder.RegisterInstance<ILockstepSettings>(settings).AsImplementedInterfaces().AsSelf();
-            }
+            var settings = LockstepEngineOptionsAsset.Load();
 
-
+            builder.RegisterInstance<ILockstepSettings>(settings).AsImplementedInterfaces().AsSelf();
         }
     }
 
