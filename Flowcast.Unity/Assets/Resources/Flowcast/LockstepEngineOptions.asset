@@ -21,3 +21,4 @@ MonoBehaviour:
   <DesyncToleranceFrames>k__BackingField: 5
   <EnableLocalAutoRollback>k__BackingField: 0
   <EnableRollbackLog>k__BackingField: 0
+  _logger: {fileID: 11400000, guid: 60185369da2a51241a2f2aaf2f076350, type: 2}

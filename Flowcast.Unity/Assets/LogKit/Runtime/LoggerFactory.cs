@@ -9,14 +9,14 @@ namespace LogKit
     public class LoggerFactory
     {
         private readonly Dictionary<string, ILogger> _loggers = new();
-        private LoggerOptions _defaultOptions;
+        private ILoggerOptions _defaultOptions;
         private FileSink _sharedFileSink;
 
         private readonly object _lock = new();
 
         private static LoggerFactory _instance;
 
-        public static ILogger Create(string module, Action<LoggerOptions> overrideOptions = null)
+        public static ILogger Create(string module, Action<ILoggerOptions> overrideOptions = null)
         {
             if (_instance == null)
             {
@@ -28,7 +28,7 @@ namespace LogKit
         }
 
 
-        public LoggerFactory(Action<LoggerOptions> configure)
+        public LoggerFactory(Action<ILoggerOptions> configure)
         {
             _defaultOptions = new LoggerOptions();
             configure?.Invoke(_defaultOptions);
@@ -44,7 +44,7 @@ namespace LogKit
             _instance = this;
         }
 
-        public ILogger CreateLogger(string module, Action<LoggerOptions> overrideOptions = null)
+        public ILogger CreateLogger(string module, Action<ILoggerOptions> overrideOptions = null)
         {
             lock (_lock)
             {
@@ -68,7 +68,7 @@ namespace LogKit
         }
 
 
-        private LoggerOptions CloneOptions(LoggerOptions source)
+        private ILoggerOptions CloneOptions(ILoggerOptions source)
         {
             var clone = new LoggerOptions
             {
@@ -81,12 +81,12 @@ namespace LogKit
                 EnableUnitySink = source.EnableUnitySink,
                 EnableFileSink = source.EnableFileSink,
                 MaxLogFiles= source.MaxLogFiles,
-                LevelColors = new List<LoggerOptions.LogLevelColor>()
+                LevelColors = new List<LogLevelColor>()
             };
 
             foreach (var lc in source.LevelColors)
             {
-                clone.LevelColors.Add(new LoggerOptions.LogLevelColor
+                clone.LevelColors.Add(new LogLevelColor
                 {
                     Level = lc.Level,
                     Color = lc.Color

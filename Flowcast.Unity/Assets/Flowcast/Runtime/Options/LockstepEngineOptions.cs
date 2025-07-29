@@ -1,5 +1,7 @@
 ﻿using FixedMathSharp;
 using Flowcast.Serialization;
+using LogKit;
+using LogKit.Bootstrap;
 using System;
 
 namespace Flowcast.Options
@@ -19,8 +21,11 @@ namespace Flowcast.Options
         public bool EnableLocalAutoRollback { get; set; } = false;
         public bool EnableRollbackLog { get; set; } = false;
 
+        public ILoggerOptions Logger { get; set; } = LoggerOptionsAsset.LoadDefault();
+
         [Newtonsoft.Json.JsonIgnore]
         public Action<ISerializableGameState, ulong> OnRollback { get; set; }
+        [Newtonsoft.Json.JsonIgnore]
         public Action<ulong, Fixed64> OnStep { get; set; }
 
         public static LockstepEngineOptions Default => new LockstepEngineOptions 
@@ -35,5 +40,6 @@ namespace Flowcast.Options
             EnableLocalAutoRollback = true,
             EnableRollbackLog = true
         };
+
     }
 }

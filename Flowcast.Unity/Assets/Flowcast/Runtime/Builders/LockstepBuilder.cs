@@ -153,33 +153,29 @@ namespace Flowcast.Builders
             return engine;
         }
 
-        public ILogger CreateLogger(string moduleName, Action<LoggerOptions> overrideOptions = null)
+        public ILogger CreateLogger(string moduleName, Action<ILoggerOptions> overrideOptions = null)
         {
             return LoggerFactory.Create($"Flowcast:{moduleName}", options =>
             {
-                var defaults = LoggerBootstrapper.DefaultOptions;
+                var defaults = _configuration.Logger;
+                
+                options.EnableUnitySink = defaults.EnableUnitySink;
+                options.EnableFileSink = defaults.EnableFileSink;
+                options.MinimumLogLevel = defaults.MinimumLogLevel;
+                options.IncludeTimestamp = defaults.IncludeTimestamp;
+                options.LogFormat = defaults.LogFormat;
+                options.MaxLength = defaults.MaxLength;
+                options.MaxLogFiles = defaults.MaxLogFiles;
+                options.Color = defaults.Color;
 
-                // Fallback defaults if LoggerBootstrapper was not initialized
-                if (defaults != null)
+                options.LevelColors.Clear();
+                foreach (var colorPair in defaults.LevelColors)
                 {
-                    options.EnableUnitySink = defaults.EnableUnitySink;
-                    options.EnableFileSink = defaults.EnableFileSink;
-                    options.MinimumLogLevel = defaults.MinimumLogLevel;
-                    options.IncludeTimestamp = defaults.IncludeTimestamp;
-                    options.LogFormat = defaults.LogFormat;
-                    options.MaxLength = defaults.MaxLength;
-                    options.MaxLogFiles = defaults.MaxLogFiles;
-                    options.Color = "cyan";
-
-                    options.LevelColors.Clear();
-                    foreach (var colorPair in defaults.LevelColors)
+                    options.LevelColors.Add(new LogLevelColor
                     {
-                        options.LevelColors.Add(new LoggerOptions.LogLevelColor
-                        {
-                            Level = colorPair.Level,
-                            Color = colorPair.Color
-                        });
-                    }
+                        Level = colorPair.Level,
+                        Color = colorPair.Color
+                    });
                 }
 
                 // Apply optional customizations last

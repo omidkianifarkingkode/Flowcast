@@ -1,5 +1,7 @@
 ﻿using FixedMathSharp;
 using Flowcast.Serialization;
+using LogKit.Bootstrap;
+using LogKit;
 using System;
 using UnityEngine;
 
@@ -44,6 +46,9 @@ namespace Flowcast.Options
 
         [Tooltip("nables debug logging when rollback occurs.")]
         [field: SerializeField] public bool EnableRollbackLog { get; set; } = false;
+
+        public ILoggerOptions Logger => _logger ?? LoggerOptionsAsset.LoadDefault();
+        [SerializeField] LoggerOptionsAsset _logger;
 
         public Action<ISerializableGameState, ulong> OnRollback { get; set; }
         public Action<ulong, Fixed64> OnStep { get; set; }

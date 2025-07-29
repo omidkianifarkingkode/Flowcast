@@ -9,9 +9,9 @@ namespace LogKit.Sinks
     public class FileSink : ILogSink
     {
         private readonly string _filePath;
-        private readonly LoggerOptions _options;
+        private readonly ILoggerOptions _options;
 
-        public FileSink(LoggerOptions options)
+        public FileSink(ILoggerOptions options)
         {
             _options = options;
 

@@ -5,9 +5,9 @@ namespace LogKit.Sinks
 {
     public class UnitySink : ILogSink
     {
-        private readonly LoggerOptions _options;
+        private readonly ILoggerOptions _options;
 
-        public UnitySink(LoggerOptions options)
+        public UnitySink(ILoggerOptions options)
         {
             _options = options;
         }

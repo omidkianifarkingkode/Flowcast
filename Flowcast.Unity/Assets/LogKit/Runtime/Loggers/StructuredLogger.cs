@@ -6,9 +6,9 @@ namespace LogKit.Loggers
 {
     public class StructuredLogger : ILogger
     {
-        private readonly LoggerOptions _options;
+        private readonly ILoggerOptions _options;
 
-        public StructuredLogger(LoggerOptions options)
+        public StructuredLogger(ILoggerOptions options)
         {
             _options = options;
         }

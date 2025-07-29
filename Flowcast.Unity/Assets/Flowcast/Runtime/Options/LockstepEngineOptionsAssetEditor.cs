@@ -23,6 +23,8 @@ namespace Flowcast.Lockstep
         {
             var asset = (LockstepEngineOptionsAsset)target;
 
+            serializedObject.Update();
+
             // Lockstep Settings
             _lockstepFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(_lockstepFoldout, "Lockstep");
             if (_lockstepFoldout)
@@ -53,7 +55,14 @@ namespace Flowcast.Lockstep
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
 
-            EditorUtility.SetDirty(asset); // Mark dirty to persist changes
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_logger"), true);
+
+            serializedObject.ApplyModifiedProperties();
+
+            if (GUI.changed) // optional, but prevents unnecessary marking
+            {
+                EditorUtility.SetDirty(target);
+            }
         }
 
         [MenuItem(CreateAssetMenuPath)]
