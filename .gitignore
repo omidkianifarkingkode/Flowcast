@@ -83,3 +83,5 @@ Flowcast.Unity/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Flow/Un
 Flowcast.Unity/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db.meta
 Flowcast.Unity/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers
 Flowcast.Unity/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers.meta
+Flowcast.Server/GameServer/*/bin
+Flowcast.Server/GameServer/*/obj

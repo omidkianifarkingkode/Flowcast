@@ -1,18 +1,15 @@
-﻿using Flowcast.Data;
-using Flowcast.Commands;
-using NUnit.Framework.Interfaces;
+﻿using Flowcast.Commands;
+using Flowcast.Data;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Flowcast.Network
 {
     public interface INetworkConnectionService : IDisposable
     {
-        event System.Action OnConnected;
-        event System.Action OnDisconnected;
+        event Action OnConnected;
+        event Action OnDisconnected;
         event Action<Exception> OnConnectionError;
 
         void Connect(string serverAddress);
@@ -41,7 +38,7 @@ namespace Flowcast.Network
         event Action<SyncStatus> OnSyncStatusReceived;
     }
 
-    public interface INetworkRollbackService 
+    public interface INetworkRollbackService
     {
         void RequestCommandsHistory();
 
@@ -83,4 +80,4 @@ namespace Flowcast.Network
         INetworkRollbackService,
         INetworkDiagnosticsService
     { }
-    }
+}

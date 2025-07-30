@@ -15,7 +15,7 @@ MonoBehaviour:
   <GameFramesPerSecond>k__BackingField: 50
   <GameFramesPerLockstepTurn>k__BackingField: 5
   _minRecoverySpeed: 2
-  _maxRecoverySpeed: 5
+  _maxRecoverySpeed: 10
   <FarRecoveryThreshold>k__BackingField: 20
   <SnapshotHistoryLimit>k__BackingField: 20
   <DesyncToleranceFrames>k__BackingField: 5
