@@ -1,0 +1,32 @@
+﻿using Domain.Sessions;
+using MediatR;
+using SharedKernel;
+
+namespace Application.Sessions.Commands;
+
+public record PlayerReadyCommand(SessionId SessionId, long PlayerId) : IRequest<Result>;
+
+public sealed class PlayerReadyHandler(ISessionRepository sessionRepository)
+    : IRequestHandler<PlayerReadyCommand, Result>
+{
+    public Task<Result> Handle(PlayerReadyCommand request, CancellationToken cancellationToken)
+    {
+        var getResult = sessionRepository.GetById(request.SessionId);
+
+        if (getResult.IsFailure)
+            return Task.FromResult(Result.Failure(getResult.Error));
+
+        var session = getResult.Value;
+
+        var result = session.MarkPlayerReady(request.PlayerId);
+
+        if (result.IsSuccess)
+        {
+            sessionRepository.Save(session);
+        }
+
+        return Task.FromResult(result);
+    }
+}
+
+
