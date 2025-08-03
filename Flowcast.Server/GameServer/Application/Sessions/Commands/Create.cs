@@ -1,21 +1,21 @@
-﻿using Application.Sessions.Shared;
+﻿using Application.Abstractions.Messaging;
 using Domain.Entities;
-using Domain.Players;
 using Domain.Sessions;
 using Domain.ValueObjects;
-using MediatR;
 using SharedKernel;
 
 namespace Application.Sessions.Commands;
 
-public record CreateSessionCommand(List<PlayerDto> Players, string Mode, MatchSettings? GameSettings) 
-    : IRequest<Result<SessionId>>;
-
+public record CreateSessionCommand(List<CreateSessionCommand.PlayerInput> Players, string Mode, MatchSettings? GameSettings)
+    : ICommand<SessionId>
+{
+    public record PlayerInput(long Id, string DisplayName);
+}
 
 public sealed class CreateSessionHandler(ISessionRepository sessionRepository)
-    : IRequestHandler<CreateSessionCommand, Result<SessionId>>
+    : ICommandHandler<CreateSessionCommand, SessionId>
 {
-    public Task<Result<SessionId>> Handle(CreateSessionCommand request, CancellationToken cancellationToken)
+    public Task<Result<SessionId>> Handle(CreateSessionCommand request, CancellationToken ct)
     {
         var sessionId = SessionId.NewId();
 

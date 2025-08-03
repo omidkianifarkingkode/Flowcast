@@ -1,13 +1,12 @@
-﻿using Domain.Sessions;
-using MediatR;
+﻿using Application.Abstractions.Messaging;
+using Domain.Sessions;
 using SharedKernel;
 
 namespace Application.Sessions.Commands;
 
-public record PlayerReadyCommand(SessionId SessionId, long PlayerId) : IRequest<Result>;
+public record PlayerReadyCommand(SessionId SessionId, long PlayerId) : ICommand;
 
-public sealed class PlayerReadyHandler(ISessionRepository sessionRepository)
-    : IRequestHandler<PlayerReadyCommand, Result>
+public sealed class PlayerReadyHandler(ISessionRepository sessionRepository) : ICommandHandler<PlayerReadyCommand>
 {
     public Task<Result> Handle(PlayerReadyCommand request, CancellationToken cancellationToken)
     {

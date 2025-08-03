@@ -1,20 +1,34 @@
-﻿using Presentation.Infrastructure;
+﻿using Presentation.Endpoints;
+using Presentation.Extensions;
+using Presentation.Infrastructure;
+using Presentation.SwaggerUtilities;
+using System.Reflection;
+using System.Text.Json.Serialization;
 
 namespace Presentation;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddPresentation(this IServiceCollection services)
+    public static WebApplicationBuilder AddPresentation(this WebApplicationBuilder builder)
     {
-        services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddHttpContextAccessor();
 
-        // REMARK: If you want to use Controllers, you'll need this.
-        services.AddControllers();
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
 
-        services.AddExceptionHandler<GlobalExceptionHandler>();
-        services.AddProblemDetails();
+        builder.Services.AddSwaggerGen();
 
-        return services;
+        builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
+        builder.Services.AddControllers().AddJsonOptions(x =>
+        {
+            x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
+
+        builder.Services.AddSingleton(builder.Services);
+
+        builder.Services.InstallVersioning();
+
+        return builder;
     }
 }

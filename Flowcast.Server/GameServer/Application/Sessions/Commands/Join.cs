@@ -1,14 +1,13 @@
-﻿using Domain.Entities;
+﻿using Application.Abstractions.Messaging;
+using Domain.Entities;
 using Domain.Sessions;
-using MediatR;
 using SharedKernel;
 
 namespace Application.Sessions.Commands;
 
-public record JoinSessionCommand(SessionId SessionId, long PlayerId, string DisplayName) 
-    : IRequest<Result>;
+public record JoinSessionCommand(SessionId SessionId, long PlayerId, string DisplayName) : ICommand;
 
-public sealed class JoinSessionHandler(SessionAppService service) : IRequestHandler<JoinSessionCommand, Result>
+public sealed class JoinSessionHandler(SessionAppService service) : ICommandHandler<JoinSessionCommand>
 {
     public Task<Result> Handle(JoinSessionCommand request, CancellationToken cancellationToken)
     {

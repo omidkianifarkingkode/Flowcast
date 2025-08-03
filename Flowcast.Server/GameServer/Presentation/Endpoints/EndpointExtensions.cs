@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
-using Presentation.Endpoints;
 using System.Reflection;
 
-namespace Presentation.Extensions;
+namespace Presentation.Endpoints;
 
 public static class EndpointExtensions
 {

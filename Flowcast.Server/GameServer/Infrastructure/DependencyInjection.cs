@@ -1,102 +1,104 @@
-﻿using System.Text;
-using Application.Abstractions.Authentication;
+﻿using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Domain.Sessions;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Persistence.Respositories;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using SharedKernel;
+using System.Text;
 
 namespace Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(
-        this IServiceCollection services,
-        IConfiguration configuration) =>
-        services
-            .AddServices()
-            .AddDatabase(configuration)
-            .AddHealthChecks(configuration)
-            .AddAuthenticationInternal(configuration)
-            .AddAuthorizationInternal();
-
-    private static IServiceCollection AddServices(this IServiceCollection services)
+    public static WebApplicationBuilder AddInfrastructure(this WebApplicationBuilder builder)
     {
-        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-
-        services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
-
-        return services;
+        return builder
+            .AddServices()
+            .AddDatabase()
+            .AddHealthChecks()
+            .AddAuthenticationInternal()
+            .AddAuthorizationInternal();
     }
 
-    private static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
+    private static WebApplicationBuilder AddServices(this WebApplicationBuilder builder)
     {
-        string? connectionString = configuration.GetConnectionString("Database");
+        builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
-        services.AddDbContext<ApplicationDbContext>(
+        builder.Services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
+
+        builder.Services.AddScoped<ISessionRepository, InMemorySessionRepository>();
+
+        return builder;
+    }
+
+    private static WebApplicationBuilder AddDatabase(this WebApplicationBuilder builder)
+    {
+        string? connectionString = builder.Configuration.GetConnectionString("Database");
+
+        builder.Services.AddDbContext<ApplicationDbContext>(
             options => options
                 //.UseNpgsql(connectionString, npgsqlOptions =>
                 //    npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Default))
                 .UseSnakeCaseNamingConvention());
 
-        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+        builder.Services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-        return services;
+        return builder;
     }
 
-    private static IServiceCollection AddHealthChecks(this IServiceCollection services, IConfiguration configuration)
+    private static WebApplicationBuilder AddHealthChecks(this WebApplicationBuilder builder)
     {
-        services
+        builder.Services
             .AddHealthChecks();
-            //.AddNpgSql(configuration.GetConnectionString("Database")!);
+        //.AddNpgSql(builder.Configuration.GetConnectionString("Database")!);
 
-        return services;
+        return builder;
     }
 
-    private static IServiceCollection AddAuthenticationInternal(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    private static WebApplicationBuilder AddAuthenticationInternal(this WebApplicationBuilder builder)
     {
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(o =>
             {
                 o.RequireHttpsMetadata = false;
                 o.TokenValidationParameters = new TokenValidationParameters
                 {
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Secret"]!)),
-                    ValidIssuer = configuration["Jwt:Issuer"],
-                    ValidAudience = configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)),
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
                     ClockSkew = TimeSpan.Zero
                 };
             });
 
-        services.AddHttpContextAccessor();
-        services.AddScoped<IUserContext, UserContext>();
-        services.AddSingleton<IPasswordHasher, PasswordHasher>();
-        services.AddSingleton<ITokenProvider, TokenProvider>();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IUserContext, UserContext>();
+        builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        builder.Services.AddSingleton<ITokenProvider, TokenProvider>();
 
-        return services;
+        return builder;
     }
 
-    private static IServiceCollection AddAuthorizationInternal(this IServiceCollection services)
+    private static WebApplicationBuilder AddAuthorizationInternal(this WebApplicationBuilder builder)
     {
-        services.AddAuthorization();
+        builder.Services.AddAuthorization();
 
-        services.AddScoped<PermissionProvider>();
+        builder.Services.AddScoped<PermissionProvider>();
 
-        services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        builder.Services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
-        services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+        builder.Services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 
-        return services;
+        return builder;
     }
 }

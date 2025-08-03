@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 
-namespace Presentation.Extensions;
+namespace Presentation.SwaggerUtilities;
 
-internal static class ServiceCollectionExtensions
+internal static class SwaggerExtensions
 {
-    internal static IServiceCollection AddSwaggerGenWithAuth(this IServiceCollection services)
+    internal static IServiceCollection AddSwaggerGen(this IServiceCollection services)
     {
         services.AddSwaggerGen(o =>
         {
@@ -41,6 +41,26 @@ internal static class ServiceCollectionExtensions
             o.AddSecurityRequirement(securityRequirement);
         });
 
+        services.ConfigureOptions<ConfigureSwaggerGenOptions>();
+
         return services;
+    }
+
+    public static void UseSwagger(this WebApplication app)
+    {
+        SwaggerBuilderExtensions.UseSwagger(app);
+
+        app.UseSwaggerUI(options =>
+        {
+            var descriptions = app.DescribeApiVersions();
+
+            foreach (var description in descriptions)
+            {
+                var url = $"/swagger/{description.GroupName}/swagger.json";
+                var name = description.GroupName.ToUpperInvariant();
+
+                options.SwaggerEndpoint(url, name);
+            }
+        });
     }
 }

@@ -1,12 +1,12 @@
-﻿using Domain.Sessions;
-using MediatR;
+﻿using Application.Abstractions.Messaging;
+using Domain.Sessions;
 using SharedKernel;
 
 namespace Application.Sessions.Commands;
 
-public record EndSessionCommand(SessionId SessionId) : IRequest<Result>;
+public record EndSessionCommand(SessionId SessionId) : ICommand;
 
-public sealed class EndSessionHandler(SessionAppService service) : IRequestHandler<EndSessionCommand, Result>
+public sealed class EndSessionHandler(SessionAppService service) : ICommandHandler<EndSessionCommand>
 {
     public Task<Result> Handle(EndSessionCommand request, CancellationToken cancellationToken)
     {

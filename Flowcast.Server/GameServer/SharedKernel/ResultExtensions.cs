@@ -1,6 +1,4 @@
-﻿using SharedKernel;
-
-namespace Presentation.Extensions;
+﻿namespace SharedKernel;
 
 public static class ResultExtensions
 {

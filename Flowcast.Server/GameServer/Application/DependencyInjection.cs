@@ -1,6 +1,8 @@
 ﻿using Application.Abstractions.Behaviors;
 using Application.Abstractions.Messaging;
+using Application.Sessions;
 using FluentValidation;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel;
 
@@ -8,9 +10,9 @@ namespace Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static WebApplicationBuilder AddApplication(this WebApplicationBuilder builder)
     {
-        services.Scan(scan => scan.FromAssembliesOf(typeof(DependencyInjection))
+        builder.Services.Scan(scan => scan.FromAssembliesOf(typeof(DependencyInjection))
             .AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)), publicOnly: false)
                 .AsImplementedInterfaces()
                 .WithScopedLifetime()
@@ -21,20 +23,22 @@ public static class DependencyInjection
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
-        services.Decorate(typeof(ICommandHandler<,>), typeof(ValidationDecorator.CommandHandler<,>));
-        //services.Decorate(typeof(ICommandHandler<>), typeof(ValidationDecorator.CommandBaseHandler<>));
+        builder.Services.Decorate(typeof(ICommandHandler<,>), typeof(ValidationDecorator.CommandHandler<,>));
+        builder.Services.Decorate(typeof(ICommandHandler<>), typeof(ValidationDecorator.CommandBaseHandler<>));
 
-        services.Decorate(typeof(IQueryHandler<,>), typeof(LoggingDecorator.QueryHandler<,>));
-        services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingDecorator.CommandHandler<,>));
-        //services.Decorate(typeof(ICommandHandler<>), typeof(LoggingDecorator.CommandBaseHandler<>));
+        builder.Services.Decorate(typeof(IQueryHandler<,>), typeof(LoggingDecorator.QueryHandler<,>));
+        builder.Services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingDecorator.CommandHandler<,>));
+        builder.Services.Decorate(typeof(ICommandHandler<>), typeof(LoggingDecorator.CommandBaseHandler<>));
 
-        services.Scan(scan => scan.FromAssembliesOf(typeof(DependencyInjection))
+        builder.Services.Scan(scan => scan.FromAssembliesOf(typeof(DependencyInjection))
             .AddClasses(classes => classes.AssignableTo(typeof(IDomainEventHandler<>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
-        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
+        builder.Services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
-        return services;
+        builder.Services.AddScoped<SessionAppService>();
+
+        return builder;
     }
 }

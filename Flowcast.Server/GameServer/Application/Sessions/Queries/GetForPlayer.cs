@@ -1,27 +1,18 @@
-﻿using Application.Sessions.Shared;
+﻿using Application.Abstractions.Messaging;
 using Domain.Sessions;
-using MediatR;
 using SharedKernel;
 
 namespace Application.Sessions.Queries;
 
-public record GetSessionsForPlayerQuery(long PlayerId) : IRequest<Result<List<SessionSummaryDto>>>;
+public record GetSessionsForPlayerQuery(long PlayerId) : IQuery<List<Session>>;
 
 public sealed class GetSessionsForPlayerHandler(ISessionRepository repo)
-    : IRequestHandler<GetSessionsForPlayerQuery, Result<List<SessionSummaryDto>>>
+    : IQueryHandler<GetSessionsForPlayerQuery, List<Session>>
 {
-    public Task<Result<List<SessionSummaryDto>>> Handle(GetSessionsForPlayerQuery request, CancellationToken ct)
+    public Task<Result<List<Session>>> Handle(GetSessionsForPlayerQuery request, CancellationToken ct)
     {
-        var all = repo.GetAll(); // You’d need to expose this
-        var sessions = all
+        var sessions = repo.GetAll()
             .Where(s => s.Players.Any(p => p.PlayerId == request.PlayerId))
-            .Select(s => new SessionSummaryDto(
-                s.Id.Value,
-                s.Mode,
-                s.Status,
-                s.Players.Count,
-                s.CreatedAtUtc
-            ))
             .ToList();
 
         return Task.FromResult(Result.Success(sessions));
