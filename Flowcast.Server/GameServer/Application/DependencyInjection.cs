@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Behaviors;
 using Application.Abstractions.Messaging;
-using Application.Sessions;
+using Application.Defaults;
+using Application.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +38,7 @@ public static class DependencyInjection
 
         builder.Services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
-        builder.Services.AddScoped<SessionAppService>();
+        builder.Services.AddScoped<ConnectedPlayersRegistry>();
 
         return builder;
     }

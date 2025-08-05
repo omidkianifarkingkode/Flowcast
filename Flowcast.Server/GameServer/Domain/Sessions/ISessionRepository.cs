@@ -1,11 +1,15 @@
-﻿using SharedKernel;
+﻿using Domain.Sessions.ValueObjects;
+using SharedKernel;
 
 namespace Domain.Sessions;
 
 public interface ISessionRepository
 {
-    Result<Session> GetById(SessionId id);
-    IReadOnlyCollection<Session> GetAll();
-    void Save(Session session);
-    void Delete(SessionId id);
+    Task<Result<Session>> GetById(SessionId id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<Session>> GetAll(CancellationToken cancellationToken = default);
+
+    Task Save(Session session, CancellationToken cancellationToken = default);
+
+    Task Delete(SessionId id, CancellationToken cancellationToken = default);
 }

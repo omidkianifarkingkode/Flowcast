@@ -3,17 +3,17 @@
 public static class Create
 {
     public const string Method = "POST";
-    public const string Route = "sessions";
+    public const string Route = "sessions/create";
 
-    public record Request(string Mode, List<PlayerRequest> Players, MatchSettings? GameSettings);
-
-    public record Response(string SessionId);
-
-    public record PlayerRequest(long Id, string DisplayName);
-
-    public record MatchSettings
+    public record Request(string Mode, List<Request.Player> Players, Request.MatchSettings? GameSettings)
     {
-        public int TickRate { get; init; } = 60;
-        public int InputDelayFrames { get; init; } = 2;
+        public record Player(Guid Id, string DisplayName);
+        public record MatchSettings
+        {
+            public int TickRate { get; init; } = 60;
+            public int InputDelayFrames { get; init; } = 2;
+        }
     }
+
+    public record Response(Guid SessionId);
 }

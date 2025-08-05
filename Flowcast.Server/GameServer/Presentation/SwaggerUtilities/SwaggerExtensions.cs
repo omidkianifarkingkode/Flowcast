@@ -9,6 +9,7 @@ internal static class SwaggerExtensions
     {
         services.AddSwaggerGen(o =>
         {
+            //o.EnableAnnotations();
             o.CustomSchemaIds(id => id.FullName!.Replace('+', '-'));
 
             var securityScheme = new OpenApiSecurityScheme

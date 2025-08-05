@@ -3,9 +3,12 @@
 public static class Join
 {
     public const string Method = "POST";
-    public const string Route = "sessions/{sessionId}/join";
+    public const string Route = "sessions/join";
 
-    public record Request(long PlayerId, string DisplayName);
+    public record Request(Guid SessionId, Guid PlayerId);
 
-    public record Response(string SessionId);
+    public record Response(Guid SessionId, Response.PlayerInfo Player)
+    {
+        public record PlayerInfo(Guid Id, string DisplayName);
+    }
 }

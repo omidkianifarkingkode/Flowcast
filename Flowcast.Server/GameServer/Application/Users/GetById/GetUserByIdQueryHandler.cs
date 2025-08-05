@@ -22,8 +22,8 @@ internal sealed class GetUserByIdQueryHandler(IApplicationDbContext context, IUs
             .Select(u => new UserResponse
             {
                 Id = u.Id,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
+                //FirstName = u.FirstName,
+                //LastName = u.LastName,
                 Email = u.Email
             })
             .SingleOrDefaultAsync(cancellationToken);

@@ -37,7 +37,7 @@ public static class DependencyInjection
 
         builder.Services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
 
-        builder.Services.AddScoped<ISessionRepository, InMemorySessionRepository>();
+        builder.Services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
 
         return builder;
     }

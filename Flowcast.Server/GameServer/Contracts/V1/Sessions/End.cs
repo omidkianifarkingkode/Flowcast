@@ -2,10 +2,10 @@
 
 public static class End
 {
-    public const string Method = "DELETE";
-    public const string Route = "sessions/{sessionId}/end";
+    public const string Method = "POST";
+    public const string Route = "sessions/end";
 
-    public record Request(string SessionId);
+    public record Request(Guid SessionId);
 
-    public record Response(string SessionId, DateTime EndedAtUtc);
+    public record Response(Guid SessionId, DateTime EndedAtUtc);
 }

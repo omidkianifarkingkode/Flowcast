@@ -2,10 +2,13 @@
 
 public static class Ready
 {
-    public const string Method = "POST";
-    public const string Route = "sessions/{sessionId}/ready";
+    public const string Method = "PUT";
+    public const string Route = "sessions/ready";
 
-    public record Request(string SessionId, long PlayerId);
+    public record Request(Guid SessionId, Guid PlayerId);
 
-    public record Response(string SessionId, bool AllPlayersReady);
+    public record Response(Guid SessionId, Response.PlayerInfo Player, bool AllPlayersReady)
+    {
+        public record PlayerInfo(Guid Id, string DisplayName);
+    }
 }
