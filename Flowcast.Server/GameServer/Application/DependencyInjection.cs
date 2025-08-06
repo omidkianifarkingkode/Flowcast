@@ -1,6 +1,5 @@
 ﻿using Application.Abstractions.Behaviors;
 using Application.Abstractions.Messaging;
-using Application.Defaults;
 using Application.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;

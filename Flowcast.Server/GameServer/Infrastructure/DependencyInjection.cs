@@ -1,11 +1,14 @@
 ﻿using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
-using Domain.Sessions;
+using Domain.Games.Services;
+using Domain.Sessions.Services;
+using Domain.Users.Services;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
 using Infrastructure.Persistence.Respositories;
+using Infrastructure.Persistence.Users.Services;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -38,6 +41,10 @@ public static class DependencyInjection
         builder.Services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
 
         builder.Services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
+        builder.Services.AddSingleton<IUserConnectionRegistry, InMemoryUserConnectionRegistry>();
+        builder.Services.AddScoped<IUserContextService, UserContextService>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
 
         return builder;
     }

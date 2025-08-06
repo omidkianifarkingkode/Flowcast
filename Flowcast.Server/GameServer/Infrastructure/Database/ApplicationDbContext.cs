@@ -5,6 +5,7 @@ using SharedKernel;
 
 namespace Infrastructure.Database;
 
+using Domain.Games;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class ApplicationDbContext(
@@ -13,6 +14,7 @@ public sealed class ApplicationDbContext(
     : DbContext(options), IApplicationDbContext
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<UserProgress> UserProgress { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,5 +1,6 @@
 ﻿using Domain.Sessions.Entities;
 using Domain.Sessions.Enums;
+using Domain.Sessions.Errors;
 using Domain.Sessions.Events;
 using Domain.Sessions.ValueObjects;
 using SharedKernel;

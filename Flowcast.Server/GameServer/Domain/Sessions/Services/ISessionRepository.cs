@@ -1,7 +1,7 @@
 ﻿using Domain.Sessions.ValueObjects;
 using SharedKernel;
 
-namespace Domain.Sessions;
+namespace Domain.Sessions.Services;
 
 public interface ISessionRepository
 {

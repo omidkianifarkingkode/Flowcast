@@ -1,4 +1,6 @@
 ﻿using Domain.Sessions;
+using Domain.Sessions.Errors;
+using Domain.Sessions.Services;
 using Domain.Sessions.ValueObjects;
 using SharedKernel;
 using System.Collections.Concurrent;

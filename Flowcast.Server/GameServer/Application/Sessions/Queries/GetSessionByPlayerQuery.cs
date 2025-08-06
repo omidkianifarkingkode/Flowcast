@@ -1,6 +1,8 @@
 ﻿using Application.Abstractions.Messaging;
 using Application.Services;
 using Domain.Sessions;
+using Domain.Sessions.Errors;
+using Domain.Sessions.Services;
 using Domain.Sessions.ValueObjects;
 using SharedKernel;
 

@@ -25,7 +25,7 @@ internal sealed class GetUserByEmailQueryHandler(IApplicationDbContext context, 
 
         if (user is null)
         {
-            return Result.Failure<UserResponse>(UserErrors.NotFoundByEmail);
+            return Result.Failure<UserResponse>(UserErrors.NotEmailFound(query.Email));
         }
 
         if (user.Id != userContext.UserId)

@@ -14,13 +14,14 @@ internal sealed class RegisterUserCommandHandler(IApplicationDbContext context, 
     {
         if (await context.Users.AnyAsync(u => u.Email == command.Email, cancellationToken))
         {
-            return Result.Failure<Guid>(UserErrors.EmailNotUnique);
+            return Result.Failure<Guid>(UserErrors.EmailNotUnique(command.Email));
         }
 
         var user = new User(
             Guid.NewGuid(),
             command.FirstName,
-            command.Email
+            command.Email,
+            command.Password
         );
 
         //user.add(new UserRegisteredDomainEvent(user.Id));

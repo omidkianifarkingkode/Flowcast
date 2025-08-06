@@ -12,18 +12,16 @@ public sealed class User : Entity<Guid>
 
     private User() { } // EF/ORM constructor
 
-    public User(Guid id, string displayName, string email)
+    public User(Guid id, string displayName, string email, string passwordHash)
     {
         Id = id;
         DisplayName = displayName;
         Email = email;
+        PasswordHash = passwordHash;
         CreatedAtUtc = DateTime.UtcNow;
     }
 
-    public void ChangeDisplayName(string newName)
-    {
-        DisplayName = newName;
-    }
+    public void ChangeDisplayName(string newName) => DisplayName = newName;
 
     public void Ban() => IsBanned = true;
 }

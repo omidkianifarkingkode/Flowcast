@@ -25,6 +25,8 @@ public static class DependencyInjection
             x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
 
+        builder.Services.AddSignalR();
+
         builder.Services.AddSingleton(builder.Services);
 
         builder.Services.InstallVersioning();

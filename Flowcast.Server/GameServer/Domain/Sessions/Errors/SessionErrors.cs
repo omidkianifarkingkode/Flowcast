@@ -1,6 +1,6 @@
 ﻿using SharedKernel;
 
-namespace Domain.Sessions;
+namespace Domain.Sessions.Errors;
 
 public static class SessionErrors
 {

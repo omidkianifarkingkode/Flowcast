@@ -8,15 +8,15 @@ public static class UserErrors
         "Users.NotFound",
         $"The user with the Id = '{userId}' was not found");
 
+    public static Error NotEmailFound(string email) => Error.NotFound(
+        "Users.NotFoundByEmail",
+        $"The user with the Email = '{email}' was not found");
+
     public static Error Unauthorized() => Error.Failure(
         "Users.Unauthorized",
         "You are not authorized to perform this action.");
 
-    public static readonly Error NotFoundByEmail = Error.NotFound(
-        "Users.NotFoundByEmail",
-        "The user with the specified email was not found");
-
-    public static readonly Error EmailNotUnique = Error.Conflict(
+    public static Error EmailNotUnique(string email) => Error.Conflict(
         "Users.EmailNotUnique",
-        "The provided email is not unique");
+        $"The provided email = '{email}' is not unique");
 }
