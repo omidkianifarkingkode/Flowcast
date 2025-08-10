@@ -11,25 +11,26 @@ public static class DependencyInjection
 {
     public static WebApplicationBuilder AddPresentation(this WebApplicationBuilder builder)
     {
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddSingleton(builder.Services);
+
+        builder.Services.InstallVersioning();
 
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
 
-        builder.Services.AddSwaggerGen();
-
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddHttpContextAccessor();
         builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
         builder.Services.AddControllers().AddJsonOptions(x =>
         {
             x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
 
-        builder.Services.AddSignalR();
+        builder.Services.AddSwaggerGen();
 
-        builder.Services.AddSingleton(builder.Services);
 
-        builder.Services.InstallVersioning();
+
+        //builder.Services.AddSignalR();
 
         return builder;
     }

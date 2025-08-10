@@ -27,7 +27,7 @@ public static class MiddlewareExtensions
             ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
         });
 
-        app.UseRequestContextLogging();
+        app.UseMiddleware<RequestContextLoggingMiddleware>();
 
         app.UseSerilogRequestLogging();
 
@@ -39,12 +39,7 @@ public static class MiddlewareExtensions
 
         app.MapControllers();// REMARK: If you want to use Controllers, you'll need this.
 
-        return app;
-    }
-
-    public static IApplicationBuilder UseRequestContextLogging(this IApplicationBuilder app)
-    {
-        app.UseMiddleware<RequestContextLoggingMiddleware>();
+        app.UseWebSocketsAndMapEndpoint();
 
         return app;
     }

@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Realtime;
 using Domain.Games.Services;
 using Domain.Sessions.Services;
 using Domain.Users.Services;
@@ -9,6 +10,7 @@ using Infrastructure.Database;
 using Infrastructure.DomainEvents;
 using Infrastructure.Persistence.Respositories;
 using Infrastructure.Persistence.Users.Services;
+using Infrastructure.Realtime;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -42,9 +44,11 @@ public static class DependencyInjection
 
         builder.Services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
         builder.Services.AddSingleton<IUserConnectionRegistry, InMemoryUserConnectionRegistry>();
-        builder.Services.AddScoped<IUserContextService, UserContextService>();
+        builder.Services.AddSingleton<IUserConnectionSender, UserConnectionSender>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
+
+        builder.Services.AddHostedService<HeartbeatBackgroundService>();
 
         return builder;
     }
