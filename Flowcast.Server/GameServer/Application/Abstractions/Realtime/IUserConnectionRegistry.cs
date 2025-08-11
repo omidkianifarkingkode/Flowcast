@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 
 namespace Application.Abstractions.Realtime;
 

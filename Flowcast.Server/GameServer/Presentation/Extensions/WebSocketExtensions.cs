@@ -1,4 +1,6 @@
-﻿namespace Presentation.Extensions
+﻿using Infrastructure.Realtime;
+
+namespace Presentation.Extensions
 {
     public static class WebSocketExtensions
     {
@@ -11,8 +13,8 @@
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
-                    var wsHandler = context.RequestServices.GetRequiredService<GameWebSocketHandler>();
-                    await wsHandler.HandleConnectionAsync(context);
+                    var wsHandler = context.RequestServices.GetRequiredService<WebSocketHandler>();
+                    await wsHandler.HandleConnectionAsync(context, context.RequestAborted);
                 }
                 else
                 {

@@ -2,25 +2,28 @@
 
 namespace Application.Abstractions.Realtime;
 
-public class UserConnectionInfo(string connectionId, Guid userId, WebSocket socket, DateTime connectedAtUtc)
+public class UserConnectionInfo(string connectionId, Guid userId, WebSocket socket, long connectedAtUnixMillis)
 {
     public string ConnectionId { get; } = connectionId;
     public Guid UserId { get; } = userId;
     public WebSocket Socket { get; } = socket;
-    public DateTime ConnectedAtUtc { get; } = connectedAtUtc;
-    public DateTime? DisconnectedAtUtc { get; private set; }
-    public DateTime LastPongUtc { get; private set; }
-    public bool IsConnected => DisconnectedAtUtc == null;
+
+    // Store timestamps as Unix time milliseconds
+    public long ConnectedAtUnixMillis { get; } = connectedAtUnixMillis;
+    public long? DisconnectedAtUnixMillis { get; private set; }
+    public long LastPongUnixMillis { get; private set; } = connectedAtUnixMillis;
+
+    public bool IsConnected => DisconnectedAtUnixMillis == null;
 
     public WebSocketState State => Socket.State;
 
-    public void MarkDisconnected(DateTime dateTime)
+    public void MarkDisconnected(long unixMillis)
     {
-        DisconnectedAtUtc = dateTime;
+        DisconnectedAtUnixMillis = unixMillis;
     }
 
-    public void MarkPongReceived(DateTime utcNow)
+    public void MarkPongReceived(long unixMillis)
     {
-        LastPongUtc = utcNow;
+        LastPongUnixMillis = unixMillis;
     }
 }

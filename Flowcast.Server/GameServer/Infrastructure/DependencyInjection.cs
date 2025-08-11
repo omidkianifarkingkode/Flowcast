@@ -42,11 +42,20 @@ public static class DependencyInjection
 
         builder.Services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
 
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IUserContext, UserContext>();
+
         builder.Services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
-        builder.Services.AddSingleton<IUserConnectionRegistry, InMemoryUserConnectionRegistry>();
-        builder.Services.AddSingleton<IUserConnectionSender, UserConnectionSender>();
+
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
+
+        //realtime services
+        builder.Services.AddSingleton<WebSocketHandler>();
+        builder.Services.AddSingleton<IUserConnectionRegistry, InMemoryUserConnectionRegistry>();
+        builder.Services.AddSingleton<IRealtimeMessageSender, JsonRealtimeMessageSender>();
+        builder.Services.AddSingleton<IRealtimeMessageReceiver, RealtimeMessageReceiver>();
+
 
         builder.Services.AddHostedService<HeartbeatBackgroundService>();
 
@@ -92,8 +101,7 @@ public static class DependencyInjection
                 };
             });
 
-        builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<IUserContext, UserContext>();
+        
         builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
         builder.Services.AddSingleton<ITokenProvider, TokenProvider>();
 

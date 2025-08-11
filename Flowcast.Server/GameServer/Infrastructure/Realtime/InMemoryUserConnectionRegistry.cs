@@ -35,7 +35,7 @@ public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider) 
             }
 
             // Register new connection
-            var connection = new UserConnectionInfo(connectionId, userId, socket, dateTimeProvider.UtcNow);
+            var connection = new UserConnectionInfo(connectionId, userId, socket, dateTimeProvider.UnixTimeMilliseconds);
             _connections[connectionId] = connection;
             _userConnections[userId] = connectionId;
 
@@ -49,7 +49,7 @@ public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider) 
         {
             if (_connections.TryRemove(connectionId, out var conn))
             {
-                conn.MarkDisconnected(dateTimeProvider.UtcNow);
+                conn.MarkDisconnected(dateTimeProvider.UnixTimeMilliseconds);
                 var userId = conn.UserId;
 
                 // Remove from userConnections if it matches this connectionId

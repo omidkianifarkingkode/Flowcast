@@ -19,7 +19,6 @@ public static class DependencyInjection
         builder.Services.AddProblemDetails();
 
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddHttpContextAccessor();
         builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
         builder.Services.AddControllers().AddJsonOptions(x =>
         {
@@ -27,10 +26,6 @@ public static class DependencyInjection
         });
 
         builder.Services.AddSwaggerGen();
-
-
-
-        //builder.Services.AddSignalR();
 
         return builder;
     }
