@@ -1,19 +1,22 @@
 ﻿using Application.Abstractions.Realtime;
+using Application.Abstractions.Realtime.Messaging;
+using Application.Abstractions.Realtime.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SharedKernel;
 using System.Net.WebSockets;
-using System.Text;
 
-namespace Infrastructure.Realtime;
+namespace Infrastructure.Realtime.Services;
 
-public class HeartbeatBackgroundService(IUserConnectionRegistry connectionRegistry,
+public class WebSocketLivenessService(IUserConnectionRegistry connectionRegistry,
     IDateTimeProvider dateTimeProvider,
     IRealtimeMessageSender messageSender,
-    ILogger<HeartbeatBackgroundService> logger) : BackgroundService
+    IOptions<WebSocketLivenessOptions> options,
+    ILogger<WebSocketLivenessService> logger) : BackgroundService
 {
-    private readonly TimeSpan _pingInterval = TimeSpan.FromSeconds(15);
-    private readonly TimeSpan _timeout = TimeSpan.FromSeconds(60);
+    private readonly TimeSpan _pingInterval = TimeSpan.FromSeconds(options.Value.PingIntervalSeconds);
+    private readonly TimeSpan _timeout = TimeSpan.FromSeconds(options.Value.TimeoutSeconds);
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -29,7 +32,7 @@ public class HeartbeatBackgroundService(IUserConnectionRegistry connectionRegist
 
                 if (nowUnix - connection.LastPongUnixMillis > (long)_timeout.TotalMilliseconds)
                 {
-                    logger.LogWarning("Closing connection {ConnectionId} for user {UserId} due to heartbeat timeout.", connection.ConnectionId, connection.UserId);
+                    logger.LogWarning("[WebSocketLivenessService] Closing connection {ConnectionId} for user {UserId} due to heartbeat timeout.", connection.ConnectionId, connection.UserId);
                     await socket.CloseAsync(WebSocketCloseStatus.NormalClosure,
                         "Heartbeat timeout", cancellationToken);
                     connectionRegistry.Unregister(connection.ConnectionId);
@@ -38,9 +41,7 @@ public class HeartbeatBackgroundService(IUserConnectionRegistry connectionRegist
 
                 try
                 {
-                    var pingMessage = RealtimeMessage.Create(RealtimeMessageType.Ping, nowUnix, []);
-                    var pingBytes = pingMessage.ToBytes();
-                    var segment = new ArraySegment<byte>(pingBytes);
+                    var pingMessage = RealtimeMessage.Create(RealtimeMessageType.Ping, nowUnix);
 
                     await messageSender.SendToUserAsync(connection.UserId, pingMessage, cancellationToken);
 
@@ -48,7 +49,7 @@ public class HeartbeatBackgroundService(IUserConnectionRegistry connectionRegist
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error sending ping to connection {ConnectionId} for user {UserId}.", connection.ConnectionId, connection.UserId);
+                    logger.LogError(ex, "[WebSocketLivenessService] Error sending ping to connection {ConnectionId} for user {UserId}.", connection.ConnectionId, connection.UserId);
                 }
             }
 

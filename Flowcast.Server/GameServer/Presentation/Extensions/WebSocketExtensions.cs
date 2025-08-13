@@ -1,4 +1,4 @@
-﻿using Infrastructure.Realtime;
+﻿using Infrastructure.Realtime.Services;
 
 namespace Presentation.Extensions
 {

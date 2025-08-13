@@ -32,4 +32,18 @@ public record Error
 
     public static Error Conflict(string code, string description) =>
         new(code, description, ErrorType.Conflict);
+
+    public static Error Unauthorized(string code, string description) =>
+        new(code, description, ErrorType.Unauthorized);
+
+    // Default errors
+    public static readonly Error DefaultUnauthorized =
+        Unauthorized("Auth.Unauthorized", "The request is not authorized.");
+
+    public static readonly Error DefaultNotFound =
+        NotFound("General.NotFound", "The requested resource was not found.");
+
+    public static readonly Error DefaultConflict =
+        Conflict("General.Conflict", "A conflict occurred.");
+
 }

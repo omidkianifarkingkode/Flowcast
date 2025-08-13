@@ -50,14 +50,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
 
-        //realtime services
-        builder.Services.AddSingleton<WebSocketHandler>();
-        builder.Services.AddSingleton<IUserConnectionRegistry, InMemoryUserConnectionRegistry>();
-        builder.Services.AddSingleton<IRealtimeMessageSender, JsonRealtimeMessageSender>();
-        builder.Services.AddSingleton<IRealtimeMessageReceiver, RealtimeMessageReceiver>();
-
-
-        builder.Services.AddHostedService<HeartbeatBackgroundService>();
+        builder.AddRealtimeServices();
 
         return builder;
     }

@@ -1,4 +1,6 @@
-﻿namespace Application.Abstractions.Realtime;
+﻿using Application.Abstractions.Realtime.Messaging;
+
+namespace Application.Abstractions.Realtime.Services;
 
 public interface IRealtimeMessageSender
 {

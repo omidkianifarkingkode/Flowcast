@@ -3,7 +3,7 @@ using SharedKernel;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
-namespace Infrastructure.Realtime;
+namespace Infrastructure.Realtime.Services;
 
 public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider) : IUserConnectionRegistry
 {
@@ -108,12 +108,23 @@ public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider) 
         return _connections.Values.ToList();
     }
 
-
     public bool IsUserConnected(Guid userId)
     {
         lock (_lock)
         {
             return _userConnections.ContainsKey(userId);
+        }
+    }
+
+    public void MarkPongReceived(Guid userId, long unixMillis)
+    {
+        lock (_lock)
+        {
+            if (_userConnections.TryGetValue(userId, out var connectionId) &&
+                _connections.TryGetValue(connectionId, out var info))
+            {
+                info.MarkPongReceived(unixMillis);
+            }
         }
     }
 }
