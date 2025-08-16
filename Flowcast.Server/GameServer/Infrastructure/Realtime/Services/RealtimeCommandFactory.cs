@@ -1,11 +1,9 @@
-﻿using Application.Abstractions.Realtime.Messaging;
-using Application.Abstractions.Realtime.Services;
+﻿using Application.Realtime.Messaging;
+using Application.Realtime.Services;
 using MessagePack;
-using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Infrastructure.Realtime.Services;
 
@@ -121,5 +119,5 @@ public sealed class RealtimeCommandFactory : IRealtimeCommandFactory
             return Expression.Lambda<Func<IRealtimeMessageCodec, byte[], IRealtimeMessage>>(cast, pCodec, pData)
                              .Compile();
         }
-    } 
+    }
 }

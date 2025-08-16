@@ -1,6 +1,5 @@
 ﻿using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
-using Application.Abstractions.Realtime;
 using Domain.Games.Services;
 using Domain.Sessions.Services;
 using Domain.Users.Services;
@@ -94,7 +93,7 @@ public static class DependencyInjection
                 };
             });
 
-        
+
         builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
         builder.Services.AddSingleton<ITokenProvider, TokenProvider>();
 

@@ -1,6 +1,5 @@
 ﻿using Application.Abstractions.Behaviors;
 using Application.Abstractions.Messaging;
-using Application.Abstractions.Realtime.Services;
 using Application.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
@@ -40,7 +39,7 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ConnectedPlayersRegistry>();
 
-        
+
 
         return builder;
     }

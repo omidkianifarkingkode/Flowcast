@@ -1,5 +1,5 @@
-﻿using Application.Abstractions.Realtime.Messaging;
-using Application.Abstractions.Realtime.Services;
+﻿using Application.Realtime.Messaging;
+using Application.Realtime.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Realtime.Services;

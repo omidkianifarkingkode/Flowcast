@@ -1,6 +1,8 @@
-﻿using System.Net.WebSockets;
+﻿using Application.Realtime.Commons;
+using Application.Realtime.Messaging;
+using System.Net.WebSockets;
 
-namespace Application.Abstractions.Realtime;
+namespace Application.Realtime.Services;
 
 public interface IUserConnectionRegistry
 {
@@ -15,5 +17,9 @@ public interface IUserConnectionRegistry
 
     IReadOnlyList<UserConnectionInfo> GetAllConnections();
     bool IsUserConnected(Guid userId);
-    void MarkPongReceived(Guid userId, long unixMillis);
+
+    void MarkPingSent(Guid userId, ulong pingId, long sentAtUnixMillis);
+    void MarkPongReceived(Guid userId, long nowUnixMillis);
+    bool TryCompletePing(Guid userId, ulong pingId, long nowUnixMillis, out long rttMillis);
+    bool TryGetTelemetry(Guid userId, out TelemetrySegment telemetry);
 }

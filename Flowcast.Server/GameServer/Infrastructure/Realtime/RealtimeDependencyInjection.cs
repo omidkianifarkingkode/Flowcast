@@ -1,6 +1,5 @@
-﻿using Application.Abstractions.Realtime;
-using Application.Abstractions.Realtime.Messaging;
-using Application.Abstractions.Realtime.Services;
+﻿using Application.Realtime.Messaging;
+using Application.Realtime.Services;
 using Infrastructure.Realtime.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +29,6 @@ public static class RealtimeDependencyInjection
         builder.Services.AddSingleton<IRealtimeCommandFactory, RealtimeCommandFactory>();
         builder.Services.AddSingleton<IRealtimeMessageCodec, RealtimeMessageCodec>();
         builder.Services.AddSingleton<ICommandDispatcher, CommandDispatcher>();
-        builder.Services.AddSingleton<IHeaderMessageHandler, HeartbeatHeaderHandler>();
 
         return builder;
     }

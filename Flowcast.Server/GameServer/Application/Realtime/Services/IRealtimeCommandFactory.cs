@@ -1,6 +1,6 @@
-﻿using Application.Abstractions.Realtime.Messaging;
+﻿using Application.Realtime.Messaging;
 
-namespace Application.Abstractions.Realtime.Services;
+namespace Application.Realtime.Services;
 
 public interface IRealtimeCommandFactory
 {

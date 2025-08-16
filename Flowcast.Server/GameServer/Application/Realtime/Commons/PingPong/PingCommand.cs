@@ -1,0 +1,20 @@
+﻿using Application.Abstractions.Messaging;
+using Application.Realtime.Messaging;
+using MessagePack;
+using SharedKernel;
+
+namespace Application.Realtime.Commons.PingPong;
+
+[MessagePackObject]
+[RealtimeMessage(RealtimeMessageType.Ping)]
+public sealed class PingCommand : IRealtimeCommand
+{
+    [Key(0)] public ulong PingId { get; set; }
+    [Key(1)] public long ServerTimestamp { get; set; }
+}
+
+public sealed class PingCommandHandler : ICommandHandler<PingCommand>
+{
+    public Task<Result> Handle(PingCommand command, CancellationToken cancellationToken)
+        => Task.FromResult(Result.Success()); // No-op (server-originated heartbeats)
+}

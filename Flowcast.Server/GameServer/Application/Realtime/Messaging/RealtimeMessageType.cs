@@ -1,4 +1,4 @@
-﻿namespace Application.Abstractions.Realtime.Messaging;
+﻿namespace Application.Realtime.Messaging;
 
 public enum RealtimeMessageType : ushort
 {

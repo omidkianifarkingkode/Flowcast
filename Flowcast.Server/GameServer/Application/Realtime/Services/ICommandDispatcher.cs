@@ -1,7 +1,7 @@
-﻿using Application.Abstractions.Realtime.Messaging;
+﻿using Application.Realtime.Messaging;
 using SharedKernel;
 
-namespace Application.Abstractions.Realtime.Services;
+namespace Application.Realtime.Services;
 
 public interface ICommandDispatcher
 {

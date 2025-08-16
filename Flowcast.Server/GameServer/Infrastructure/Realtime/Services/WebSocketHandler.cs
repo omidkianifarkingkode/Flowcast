@@ -1,6 +1,5 @@
 ﻿using Application.Abstractions.Authentication;
-using Application.Abstractions.Realtime;
-using Application.Abstractions.Realtime.Services;
+using Application.Realtime.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

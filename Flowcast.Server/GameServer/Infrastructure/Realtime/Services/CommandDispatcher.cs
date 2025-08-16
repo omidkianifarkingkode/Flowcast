@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Messaging;
-using Application.Abstractions.Realtime.Messaging;
-using Application.Abstractions.Realtime.Services;
+using Application.Realtime.Commons;
+using Application.Realtime.Messaging;
+using Application.Realtime.Services;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel;
 using System.Collections.Concurrent;
@@ -65,7 +66,8 @@ public sealed class CommandDispatcher(IServiceScopeFactory scopes) : ICommandDis
 
             var castH = Expression.Convert(h, handlerType);
             var castC = Expression.Convert(c, cmdType);
-            var call = Expression.Call(castH, handlerType.GetMethod("Handle")!, castC, ct);
+            var methodName = nameof(ICommandHandler<ICommand>.Handle);
+            var call = Expression.Call(castH, handlerType.GetMethod(methodName)!, castC, ct);
 
             return Expression.Lambda<Func<object, ICommand, CancellationToken, Task<Result>>>(call, h, c, ct).Compile();
         }

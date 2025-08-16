@@ -1,4 +1,4 @@
-﻿namespace Application.Abstractions.Realtime.Services;
+﻿namespace Application.Realtime.Services;
 
 public interface IRealtimeMessageReceiver
 {

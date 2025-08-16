@@ -1,4 +1,4 @@
-﻿namespace Application.Abstractions.Realtime.Messaging;
+﻿namespace Application.Realtime.Messaging;
 
 /// <summary>
 /// Handles header-only realtime messages (no payload), e.g., Ping/Pong.

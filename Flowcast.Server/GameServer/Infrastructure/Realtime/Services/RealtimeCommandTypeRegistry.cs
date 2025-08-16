@@ -1,5 +1,5 @@
-﻿using Application.Abstractions.Realtime.Messaging;
-using Application.Abstractions.Realtime.Services;
+﻿using Application.Realtime.Messaging;
+using Application.Realtime.Services;
 using System.Collections.Concurrent;
 using System.Reflection;
 

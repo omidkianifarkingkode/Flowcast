@@ -1,11 +1,14 @@
-﻿using Application.Abstractions.Realtime;
+﻿using Application.Realtime.Commons;
+using Application.Realtime.Messaging;
+using Application.Realtime.Services;
+using Microsoft.Extensions.Options;
 using SharedKernel;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
 namespace Infrastructure.Realtime.Services;
 
-public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider) : IUserConnectionRegistry
+public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider, IOptions<WebSocketLivenessOptions> options) : IUserConnectionRegistry
 {
     private readonly ConcurrentDictionary<string, UserConnectionInfo> _connections = new();
     private readonly ConcurrentDictionary<Guid, string> _userConnections = new(); // One connectionId per user
@@ -35,7 +38,8 @@ public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider) 
             }
 
             // Register new connection
-            var connection = new UserConnectionInfo(connectionId, userId, socket, dateTimeProvider.UnixTimeMilliseconds);
+            var maxPending = options.Value.GetMaxPendingPings();
+            var connection = new UserConnectionInfo(connectionId, userId, socket, dateTimeProvider.UnixTimeMilliseconds, maxPending);
             _connections[connectionId] = connection;
             _userConnections[userId] = connectionId;
 
@@ -116,15 +120,55 @@ public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider) 
         }
     }
 
-    public void MarkPongReceived(Guid userId, long unixMillis)
+    public void MarkPingSent(Guid userId, ulong pingId, long sentAt)
     {
         lock (_lock)
         {
-            if (_userConnections.TryGetValue(userId, out var connectionId) &&
-                _connections.TryGetValue(connectionId, out var info))
+            if (_userConnections.TryGetValue(userId, out var cid) &&
+                _connections.TryGetValue(cid, out var info))
             {
-                info.MarkPongReceived(unixMillis);
+                info.MarkPingSent(pingId, sentAt);
             }
         }
+    }
+
+    public void MarkPongReceived(Guid userId, long now)
+    {
+        lock (_lock)
+        {
+            if (_userConnections.TryGetValue(userId, out var cid) &&
+                _connections.TryGetValue(cid, out var info))
+            {
+                info.MarkPongReceived(now);
+            }
+        }
+    }
+
+    public bool TryCompletePing(Guid userId, ulong pingId, long now, out long rtt)
+    {
+        lock (_lock)
+        {
+            if (_userConnections.TryGetValue(userId, out var cid) &&
+                _connections.TryGetValue(cid, out var info))
+            {
+                return info.TryCompletePing(pingId, now, out rtt);
+            }
+        }
+        rtt = 0; return false;
+    }
+
+    public bool TryGetTelemetry(Guid userId, out TelemetrySegment telemetry)
+    {
+        lock (_lock)
+        {
+            if (_userConnections.TryGetValue(userId, out var cid) &&
+                _connections.TryGetValue(cid, out var info) &&
+                info.TryGetTelemetry(out telemetry))
+            {
+                return true;
+            }
+        }
+        telemetry = default; 
+        return false;
     }
 }

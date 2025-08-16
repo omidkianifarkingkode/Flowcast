@@ -1,4 +1,4 @@
-﻿namespace Application.Abstractions.Realtime.Messaging;
+﻿namespace Application.Realtime.Messaging;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class RealtimeMessageAttribute : Attribute
