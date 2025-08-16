@@ -19,6 +19,18 @@
     /// </summary>
     public bool IncludeTelemetryInPing { get; set; } = true;
 
+    // <summary>
+    /// If true, any client message (binary or text) counts as heartbeat.
+    /// If false, liveness requires a Pong (or we time out).
+    /// </summary>
+    public bool TreatAnyClientMessageAsHeartbeat { get; set; } = true;
+
+    /// <summary>
+    /// If true, only send a Ping when the connection was idle for at least PingInterval.
+    /// If false, always send a Ping each tick regardless of activity.
+    /// </summary>
+    public bool AdaptivePing { get; set; } = true;
+
     public TimeSpan GetPingInterval() => TimeSpan.FromSeconds(PingIntervalSeconds);
     public TimeSpan GetTimeout() => TimeSpan.FromSeconds(TimeoutSeconds);
 

@@ -13,6 +13,7 @@ public class UserConnectionInfo
     public long ConnectedAtUnixMillis { get; }
     public long? DisconnectedAtUnixMillis { get; private set; }
     public long LastPongUnixMillis { get; private set; }
+    public long LastClientActivityUnixMillis { get; private set; }
 
     public bool IsConnected => DisconnectedAtUnixMillis == null;
 
@@ -32,6 +33,7 @@ public class UserConnectionInfo
         Socket = socket;
         ConnectedAtUnixMillis = connectedAtUnixMillis;
         LastPongUnixMillis = connectedAtUnixMillis;
+        LastClientActivityUnixMillis = connectedAtUnixMillis;
         _maxPendingPings = Math.Max(1, maxPendingPings);
     }
 
@@ -55,6 +57,11 @@ public class UserConnectionInfo
     public void MarkPongReceived(long unixMillis)
     {
         LastPongUnixMillis = unixMillis;
+    }
+
+    public void MarkClientActivity(long unixMillis)
+    {
+        LastClientActivityUnixMillis = unixMillis;
     }
 
     public bool TryCompletePing(ulong pingId, long nowUnixMillis, out long rttMillis)

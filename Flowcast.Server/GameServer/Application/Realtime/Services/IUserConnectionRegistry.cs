@@ -20,6 +20,8 @@ public interface IUserConnectionRegistry
 
     void MarkPingSent(Guid userId, ulong pingId, long sentAtUnixMillis);
     void MarkPongReceived(Guid userId, long nowUnixMillis);
+    void MarkClientActivity(Guid userId, long unixMillis);
+
     bool TryCompletePing(Guid userId, ulong pingId, long nowUnixMillis, out long rttMillis);
     bool TryGetTelemetry(Guid userId, out TelemetrySegment telemetry);
 }

@@ -144,6 +144,18 @@ public class InMemoryUserConnectionRegistry(IDateTimeProvider dateTimeProvider, 
         }
     }
 
+    public void MarkClientActivity(Guid userId, long unixMillis)
+    {
+        lock (_lock)
+        {
+            if (_userConnections.TryGetValue(userId, out var cid) &&
+                _connections.TryGetValue(cid, out var info))
+            {
+                info.MarkClientActivity(unixMillis);
+            }
+        }
+    }
+
     public bool TryCompletePing(Guid userId, ulong pingId, long now, out long rtt)
     {
         lock (_lock)

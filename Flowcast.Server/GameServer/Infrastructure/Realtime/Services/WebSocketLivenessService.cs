@@ -1,5 +1,4 @@
-﻿using Application.Realtime;
-using Application.Realtime.Commons;
+﻿using Application.Realtime.Commons;
 using Application.Realtime.Commons.PingPong;
 using Application.Realtime.Messaging;
 using Application.Realtime.Services;
@@ -54,51 +53,27 @@ public class WebSocketLivenessService(
         }
     }
 
-    private async Task RunTickAsync(long nowUnix, CancellationToken ct)
+    private async Task RunTickAsync(long nowUnix, CancellationToken cancellationToken)
     {
-        var snapshot = connectionRegistry.GetAllConnections();
-        foreach (var connection in snapshot)
+        foreach (var connectionInfo in connectionRegistry.GetAllConnections())
         {
-            if (ct.IsCancellationRequested) break;
+            if (cancellationToken.IsCancellationRequested) break;
+            if (connectionInfo.Socket.State != WebSocketState.Open) continue;
 
-            try
+            if (IsTimedOut(connectionInfo, nowUnix))
             {
-                await HandleConnectionAsync(connection, nowUnix, ct);
+                await CloseAndUnregisterAsync(connectionInfo, cancellationToken);
+                continue;
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "[Liveness] Error handling connection {ConnectionId} user {UserId}.",
-                    connection.ConnectionId, connection.UserId);
-            }
+
+            if (ShouldSendPing(connectionInfo, nowUnix))
+                await SendPingAsync(connectionInfo, nowUnix, cancellationToken);
+
+            connectionInfo.CleanupStalePings(nowUnix, (long)_pendingPingTtl.TotalMilliseconds);
         }
     }
 
-    private async Task HandleConnectionAsync(UserConnectionInfo connection, long nowUnix, CancellationToken ct)
-    {
-        var socket = connection.Socket;
-
-        // Only consider open sockets
-        if (socket.State != WebSocketState.Open)
-            return;
-
-        // Timeout check
-        if (HasHeartbeatTimedOut(connection, nowUnix))
-        {
-            await CloseAndUnregisterAsync(connection, ct);
-            return;
-        }
-
-        // Send one correlated ping this tick
-        await SendPingAsync(connection, nowUnix, ct);
-
-        // Hygiene: purge very old in-flight pings
-        connection.CleanupStalePings(nowUnix, (long)_pendingPingTtl.TotalMilliseconds);
-    }
-
-    private bool HasHeartbeatTimedOut(UserConnectionInfo connection, long nowUnix)
-        => nowUnix - connection.LastPongUnixMillis > (long)_timeout.TotalMilliseconds;
-
-    private async Task CloseAndUnregisterAsync(UserConnectionInfo connection, CancellationToken ct)
+    private async Task CloseAndUnregisterAsync(UserConnectionInfo connection, CancellationToken cancellationToken)
     {
         logger.LogWarning("[Liveness] Closing {ConnectionId} user {UserId} (heartbeat timeout).",
             connection.ConnectionId, connection.UserId);
@@ -108,7 +83,7 @@ public class WebSocketLivenessService(
             await connection.Socket.CloseAsync(
                 WebSocketCloseStatus.NormalClosure,
                 "Heartbeat timeout",
-                ct);
+                cancellationToken);
         }
         catch (Exception ex)
         {
@@ -119,7 +94,7 @@ public class WebSocketLivenessService(
         connectionRegistry.Unregister(connection.ConnectionId);
     }
 
-    private async Task SendPingAsync(UserConnectionInfo connection, long nowUnix, CancellationToken ct)
+    private async Task SendPingAsync(UserConnectionInfo connection, long nowUnix, CancellationToken cancellationToken)
     {
         var headerId = IdGenerator.NewId();
 
@@ -141,6 +116,22 @@ public class WebSocketLivenessService(
         var pingMsg = new RealtimeMessage<PingCommand>(header, payload);
 
         connectionRegistry.MarkPingSent(connection.UserId, headerId, nowUnix);
-        await messageSender.SendToUserAsync(connection.UserId, pingMsg, ct);
+        await messageSender.SendToUserAsync(connection.UserId, pingMsg, cancellationToken);
+    }
+
+    private bool IsTimedOut(UserConnectionInfo connectionInfo, long now)
+    {
+        var last = options.Value.TreatAnyClientMessageAsHeartbeat
+            ? Math.Max(connectionInfo.LastClientActivityUnixMillis, connectionInfo.LastPongUnixMillis)
+            : connectionInfo.LastPongUnixMillis; // require Pong if false
+
+        return now - last > (long)_timeout.TotalMilliseconds;
+    }
+
+    private bool ShouldSendPing(UserConnectionInfo connectionInfo, long now)
+    {
+        if (!options.Value.AdaptivePing) return true;
+        // if client chatty recently, skip ping
+        return now - connectionInfo.LastClientActivityUnixMillis >= (long)_pingInterval.TotalMilliseconds;
     }
 }
