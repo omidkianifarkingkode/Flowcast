@@ -1,7 +1,7 @@
 ﻿using Application.Abstractions.Messaging;
 using Application.Sessions.Commands;
 using Contracts.V1.Sessions;
-using Domain.Sessions.ValueObjects;
+using Domain.Sessions;
 using Presentation.Infrastructure;
 using Presentation.Mappings;
 using SharedKernel;

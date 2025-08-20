@@ -1,6 +1,4 @@
-﻿using Domain.Sessions.ValueObjects;
-
-namespace Domain.Sessions.Entities;
+﻿namespace Domain.Sessions;
 
 public class CommandHistory
 {

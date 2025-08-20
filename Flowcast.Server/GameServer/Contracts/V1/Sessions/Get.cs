@@ -7,8 +7,19 @@ public static class Get
 
     public record Request(Guid SessionId);
 
-    public record Response(Guid SessionId, string Mode, string Status, DateTime CreatedAtUtc, List<Response.PlayerInfo> Players)
+    public record Response(
+        Guid SessionId,
+        string Mode,
+        string Status,                  // Waiting|InProgress|Aborted|Ended
+        string StartBarrier,            // ConnectedOnly|ConnectedAndLoaded|Timer
+        DateTime CreatedAtUtc,
+        DateTime? StartedAtUtc,
+        DateTime? EndedAtUtc,
+        DateTime? JoinDeadlineUtc,
+        string? CloseReason,            // Completed|NoShow|ServerFailure|AdminTerminate|PlayerAbandon
+        List<Response.ParticipantInfo> Participants
+    )
     {
-        public record PlayerInfo(Guid Id, string DisplayName, string Status);
+        public record ParticipantInfo(Guid Id, string DisplayName, string Status); // Invited|Connected|Loaded|Disconnected
     }
 }

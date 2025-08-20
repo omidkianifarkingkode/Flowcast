@@ -1,13 +1,14 @@
-﻿using Domain.Sessions.ValueObjects;
-using SharedKernel;
+﻿using SharedKernel;
 
-namespace Domain.Sessions.Services;
+namespace Domain.Sessions;
 
 public interface ISessionRepository
 {
     Task<Result<Session>> GetById(SessionId id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Session>> GetAll(CancellationToken cancellationToken = default);
+    Task<Result<IReadOnlyList<Session>>> GetAll(CancellationToken cancellationToken = default);
+
+    Task<Result<Session?>> GetActiveByPlayer(PlayerId playerId, CancellationToken ct);
 
     Task Save(Session session, CancellationToken cancellationToken = default);
 

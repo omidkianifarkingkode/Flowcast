@@ -1,7 +1,7 @@
 ﻿using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Domain.Games.Services;
-using Domain.Sessions.Services;
+using Domain.Sessions;
 using Domain.Users.Services;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;

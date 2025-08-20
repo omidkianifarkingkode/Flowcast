@@ -1,125 +1,138 @@
-﻿using Domain.Sessions.Entities;
-using Domain.Sessions.Enums;
-using Domain.Sessions.Errors;
-using Domain.Sessions.Events;
-using Domain.Sessions.ValueObjects;
-using SharedKernel;
-using System.Windows.Input;
+﻿using SharedKernel;
 
 namespace Domain.Sessions;
 
-public class Session : Entity<SessionId>, IAggregateRoot
+public sealed class Session : Entity<SessionId>, IAggregateRoot
 {
     public string Mode { get; private set; }
     public SessionStatus Status { get; private set; }
+    public StartBarrier Barrier { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime? StartedAtUtc { get; private set; }
     public DateTime? EndedAtUtc { get; private set; }
+    public DateTime? JoinDeadlineUtc { get; private set; }
     public MatchSettings? Settings { get; private set; }
+    public SessionCloseReason? CloseReason { get; private set; }
 
-    private readonly List<Player> _players = [];
-    public IReadOnlyList<Player> Players => _players.AsReadOnly();
+    private readonly List<Participant> _participants = [];
+    public IReadOnlyList<Participant> Participants => _participants.AsReadOnly();
 
     private readonly CommandHistory _commandHistory = new();
     private readonly StateHashBuffer _hashBuffer = new();
 
     public int CurrentTick { get; private set; }
 
-    public static Session Create(string mode, DateTime createdAtUtc, MatchSettings? settings = null)
-    {
-        var id = new SessionId(Guid.NewGuid());
-        var session = new Session(id, mode, createdAtUtc, settings);
-
-        session.AddDomainEvent(new SessionCreated(id, mode, createdAtUtc));
-
-        return session;
-    }
-
     private Session() { }
 
-    private Session(SessionId id, string mode, DateTime createdAtUtc, MatchSettings? settings = null) : base(id)
+    private Session(SessionId id, string mode, StartBarrier barrier, DateTime createdAtUtc, DateTime? joinDeadlineUtc, MatchSettings? settings)
+        : base(id)
     {
         Id = id;
         Mode = mode;
+        Barrier = barrier;
         Settings = settings;
         Status = SessionStatus.Waiting;
         CreatedAtUtc = createdAtUtc;
+        JoinDeadlineUtc = joinDeadlineUtc;
         CurrentTick = 0;
+
+        AddDomainEvent(new SessionCreated(id, mode, createdAtUtc));
     }
 
-    public Result JoinPlayer(Player playerToJoin)
+    public static Session Create(string mode, StartBarrier barrier, DateTime createdAtUtc, DateTime? joinDeadlineUtc, MatchSettings? settings = null)
+        => new(new SessionId(Guid.NewGuid()), mode, barrier, createdAtUtc, joinDeadlineUtc, settings);
+
+    public Result JoinParticipant(Participant p, DateTime utc)
     {
         if (Status != SessionStatus.Waiting)
-            return Result.Failure(SessionErrors.SessionAlreadyStarted);
+            return Result.Failure(SessionErrors.AlreadyStarted);
 
-        if (_players.Any(p => p.Id == playerToJoin.Id))
-            return Result.Failure(SessionErrors.PlayerAlreadyInSession);
+        if (_participants.Any(x => x.Id == p.Id))
+            return Result.Failure(SessionErrors.DuplicateJoin);
 
-        _players.Add(playerToJoin);
+        _participants.Add(p);
 
-        AddDomainEvent(new PlayerJoinedSession(Id, playerToJoin.Id));
-
-        return Result.Success();
-    }
-
-    public Result RemovePlayer(Player playerToRemove)
-    {
-        var removed = _players.RemoveAll(p => p.Id == playerToRemove.Id);
-        if (removed == 0)
-            return Result.Failure(SessionErrors.PlayerNotFound);
-
-        AddDomainEvent(new PlayerLeftSession(Id, playerToRemove.Id));
+        AddDomainEvent(new ParticipantJoined(Id, p.Id, utc));
 
         return Result.Success();
     }
 
-    public Result DisconnectPlayer(Player playerToDiscounnet)
+    public Result RemoveParticipant(PlayerId playerId, DateTime utc)
     {
-        var player = _players.FirstOrDefault(p => p.Id == playerToDiscounnet.Id);
-        if (player is null)
-            return Result.Failure(SessionErrors.PlayerNotFound);
+        var index = _participants.FindIndex(p => p.Id == playerId);
 
-        player.SetStatus(PlayerStatus.Disconnected);
-        AddDomainEvent(new PlayerLeftSession(Id, player.Id));
+        if (index < 0) 
+            return Result.Failure(SessionErrors.ParticipantMissing);
+
+        var removed = _participants[index];
+        _participants.RemoveAt(index);
+
+        AddDomainEvent(new ParticipantLeft(Id, removed.Id, utc));
 
         return Result.Success();
     }
 
-    public Result<bool> MarkPlayerReady(Player readyPlayer, DateTime utc)
+    public Result MarkParticipantConnected(PlayerId id)
     {
-        var player = _players.FirstOrDefault(p => p.Id == readyPlayer.Id);
-        if (player is null)
-            return Result.Failure<bool>(SessionErrors.PlayerNotFound);
+        var participant = _participants.FirstOrDefault(x => x.Id == id);
 
-        player.MarkReady();
-        AddDomainEvent(new PlayerMarkedReady(Id, player.Id));
+        if (participant is null) 
+            return Result.Failure(SessionErrors.ParticipantMissing);
 
-        if (_players.All(p => p.Status == PlayerStatus.Ready))
+        participant.MarkConnected();
+
+        return Result.Success();
+    }
+
+    public Result MarkParticipantLoaded(PlayerId id, DateTime utc)
+    {
+        var participant = _participants.FirstOrDefault(x => x.Id == id);
+
+        if (participant is null)
+            return Result.Failure(SessionErrors.ParticipantMissing);
+
+        participant.MarkLoaded();
+
+        AddDomainEvent(new ParticipantLoaded(Id, id, utc));
+
+        return Result.Success();
+    }
+
+    public bool StartBarrierSatisfied(DateTime nowUtc)
+        => Barrier switch
         {
-            Start(utc);
-            return Result.Success(true);
-        }
+            StartBarrier.ConnectedOnly => 
+                _participants.Count > 0 && _participants.All(p => p.Status is ParticipantStatus.Connected or ParticipantStatus.Loaded),
+            StartBarrier.ConnectedAndLoaded => 
+                _participants.Count > 0 && _participants.All(p => p.Status == ParticipantStatus.Loaded),
+            StartBarrier.Timer => 
+                JoinDeadlineUtc is { } dl && nowUtc >= dl,
+            _ => false
+        };
 
-        return Result.Success(false);
-    }
-
-
-    public Result Start(DateTime startedAtUtc)
+    public Result TryStart(DateTime nowUtc)
     {
         if (Status != SessionStatus.Waiting)
-            return Result.Failure(SessionErrors.SessionAlreadyStarted);
+            return Result.Failure(SessionErrors.AlreadyStarted);
+
+        if (!StartBarrierSatisfied(nowUtc))
+            return Result.Success(); // no-op if not ready
 
         Status = SessionStatus.InProgress;
-        StartedAtUtc = startedAtUtc;
+        StartedAtUtc = nowUtc;
 
-        AddDomainEvent(new SessionCreated(Id, Mode, CreatedAtUtc));
+        AddDomainEvent(new SessionStarted(Id, Mode, nowUtc));
 
         return Result.Success();
     }
 
-    public Result End(DateTime endedAtUtc)
+    public Result End(DateTime endedAtUtc, SessionCloseReason reason = SessionCloseReason.Completed)
     {
+        if (Status == SessionStatus.Ended)
+            return Result.Success();
+
         Status = SessionStatus.Ended;
+        CloseReason = reason;
         EndedAtUtc = endedAtUtc;
 
         AddDomainEvent(new SessionEnded(Id, endedAtUtc));
@@ -127,12 +140,26 @@ public class Session : Entity<SessionId>, IAggregateRoot
         return Result.Success();
     }
 
+    public Result AbortBeforeStart(DateTime utc, SessionCloseReason reason = SessionCloseReason.NoShow)
+    {
+        if (Status is SessionStatus.Aborted or SessionStatus.Ended)
+            return Result.Success();
+
+        if (Status == SessionStatus.InProgress)
+            return Result.Failure(SessionErrors.AlreadyStarted);
+
+        Status = SessionStatus.Aborted;
+        CloseReason = reason;
+        EndedAtUtc = utc;
+
+        AddDomainEvent(new SessionEnded(Id, utc));
+
+        return Result.Success();
+    }
+
+    // Runtime
     public void ReceiveCommand(IGameCommand command) { /* store in CommandHistory */ }
     public void ReceiveStateHash(StateHashReport report) { /* store in HashBuffer */ }
-    public IReadOnlyList<IGameCommand> GetCommandsFromFrame(ulong startFrame) { return default; }
-
-    public void TickForward()
-    {
-        CurrentTick += 1;
-    }
+    public IReadOnlyList<IGameCommand> GetCommandsFromFrame(ulong startFrame) => Array.Empty<IGameCommand>();
+    public void TickForward() => CurrentTick += 1;
 }

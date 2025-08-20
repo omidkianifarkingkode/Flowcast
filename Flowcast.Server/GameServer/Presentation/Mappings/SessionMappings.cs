@@ -2,7 +2,6 @@
 using Application.Sessions.Queries;
 using Contracts.V1.Sessions;
 using Domain.Sessions;
-using Domain.Sessions.ValueObjects;
 using static Contracts.V1.Sessions.Get;
 
 namespace Presentation.Mappings;

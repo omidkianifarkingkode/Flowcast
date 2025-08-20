@@ -37,10 +37,6 @@ public static class DependencyInjection
 
         builder.Services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
-        builder.Services.AddScoped<ConnectedPlayersRegistry>();
-
-
-
         return builder;
     }
 }

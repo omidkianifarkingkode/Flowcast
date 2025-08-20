@@ -1,29 +1,38 @@
 ﻿using Application.Abstractions.Messaging;
-using Application.Services;
 using Domain.Sessions;
-using Domain.Sessions.Errors;
-using Domain.Sessions.Services;
-using Domain.Sessions.ValueObjects;
 using SharedKernel;
 
 namespace Application.Sessions.Queries;
 
 public record GetSessionByPlayerQuery(PlayerId PlayerId) : IQuery<Session>;
 
-public sealed class GetSessionsForPlayerHandler(ISessionRepository sessionRepository, ConnectedPlayersRegistry playerRegistry)
+public sealed class GetSessionsForPlayerHandler(ISessionRepository repo)
     : IQueryHandler<GetSessionByPlayerQuery, Session>
 {
-    public async Task<Result<Session>> Handle(GetSessionByPlayerQuery query, CancellationToken cancellationToken)
+    public async Task<Result<Session>> Handle(GetSessionByPlayerQuery query, CancellationToken ct)
     {
-        if (!playerRegistry.TryGet(query.PlayerId.Value, out var registerdPlayer))
-            return Result.Failure<Session>(SessionErrors.PlayerNotFound);
+        // Try optimized path if implemented
+        var active = await repo.GetActiveByPlayer(query.PlayerId, ct);
 
-        var session = (await sessionRepository.GetAll(cancellationToken))
-            .FirstOrDefault(s => s.Players.Any(p => p.Id == query.PlayerId));
+        if (active.IsSuccess && active.Value is { } seassion)
+            return seassion;
 
-        if (session is null)
-            return Result.Failure<Session>(SessionErrors.SessionNotFound);
+        if (active.IsFailure && active.Error is not null)
+        {
+            if (!string.Equals(active.Error.Code, "not_implemented", StringComparison.OrdinalIgnoreCase))
+                return Result.Failure<Session>(active.Error);
+        }
 
-        return session;
+        // Fallback scan
+        var all = await repo.GetAll(ct);
+        if (all.IsFailure) return Result.Failure<Session>(all.Error);
+
+        var found = all.Value.FirstOrDefault(s =>
+            s.Status is SessionStatus.Waiting or SessionStatus.InProgress
+            && s.Participants.Any(p => p.Id == query.PlayerId));
+
+        return found is null
+            ? Result.Failure<Session>(SessionErrors.SessionNotFound)
+            : Result.Success(found);
     }
 }

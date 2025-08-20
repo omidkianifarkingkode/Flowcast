@@ -6,7 +6,7 @@ using SharedKernel;
 namespace Application.Realtime.Commons.PingPong;
 
 [MessagePackObject]
-[RealtimeMessage(RealtimeMessageType.Ping)]
+[RealtimeMessage(RealtimeMessageType.MatchMaking)]
 public sealed class PingCommand : IRealtimeCommand
 {
     [Key(0)] public ulong PingId { get; set; }

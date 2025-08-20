@@ -39,7 +39,7 @@ public class BinaryRealtimeMessageSender(
             return msg;
 
         // Do NOT auto-attach for Ping; leave it to liveness service (option-controlled).
-        if (msg.Header.Type == RealtimeMessageType.Ping)
+        if (msg.Header.Type == RealtimeMessageType.MatchMaking)
             return msg;
 
         if (connectionRegistry.TryGetTelemetry(userId, out var telem))
@@ -56,7 +56,7 @@ public class BinaryRealtimeMessageSender(
         if ((msg.Header.Flags & HeaderFlags.HasTelemetry) != 0 && msg.Header.Telemetry.HasValue)
             return msg;
 
-        if (msg.Header.Type == RealtimeMessageType.Ping)
+        if (msg.Header.Type == RealtimeMessageType.MatchMaking)
             return msg;
 
         if (connectionRegistry.TryGetTelemetry(userId, out var telem))

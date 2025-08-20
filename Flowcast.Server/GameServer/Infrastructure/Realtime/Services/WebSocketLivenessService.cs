@@ -111,7 +111,7 @@ public class WebSocketLivenessService(
             flags = HeaderFlags.HasTelemetry;
         }
 
-        var header = new MessageHeader(RealtimeMessageType.Ping, headerId, nowUnix, flags, telemetry);
+        var header = new MessageHeader(RealtimeMessageType.MatchMaking, headerId, nowUnix, flags, telemetry);
         var payload = new PingCommand { PingId = headerId, ServerTimestamp = nowUnix };
         var pingMsg = new RealtimeMessage<PingCommand>(header, payload);
 
