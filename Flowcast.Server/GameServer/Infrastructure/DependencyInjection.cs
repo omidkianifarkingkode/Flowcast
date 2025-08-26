@@ -7,9 +7,8 @@ using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
-using Infrastructure.Persistence.Respositories;
+using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence.Users.Services;
-using Infrastructure.Realtime;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Realtime.Transport;
 using SharedKernel;
 using System.Text;
 
@@ -48,8 +48,6 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
-
-        builder.AddRealtimeServices();
 
         return builder;
     }

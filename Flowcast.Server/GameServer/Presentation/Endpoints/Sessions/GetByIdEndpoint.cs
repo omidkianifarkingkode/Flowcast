@@ -2,7 +2,6 @@
 using Application.Sessions.Queries;
 using Contracts.V1.Sessions;
 using Domain.Sessions;
-using Domain.Sessions.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.Infrastructure;
 using Presentation.Mappings;

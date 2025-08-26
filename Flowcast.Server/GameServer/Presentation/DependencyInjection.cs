@@ -2,6 +2,7 @@
 using Presentation.Extensions;
 using Presentation.Infrastructure;
 using Presentation.SwaggerUtilities;
+using Realtime.Transport;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -26,6 +27,8 @@ public static class DependencyInjection
         });
 
         builder.Services.AddSwaggerGen();
+
+        builder.AddRealtimeServices(typeof(DependencyInjection).Assembly);
 
         return builder;
     }

@@ -1,7 +1,7 @@
 ﻿using Application.Abstractions.Messaging;
 using Application.Abstractions.Security;
-using Application.Realtime.Services;
 using Domain.Sessions;
+using Realtime.Transport.UserConnection;
 using SharedKernel;
 
 namespace Application.Sessions.Commands;
@@ -28,7 +28,7 @@ public sealed class JoinSessionHandler(
         if (!tokenValidator.Validate(cmd.SessionId.Value, cmd.PlayerId.Value, cmd.JoinToken))
             return Result.Failure<JoinSessionResult>(Error.Unauthorized("session.invalid_join_token", "Join token invalid or expired."));
 
-        if (!userConn.IsUserConnected(cmd.PlayerId.Value))
+        if (!userConn.IsUserConnected(cmd.PlayerId.Value.ToString()))
             return Result.Failure<JoinSessionResult>(Error.Conflict("session.player_not_connected", "Player socket not connected."));
 
         var sessionResult = await sessionRepository.GetById(cmd.SessionId, cancellationToken);

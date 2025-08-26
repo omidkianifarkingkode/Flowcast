@@ -16,9 +16,9 @@ public sealed record FindMatchResult(
     DateTime? ReadyDeadlineUtc);
 
 public sealed class FindMatchHandler(
-    ITicketRepository ticketRepository,
-    IMatchRepository matchRepository,
-    ISessionRepository sessionRepository,
+    ITicketRepository tickets,
+    IMatchRepository matches,
+    ISessionRepository sessions,
     ILivenessProbe liveness,
     IDateTimeProvider clock,
     IMatchmakingNotifier notifier,
@@ -28,36 +28,36 @@ public sealed class FindMatchHandler(
     public async Task<Result<FindMatchResult>> Handle(FindMatchCommand command, CancellationToken cancellationToken)
     {
         // 0) Optional gate: player must not be in an active session
-        var activeSession = await sessionRepository.GetActiveByPlayer(command.PlayerId, cancellationToken);
+        var activeSession = await sessions.GetActiveByPlayer(command.PlayerId, cancellationToken);
         if (activeSession.IsSuccess && activeSession.Value is not null)
-            return Result.Failure<FindMatchResult>(MatchErrors.PlayerAlreadyInSession);
+            return Result.Failure<FindMatchResult>(MatchmakingErrors.AlreadyInSession);
 
         // 1) Liveness gate
         if (options.Value.RequireHealthyConnection && !liveness.IsHealthy(command.PlayerId))
-            return Result.Failure<FindMatchResult>(MatchErrors.PlayerNotHealthy);
+            return Result.Failure<FindMatchResult>(MatchmakingErrors.NotHealthy);
 
         // 2) Idempotency: if open ticket exists, return its state
-        var existing = await ticketRepository.GetOpenByPlayer(command.PlayerId, command.Mode, cancellationToken);
-        if (existing.IsSuccess && existing.Value is { } open)
+        var existing = await tickets.GetOpenByPlayer(command.PlayerId, command.Mode, cancellationToken);
+        if (existing.IsSuccess)
         {
+            var open = existing.Value;
             Match? reserved = null;
             DateTime? deadline = null;
-
             if (open.State == TicketState.PendingReady && open.MatchId is { } mid)
             {
-                var mr = await matchRepository.GetById(mid, cancellationToken);
-                if (mr.IsSuccess) { reserved = mr.Value; deadline = reserved.ReadyDeadlineUtc; }
+                var matchResult = await matches.GetById(mid, cancellationToken);
+                if (matchResult.IsSuccess) { reserved = matchResult.Value; deadline = reserved.ReadyDeadlineUtc; }
             }
             return new FindMatchResult(open, reserved, deadline);
         }
 
         // 3) Create new ticket
         var ticket = Ticket.Create(command.PlayerId, command.Mode, clock.UtcNow);
-        await ticketRepository.Save(ticket, cancellationToken);
+        await tickets.Save(ticket, cancellationToken);
 
         // 4) Try FIFO pair within same transaction scope (single node simple case)
         //    Strategy: find oldest other Searching ticket in same mode
-        var queue = await ticketRepository.GetSearchingByMode(command.Mode, cancellationToken);
+        var queue = await tickets.GetSearchingByMode(command.Mode, cancellationToken);
         var other = queue.IsSuccess
             ? queue.Value
                 .Where(t => t.PlayerId != command.PlayerId && t.Id != ticket.Id)
@@ -75,14 +75,14 @@ public sealed class FindMatchHandler(
         _ = ticket.MoveToPendingReady(match.Id, clock.UtcNow);
         _ = other.MoveToPendingReady(match.Id, clock.UtcNow);
 
-        await matchRepository.Save(match, cancellationToken);
-        await ticketRepository.Save(ticket, cancellationToken);
-        await ticketRepository.Save(other, cancellationToken);
+        await matches.Save(match, cancellationToken);
+        await tickets.Save(ticket, cancellationToken);
+        await tickets.Save(other, cancellationToken);
 
         // 6) Notify both players
-        var deadline = match.ReadyDeadlineUtc ?? clock.UtcNow.AddSeconds(options.Value.ReadyWindowSeconds);
-        await notifier.MatchFound(ticket.PlayerId, match, deadline, cancellationToken);
-        await notifier.MatchFound(other.PlayerId, match, deadline, cancellationToken);
+        var readyDeadline = match.ReadyDeadlineUtc ?? clock.UtcNow.AddSeconds(options.Value.ReadyWindowSeconds);
+        await notifier.MatchFound(ticket.PlayerId, match, readyDeadline, cancellationToken);
+        await notifier.MatchFound(other.PlayerId, match, readyDeadline, cancellationToken);
 
         return new FindMatchResult(ticket, match, match.ReadyDeadlineUtc);
     }

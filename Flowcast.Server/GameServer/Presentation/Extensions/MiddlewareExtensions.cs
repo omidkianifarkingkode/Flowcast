@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Presentation.Endpoints;
 using Presentation.Middleware;
 using Presentation.SwaggerUtilities;
+using Realtime.Transport.Gateway;
 using Serilog;
 
 namespace Presentation.Extensions;
