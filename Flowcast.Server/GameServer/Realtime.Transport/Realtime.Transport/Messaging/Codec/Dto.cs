@@ -19,9 +19,7 @@ public sealed partial class Codec
 
     private sealed class TelemetryDto
     {
-        public ulong LastPingId { get; set; }
-        public int LastRttMs { get; set; }
-        public long ClientSendTs { get; set; }
+        public Dictionary<ushort, string>? Fields { get; set; } // key -> base64(value)
     }
 
     private sealed class HeaderOnlyWrapper

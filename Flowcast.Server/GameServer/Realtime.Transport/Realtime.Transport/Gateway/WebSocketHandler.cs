@@ -1,10 +1,10 @@
 ﻿using ErrorOr;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Realtime.Transport.Http;
 using Realtime.Transport.Messaging.Receiver;
 using Realtime.Transport.UserConnection;
 using Realtime.Transport.Utilities;
+using System.Buffers;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -23,12 +23,22 @@ public class WebSocketHandler(
     /// </summary>
     public async Task HandleConnectionAsync(HttpContext context, CancellationToken cancellationToken)
     {
-        using var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
+        if (!context.WebSockets.IsWebSocketRequest)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
+
+        var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
 
         var authResult = await AuthorizeConnection(context, webSocket, cancellationToken).ConfigureAwait(false);
 
         if (authResult.IsError)
+        {
+            await CloseSocketAsync(webSocket, WebSocketCloseStatus.PolicyViolation, "unauthorized", cancellationToken).ConfigureAwait(false);
+            webSocket.Dispose();
             return;
+        }
 
         var (userId, connectionId) = authResult.Value;
 
@@ -38,6 +48,8 @@ public class WebSocketHandler(
         }
         finally
         {
+            try { webSocket.Dispose(); } catch { /* ignore */ }
+
             connectionRegistry.Unregister(connectionId, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         }
     }
@@ -57,7 +69,7 @@ public class WebSocketHandler(
             return Error.Unauthorized("Auth.Unauthorized", "The request is not authorized.");
         }
 
-        var connectionId = Guid.NewGuid().ToString();
+        var connectionId = Guid.NewGuid().ToString("N");
         connectionRegistry.Register(connectionId, userId, webSocket, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
         return new ConnectionAuthResult(userId, connectionId);
@@ -68,10 +80,12 @@ public class WebSocketHandler(
     /// </summary>
     private async Task ReceiveLoopAsync(WebSocket socket, string connectionId, string userId, CancellationToken cancellationToken)
     {
-        var buffer = new byte[1024 * 4];
+        // rent a pooled buffer (8KB) — tweak if your frames are usually larger/smaller
+        var pool = ArrayPool<byte>.Shared;
+        byte[] buffer = pool.Rent(8192);
         var messageBuffer = new ArraySegment<byte>(buffer);
 
-        using var ms = new MemoryStream(); // For fragmented message assembly
+        using var ms = new MemoryStream(capacity: 16 * 1024); // For fragmented message assembly
 
         try
         {
@@ -82,7 +96,13 @@ public class WebSocketHandler(
                 // stop reading if receive failed
                 if (receiveResult.IsError)
                 {
-                    logger.LogWarning($"[websocket-handler] Receive loop error for {connectionId}: {receiveResult.FirstError.Code} - {receiveResult.FirstError.Description}");
+                    var err = receiveResult.FirstError;
+                    logger.LogWarning("[websocket-handler] receive error {ConnectionId}: {Code} - {Desc}", connectionId, err.Code, err.Description);
+
+                    // Protocol - ish errors → 1002, unexpected server exceptions → 1011
+                    if (err.Code.StartsWith("Receive.WebSocketError") || err.Code.StartsWith("Receive.UnexpectedError"))
+                        await CloseSocketAsync(socket, WebSocketCloseStatus.ProtocolError, "bad-frame", cancellationToken).ConfigureAwait(false);
+
                     break;
                 }
 
@@ -93,7 +113,8 @@ public class WebSocketHandler(
                 {
                     logger.LogInformation($"[websocket-handler] Close message received from {connectionId}: {result.CloseStatus} - {result.CloseStatusDescription}");
 
-                    await CloseSocketAsync(socket, result.CloseStatus, result.CloseStatusDescription, cancellationToken).ConfigureAwait(false);
+                    await CloseSocketAsync(socket, result.CloseStatus ?? WebSocketCloseStatus.NormalClosure, result.CloseStatusDescription ?? "client-closed", cancellationToken).ConfigureAwait(false);
+
                     break;
                 }
 
@@ -103,6 +124,8 @@ public class WebSocketHandler(
         }
         finally
         {
+            pool.Return(buffer, clearArray: false);
+
             await CleanupConnectionAsync(socket, connectionId).ConfigureAwait(false);
         }
     }

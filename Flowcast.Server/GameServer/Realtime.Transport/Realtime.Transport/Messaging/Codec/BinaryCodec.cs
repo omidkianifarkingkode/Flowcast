@@ -1,5 +1,6 @@
 ﻿using MessagePack;
 using System.Buffers;
+using System.Buffers.Binary;
 
 namespace Realtime.Transport.Messaging.Codec;
 
@@ -14,20 +15,23 @@ public sealed partial class Codec
 
         var hasTelemetry = (message.Header.Flags & HeaderFlags.HasTelemetry) != 0
                        && message.Header.Telemetry.HasValue;
+        var telemetryContentLen = hasTelemetry ? message.Header.Telemetry!.Value.GetContentSize() : 0;
+        var telemetryTotalLen = hasTelemetry ? (2 + telemetryContentLen) : 0; // 2 = length prefix
 
-        var total = MessageHeader.Size + (hasTelemetry ? TelemetrySegment.Size : 0) + payloadBytes.Length;
-
+        var total = MessageHeader.Size + telemetryTotalLen + payloadBytes.Length;
         var buffer = new byte[total];
 
         message.Header.WriteTo(buffer);
 
         var offset = MessageHeader.Size;
 
-        // write telemetry (optional, immediately after header)
+        // telemetry (len + TLVs)
         if (hasTelemetry)
         {
-            message.Header.Telemetry!.Value.WriteTo(buffer.AsSpan(offset, TelemetrySegment.Size));
-            offset += TelemetrySegment.Size;
+            BinaryPrimitives.WriteUInt16BigEndian(buffer.AsSpan(offset, 2), (ushort)telemetryContentLen);
+            offset += 2;
+            message.Header.Telemetry!.Value.WriteContentTo(buffer.AsSpan(offset, telemetryContentLen));
+            offset += telemetryContentLen;
         }
 
         // write payload (if any)
@@ -50,12 +54,13 @@ public sealed partial class Codec
         // read telemetry if flagged
         if ((header.Flags & HeaderFlags.HasTelemetry) != 0)
         {
-            if (data.Length < offset + TelemetrySegment.Size)
-                throw new InvalidOperationException("Frame flagged with HasTelemetry but segment is incomplete.");
-
-            var telem = TelemetrySegment.ReadFrom(new ReadOnlySpan<byte>(data, offset, TelemetrySegment.Size));
+            if (data.Length < offset + 2) throw new InvalidOperationException("Missing telemetry length.");
+            var tlvLen = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(offset, 2)); offset += 2;
+            if (data.Length < offset + tlvLen) throw new InvalidOperationException("Telemetry truncated.");
+            var tlvSpan = data.AsSpan(offset, tlvLen);
+            var telem = TelemetrySegment.ReadContentFrom(tlvSpan);
             header = header.WithTelemetry(telem);
-            offset += TelemetrySegment.Size;
+            offset += tlvLen;
         }
 
         // remaining is payload (if any)
@@ -70,8 +75,8 @@ public sealed partial class Codec
         }
         else
         {
-            var payloadMem = new ReadOnlyMemory<byte>(data, offset, payloadLen);
-            var seq = new ReadOnlySequence<byte>(payloadMem);
+            var mem = new ReadOnlyMemory<byte>(data, offset, payloadLen);
+            var seq = new ReadOnlySequence<byte>(mem);
             var reader = new MessagePackReader(seq);
             payload = MessagePackSerializer.Deserialize<TPayload>(ref reader, serializerOptions);
         }
@@ -83,16 +88,22 @@ public sealed partial class Codec
     // -------- Header-only --------
     public byte[] ToBytes(RealtimeMessage message)
     {
-        var hasTelemetry = (message.Header.Flags & HeaderFlags.HasTelemetry) != 0
-                           && message.Header.Telemetry.HasValue;
+        var hasTelemetry = (message.Header.Flags & HeaderFlags.HasTelemetry) != 0 && message.Header.Telemetry.HasValue;
+        var telemetryContentLen = hasTelemetry ? message.Header.Telemetry!.Value.GetContentSize() : 0;
+        var telemetryTotalLen = hasTelemetry ? (2 + telemetryContentLen) : 0;
 
-        var total = MessageHeader.Size + (hasTelemetry ? TelemetrySegment.Size : 0);
+        var total = MessageHeader.Size + telemetryTotalLen;
         var buffer = new byte[total];
 
         message.Header.WriteTo(buffer);
+        var offset = MessageHeader.Size;
 
         if (hasTelemetry)
-            message.Header.Telemetry!.Value.WriteTo(buffer.AsSpan(MessageHeader.Size, TelemetrySegment.Size));
+        {
+            BinaryPrimitives.WriteUInt16BigEndian(buffer.AsSpan(offset, 2), (ushort)telemetryContentLen);
+            offset += 2;
+            message.Header.Telemetry!.Value.WriteContentTo(buffer.AsSpan(offset, telemetryContentLen));
+        }
 
         return buffer;
     }
@@ -107,12 +118,12 @@ public sealed partial class Codec
 
         if ((header.Flags & HeaderFlags.HasTelemetry) != 0)
         {
-            if (data.Length < offset + TelemetrySegment.Size)
-                throw new InvalidOperationException("Frame flagged with HasTelemetry but segment is incomplete.");
-
-            var telem = TelemetrySegment.ReadFrom(new ReadOnlySpan<byte>(data, offset, TelemetrySegment.Size));
+            if (data.Length < offset + 2) throw new InvalidOperationException("Missing telemetry length.");
+            var tlvLen = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(offset, 2)); offset += 2;
+            if (data.Length < offset + tlvLen) throw new InvalidOperationException("Telemetry truncated.");
+            var telem = TelemetrySegment.ReadContentFrom(data.AsSpan(offset, tlvLen));
             header = header.WithTelemetry(telem);
-            // no payload in header-only path, but OK if extra bytes are present (ignore)
+            // ignore trailing bytes if any (header-only path)
         }
 
         return new RealtimeMessage(header);

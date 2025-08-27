@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Realtime.Transport.Gateway;
 using Realtime.Transport.Http;
 using Realtime.Transport.Liveness;
+using Realtime.Transport.Liveness.Policies;
 using Realtime.Transport.Messaging.Codec;
 using Realtime.Transport.Messaging.Factories;
 using Realtime.Transport.Messaging.Receiver;
@@ -18,18 +19,22 @@ public static class RealtimeDependencyInjection
     {
         builder.Services.AddSingleton<WebSocketHandler>();
         builder.Services.AddSingleton<IUserConnectionRegistry, InMemoryUserConnectionRegistry>();
-        builder.Services.AddSingleton<IRealtimeMessageSender, JsonSender>();
-        builder.Services.AddSingleton<RealtimeMessageReceiver>();
-        builder.Services.AddSingleton<IRealtimeMessageReceiver>(sp => sp.GetRequiredService<RealtimeMessageReceiver>());
-        builder.Services.AddSingleton<IRealtimeGateway>(sp => sp.GetRequiredService<RealtimeMessageReceiver>());
+
+        builder.Services.AddSingleton<JsonSender>();
+        builder.Services.AddSingleton<BinarySender>();
+        builder.Services.AddSingleton<IRealtimeMessageSender>(sp => sp.GetRequiredService<JsonSender>());
+
+        builder.Services.AddSingleton<MessageReceiver>();
+        builder.Services.AddSingleton<IRealtimeMessageReceiver>(sp => sp.GetRequiredService<MessageReceiver>());
+        builder.Services.AddSingleton<IRealtimeGateway>(sp => sp.GetRequiredService<MessageReceiver>());
 
         builder.Services.AddOptions<WebSocketLivenessOptions>()
             .BindConfiguration("WebSocket")
             .ValidateDataAnnotations()
-            .Validate(options => options.PingIntervalSeconds > 0 && options.TimeoutSeconds > 0,
-                      "PingIntervalSeconds and TimeoutSeconds must be greater than 0")
+            .Validate(o => o.TimeoutSeconds > 0, "TimeoutSeconds must be > 0")
             .ValidateOnStart();
 
+        builder.Services.AddSingleton<ILivenessPolicy, ActivityTimeoutPolicy>();
         builder.Services.AddHostedService<WebSocketLivenessService>();
 
         builder.Services.AddScoped<IRealtimeContextAccessor, RealtimeContextAccessor>();

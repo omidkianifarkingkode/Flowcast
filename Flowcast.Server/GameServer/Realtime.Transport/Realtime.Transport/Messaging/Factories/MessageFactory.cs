@@ -23,6 +23,8 @@ public interface IMessageFactory
         HeaderFlags extraFlags = HeaderFlags.None,
         TelemetrySegment? overrideTelemetry = null)
         where TPayload : IPayload;
+
+    RealtimeMessage CreatePongFor(MessageHeader pingHeader);
 }
 
 public sealed class MessageFactory(IUserConnectionRegistry connections) : IMessageFactory
@@ -55,6 +57,9 @@ public sealed class MessageFactory(IUserConnectionRegistry connections) : IMessa
         return new RealtimeMessage<TPayload>(header, payload);
     }
 
+    public RealtimeMessage CreatePongFor(MessageHeader pingHeader)
+        => new(new MessageHeader(RealtimeMessageType.Pong, pingHeader.Id, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+
     private MessageHeader BuildHeader(
         ushort type,
         string? userId,
@@ -68,18 +73,13 @@ public sealed class MessageFactory(IUserConnectionRegistry connections) : IMessa
         TelemetrySegment? telemetry = null;
         var flags = extraFlags;
 
+        if (!overrideTelemetry.HasValue)
+            return new MessageHeader(type, id, now, flags, telemetry);
+
         if (type is not RealtimeMessageType.Ping and not RealtimeMessageType.Pong)
         {
-            if (overrideTelemetry.HasValue)
-            {
-                telemetry = overrideTelemetry.Value;
-                flags |= HeaderFlags.HasTelemetry;
-            }
-            else if (userId is not null && connections.TryGetTelemetry(userId, out var t))
-            {
-                telemetry = t;
-                flags |= HeaderFlags.HasTelemetry;
-            }
+            telemetry = overrideTelemetry.Value;
+            flags |= HeaderFlags.HasTelemetry;
         }
 
         return new MessageHeader(type, id, now, flags, telemetry);

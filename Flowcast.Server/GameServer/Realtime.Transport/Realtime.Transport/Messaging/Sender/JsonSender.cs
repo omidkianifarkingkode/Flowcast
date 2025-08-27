@@ -12,9 +12,8 @@ public class JsonSender(IUserConnectionRegistry connectionRegistry, ICodec codec
         if (connectionRegistry.TryGetWebSocketByUserId(userId, out var socket)
             && socket.State == WebSocketState.Open)
         {
-            var json = codec.ToJson(message);
-            var buffer = Encoding.UTF8.GetBytes(json);
-            var segment = new ArraySegment<byte>(buffer);
+            var bytes = codec.ToJson(message);
+            var segment = new ArraySegment<byte>(bytes);
 
             await socket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken);
         }
@@ -26,9 +25,8 @@ public class JsonSender(IUserConnectionRegistry connectionRegistry, ICodec codec
         if (connectionRegistry.TryGetWebSocketByUserId(userId, out var socket)
             && socket.State == WebSocketState.Open)
         {
-            var json = codec.ToJson(message);
-            var buffer = Encoding.UTF8.GetBytes(json);
-            var segment = new ArraySegment<byte>(buffer);
+            var bytes = codec.ToJson(message);
+            var segment = new ArraySegment<byte>(bytes);
 
             await socket.SendAsync(segment, WebSocketMessageType.Text, true, cancellationToken);
         }

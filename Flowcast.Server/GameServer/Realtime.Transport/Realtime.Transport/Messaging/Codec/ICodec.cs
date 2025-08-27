@@ -11,7 +11,7 @@ public interface ICodec
     RealtimeMessage<TPayload> FromBytes<TPayload>(byte[] data, MessagePackSerializerOptions? serializerOptions = null)
         where TPayload : IPayload;
 
-    string ToJson<TPayload>(RealtimeMessage<TPayload> message, JsonSerializerOptions? serializerOptions = null)
+    byte[] ToJson<TPayload>(RealtimeMessage<TPayload> message, JsonSerializerOptions? serializerOptions = null)
         where TPayload : IPayload;
     RealtimeMessage<TPayload> FromJson<TPayload>(string json, JsonSerializerOptions? serializerOptions = null)
         where TPayload : IPayload;
@@ -20,6 +20,6 @@ public interface ICodec
     byte[] ToBytes(RealtimeMessage message);
     RealtimeMessage FromBytesHeaderOnly(byte[] data);
 
-    string ToJson(RealtimeMessage message, JsonSerializerOptions? serializerOptions = null);
+    byte[] ToJson(RealtimeMessage message, JsonSerializerOptions? serializerOptions = null);
     RealtimeMessage FromJsonHeaderOnly(string json, JsonSerializerOptions? serializerOptions = null);
 }

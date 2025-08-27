@@ -12,8 +12,7 @@ public class BinarySender(IUserConnectionRegistry connectionRegistry, ICodec cod
         if (connectionRegistry.TryGetWebSocketByUserId(userId, out var socket)
              && socket.State == WebSocketState.Open)
         {
-            var final = AttachTelemetryIfAllowed(userId, message);
-            var buffer = codec.ToBytes(final);
+            var buffer = codec.ToBytes(message);
             await socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Binary, true, cancellationToken);
         }
     }
@@ -24,47 +23,8 @@ public class BinarySender(IUserConnectionRegistry connectionRegistry, ICodec cod
         if (connectionRegistry.TryGetWebSocketByUserId(userId, out var socket)
              && socket.State == WebSocketState.Open)
         {
-            var final = AttachTelemetryIfAllowed(userId, message);
-            var buffer = codec.ToBytes(final);
+            var buffer = codec.ToBytes(message);
             await socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Binary, true, cancellationToken);
         }
-    }
-
-    // --- helpers ---
-    private RealtimeMessage AttachTelemetryIfAllowed(string userId, RealtimeMessage msg)
-    {
-        // Respect caller: if telemetry already present, keep it.
-        if ((msg.Header.Flags & HeaderFlags.HasTelemetry) != 0 && msg.Header.Telemetry.HasValue)
-            return msg;
-
-        // Do NOT auto-attach for Ping; leave it to liveness service (option-controlled).
-        if (msg.Header.Type == RealtimeMessageType.Ping)
-            return msg;
-
-        if (connectionRegistry.TryGetTelemetry(userId, out var telem))
-        {
-            var hdr = new MessageHeader(msg.Header.Type, msg.Header.Id, msg.Header.Timestamp,
-                                        msg.Header.Flags | HeaderFlags.HasTelemetry, telem);
-            return new RealtimeMessage(hdr);
-        }
-        return msg;
-    }
-
-    private RealtimeMessage<TPayload> AttachTelemetryIfAllowed<TPayload>(string userId, RealtimeMessage<TPayload> msg)
-        where TPayload : IPayload
-    {
-        if ((msg.Header.Flags & HeaderFlags.HasTelemetry) != 0 && msg.Header.Telemetry.HasValue)
-            return msg;
-
-        if (msg.Header.Type == RealtimeMessageType.Ping)
-            return msg;
-
-        if (connectionRegistry.TryGetTelemetry(userId, out var telem))
-        {
-            var hdr = new MessageHeader(msg.Header.Type, msg.Header.Id, msg.Header.Timestamp,
-                                        msg.Header.Flags | HeaderFlags.HasTelemetry, telem);
-            return new RealtimeMessage<TPayload>(hdr, msg.Payload);
-        }
-        return msg;
     }
 }

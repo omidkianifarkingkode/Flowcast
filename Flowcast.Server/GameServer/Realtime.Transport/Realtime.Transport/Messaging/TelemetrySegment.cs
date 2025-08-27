@@ -6,44 +6,64 @@ namespace Realtime.Transport.Messaging;
 public enum HeaderFlags : byte
 {
     None = 0,
-    HasTelemetry = 1
+    HasTelemetry = 1 << 0,
+    IsCompressed = 1 << 1,
+    IsEncrypted = 1 << 2,
+    IsBatch = 1 << 3,
+    HasExt = 1 << 4
 }
 
-public readonly struct TelemetrySegment(ulong lastPingId, int lastRttMs, long clientSendTs)
+/// <summary>
+/// Variable-length telemetry segment encoded as:
+/// [2:len][ TLVs... ] where TLV = [2:key][2:len][N:value]
+/// NOTE: The outer [2:len] is written/read by the codec; this type
+/// writes/reads only the TLV content portion.
+/// </summary>
+public readonly struct TelemetrySegment(IEnumerable<TelemetryField> fields)
 {
-    public ulong LastPingId { get; } = lastPingId;   // correlation to a ping id
-    public int LastRttMs { get; } = lastRttMs;    // server-measured RTT to this peer
-    public long ClientSendTs { get; } = clientSendTs; // client-sent timestamp (optional)
+    public readonly IReadOnlyList<TelemetryField> Fields = fields.ToList();
 
-    // [8:LastPingId][4:LastRttMs][8:ClientSendTs] = 20 bytes
-    public const int Size = 8 + 4 + 8;
+    public int GetContentSize()
+        => Fields.Sum(f => 2 + 2 + (f.Value?.Length ?? 0));
 
-    public void WriteTo(Span<byte> buffer)
+    public void WriteContentTo(Span<byte> buffer)
     {
-        if (buffer.Length < Size) throw new ArgumentException("Buffer too small.", nameof(buffer));
-        BinaryPrimitives.WriteUInt64BigEndian(buffer[0..8], LastPingId);       // [0..7]
-        BinaryPrimitives.WriteInt32BigEndian(buffer[8..12], LastRttMs);       // [8..11]
-        BinaryPrimitives.WriteInt64BigEndian(buffer[12..20], ClientSendTs);   // [12..19]
+        var offs = 0;
+        foreach (var f in Fields)
+        {
+            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(offs, 2), f.Key); offs += 2;
+            var len = (ushort)(f.Value?.Length ?? 0);
+            BinaryPrimitives.WriteUInt16BigEndian(buffer.Slice(offs, 2), len); offs += 2;
+            if (len > 0)
+            {
+                f.Value!.CopyTo(buffer.Slice(offs, len));
+                offs += len;
+            }
+        }
     }
 
-    public static TelemetrySegment ReadFrom(ReadOnlySpan<byte> span)
+    public static TelemetrySegment ReadContentFrom(ReadOnlySpan<byte> buffer)
     {
-        if (span.Length < Size) throw new ArgumentException("Span too small.", nameof(span));
-        var lastPingId = BinaryPrimitives.ReadUInt64BigEndian(span[0..8]);
-        var lastRttMs = BinaryPrimitives.ReadInt32BigEndian(span[8..12]);
-        var clientSendTs = BinaryPrimitives.ReadInt64BigEndian(span[12..20]);
-        return new TelemetrySegment(lastPingId, lastRttMs, clientSendTs);
+        var fields = new List<TelemetryField>(capacity: 4);
+        var offs = 0;
+        while (offs + 4 <= buffer.Length)
+        {
+            var key = BinaryPrimitives.ReadUInt16BigEndian(buffer.Slice(offs, 2)); offs += 2;
+            var len = BinaryPrimitives.ReadUInt16BigEndian(buffer.Slice(offs, 2)); offs += 2;
+            if (offs + len > buffer.Length) throw new ArgumentException("Telemetry TLV truncated.");
+            var val = len == 0 ? [] : buffer.Slice(offs, len).ToArray();
+            offs += len;
+            fields.Add(new TelemetryField(key, val));
+        }
+        if (offs != buffer.Length) throw new ArgumentException("Telemetry trailing bytes.");
+        return new TelemetrySegment(fields);
     }
 
-    public override string ToString()
-    {
-        static string Iso(long ms)
-            => DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime.ToString("O");
+    public override string ToString() => $"Telemetry[{Fields.Count} fields]";
+}
 
-        var clientTsPart = ClientSendTs != 0
-            ? $"{ClientSendTs} ({Iso(ClientSendTs)})"
-            : "0";
-
-        return $"LastPingId={LastPingId}, LastRttMs={LastRttMs}, ClientSendTs={clientTsPart}";
-    }
+public readonly struct TelemetryField(ushort key, byte[] value)
+{
+    public ushort Key { get; } = key;
+    public byte[] Value { get; } = value ?? Array.Empty<byte>();
 }
