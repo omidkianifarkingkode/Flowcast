@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Realtime.Transport.Gateway.Options;
+using Realtime.Transport.Liveness.Options;
 using Realtime.Transport.Liveness.Policies;
+using Realtime.Transport.Options;
 using Realtime.Transport.UserConnection;
 using System.Net.WebSockets;
 
@@ -13,9 +16,11 @@ namespace Realtime.Transport.Liveness;
 public class WebSocketLivenessService(
     IUserConnectionRegistry connectionRegistry,
     ILivenessPolicy policy,
-    IOptions<WebSocketLivenessOptions> options,
+    IOptions<RealtimeOptions> realtimeOptionsAccessor,
     ILogger<WebSocketLivenessService> logger) : BackgroundService
 {
+    private readonly LivenessOptions options = realtimeOptionsAccessor.Value.Liveness;
+
     /// <summary>
     /// Routine:
     /// 1) Every Interval:
@@ -25,7 +30,7 @@ public class WebSocketLivenessService(
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        var checkInterval = TimeSpan.FromSeconds(Math.Max(1, options.Value.TimeoutSeconds / 3)); // cheap heuristic
+        var checkInterval = TimeSpan.FromSeconds(Math.Max(1, options.TimeoutSeconds / 3)); // cheap heuristic
 
         while (!cancellationToken.IsCancellationRequested)
         {

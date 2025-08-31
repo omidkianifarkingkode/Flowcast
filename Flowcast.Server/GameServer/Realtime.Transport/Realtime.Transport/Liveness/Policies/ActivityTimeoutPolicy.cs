@@ -1,10 +1,11 @@
 ﻿using Microsoft.Extensions.Options;
+using Realtime.Transport.Liveness.Options;
 using Realtime.Transport.UserConnection;
 using System.Net.WebSockets;
 
 namespace Realtime.Transport.Liveness.Policies;
 
-public sealed class ActivityTimeoutPolicy(IOptions<WebSocketLivenessOptions> options) : ILivenessPolicy
+public sealed class ActivityTimeoutPolicy(IOptions<LivenessOptions> options) : ILivenessPolicy
 {
     public bool CountInboundAsActivity => options.Value.CountAnyInboundAsActivity;
 

@@ -1,4 +1,5 @@
-﻿using Presentation.Endpoints;
+﻿using Application.Abstractions.Messaging;
+using Presentation.Endpoints;
 using Presentation.Extensions;
 using Presentation.Infrastructure;
 using Presentation.SwaggerUtilities;
@@ -28,7 +29,12 @@ public static class DependencyInjection
 
         builder.Services.AddSwaggerGen();
 
-        builder.AddRealtimeServices(typeof(DependencyInjection).Assembly);
+        builder.AddRealtimeServices()
+            .DiscoverMessagesFrom(typeof(Application.DependencyInjection).Assembly)
+            .UseCommandRouting(routes => routes
+                .Map(typeof(ICommand), typeof(ICommandHandler<>))
+                .Map(typeof(ICommand<>), typeof(ICommandHandler<,>))
+        );
 
         return builder;
     }

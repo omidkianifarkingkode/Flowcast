@@ -1,7 +1,10 @@
 ﻿using ErrorOr;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Realtime.Transport.Gateway.Options;
 using Realtime.Transport.Messaging.Receiver;
+using Realtime.Transport.Options;
 using Realtime.Transport.UserConnection;
 using Realtime.Transport.Utilities;
 using System.Buffers;
@@ -13,10 +16,13 @@ namespace Realtime.Transport.Gateway;
 // Main WebSocket handler class managing connection lifecycle and message processing
 public class WebSocketHandler(
     IUserConnectionRegistry connectionRegistry,
-    IRealtimeMessageReceiver receiver,
+    IMessageReceiver receiver,
+    IOptions<RealtimeOptions> realtimeOptionsAccessor,
     ILogger<WebSocketHandler> logger)
 {
     public record ConnectionAuthResult(string UserId, string ConnectionId);
+
+    private readonly GatewayOptions options = realtimeOptionsAccessor.Value.Gateway;
 
     /// <summary>
     /// Accepts and authorizes a WebSocket connection, then starts the receive loop.
@@ -82,7 +88,7 @@ public class WebSocketHandler(
     {
         // rent a pooled buffer (8KB) — tweak if your frames are usually larger/smaller
         var pool = ArrayPool<byte>.Shared;
-        byte[] buffer = pool.Rent(8192);
+        byte[] buffer = pool.Rent(options.ReceiveBufferBytes);
         var messageBuffer = new ArraySegment<byte>(buffer);
 
         using var ms = new MemoryStream(capacity: 16 * 1024); // For fragmented message assembly

@@ -1,8 +1,8 @@
 ﻿using System.Net.WebSockets;
 
-namespace Realtime.Transport.Liveness;
+namespace Realtime.Transport.Liveness.Options;
 
-public sealed class WebSocketLivenessOptions
+public sealed class LivenessOptions
 {
     /// <summary>Seconds of no inbound activity before the server closes the connection.</summary>
     public int TimeoutSeconds { get; set; } = 30;
