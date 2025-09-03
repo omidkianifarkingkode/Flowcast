@@ -1,14 +1,18 @@
 ﻿using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.MatchMakings.Shared;
 using Domain.Games.Services;
+using Domain.Matchmaking;
 using Domain.Sessions;
 using Domain.Users.Services;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Persistence.Matchmaking.Services;
 using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence.Users.Services;
+using Infrastructure.Realtime.Services;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -48,6 +52,11 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserProgressRepository, UserProgressRepository>();
+
+        builder.Services.AddScoped<ITicketRepository, InMemoryTicketRepository>();
+        builder.Services.AddScoped<IMatchRepository, InMemoryMatchRepository>();
+
+        builder.Services.AddSingleton<ILivenessProbe, RegistryLivenessProbe>();
 
         return builder;
     }

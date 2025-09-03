@@ -7,5 +7,8 @@ public static class Loaded
 
     public record Request(Guid SessionId, Guid PlayerId);
 
-    public record Response(Guid SessionId, Guid PlayerId, string ParticipantStatus, string SessionStatus);
+    public record Response(Guid SessionId, Response.ParticipantInfo Participant, string SessionStatus, DateTime? StartedAtUtc)
+    {
+        public record ParticipantInfo(Guid Id, string DisplayName, string Status);
+    }
 }

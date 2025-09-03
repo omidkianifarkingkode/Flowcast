@@ -1,8 +1,8 @@
 ﻿using Application.Abstractions.Messaging;
 using Application.Sessions.Commands;
 using Contracts.V1.Sessions;
+using Domain.Sessions;
 using Presentation.Infrastructure;
-using Presentation.Mappings;
 using SharedKernel;
 
 namespace Presentation.Endpoints.Sessions;
@@ -14,20 +14,33 @@ internal sealed class LeaveEndpoint : IEndpoint
         app.MapPost(Leave.Route,
             async (Leave.Request request, ICommandHandler<LeaveSessionCommand, LeaveSessionResult> handler, CancellationToken ct) =>
         {
-            request.MapToCommand(out LeaveSessionCommand command);
+            var command = ToCommand(request);
 
             var result = await handler.Handle(command, ct);
 
             return result.Match(
-                result =>
-                {
-                    result.MapToResponse(out Leave.Response response);
-                    return Results.Ok(response);
-                },
+                leaveResult => Results.Ok(ToResponse(leaveResult)),
                 CustomResults.Problem
             );
         })
         .WithTags(Tags.Sessions)
         .MapToApiVersion(1.0);
     }
+
+    // Mapping Section
+
+    public static LeaveSessionCommand ToCommand(Leave.Request request)
+        => new(
+            new SessionId(request.SessionId),
+            new PlayerId(request.PlayerId)
+        );
+
+    public static Leave.Response ToResponse(LeaveSessionResult leaveResult)
+        => new(
+            SessionId: leaveResult.Session.Id.Value,
+            Player: new Leave.Response.PlayerInfo(
+                               Id: leaveResult.Participant.Id.Value,
+                               DisplayName: leaveResult.Participant.DisplayName),
+            WasLastPlayer: leaveResult.WasLastPlayer
+        );
 }
