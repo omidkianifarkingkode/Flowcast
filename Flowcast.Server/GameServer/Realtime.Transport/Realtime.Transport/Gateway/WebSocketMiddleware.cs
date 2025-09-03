@@ -6,7 +6,7 @@ namespace Realtime.Transport.Gateway;
 
 public static class WebSocketMiddleware
 {
-    public static WebApplication UseWebSocketsAndMapEndpoint(
+    public static WebApplication UseRealtime(
         this WebApplication app)
     {
         app.UseWebSockets();

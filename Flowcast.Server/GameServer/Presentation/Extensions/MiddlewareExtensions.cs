@@ -40,7 +40,7 @@ public static class MiddlewareExtensions
 
         app.MapControllers();// REMARK: If you want to use Controllers, you'll need this.
 
-        app.UseWebSocketsAndMapEndpoint();
+        app.UseRealtime();
 
         return app;
     }

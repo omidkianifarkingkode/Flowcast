@@ -19,6 +19,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Realtime.Transport", "Realt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Realtime.Transport", "Realtime.Transport\Realtime.Transport\Realtime.Transport.csproj", "{9C51349A-AA2E-43B5-9FC1-19C7FB92EA5F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Realtime.TestHost", "Realtime.Transport\Realtime.TestHost\Realtime.TestHost.csproj", "{F8197B4C-A863-426D-BFA7-41DC449379ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,12 +55,17 @@ Global
 		{9C51349A-AA2E-43B5-9FC1-19C7FB92EA5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C51349A-AA2E-43B5-9FC1-19C7FB92EA5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C51349A-AA2E-43B5-9FC1-19C7FB92EA5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8197B4C-A863-426D-BFA7-41DC449379ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8197B4C-A863-426D-BFA7-41DC449379ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8197B4C-A863-426D-BFA7-41DC449379ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8197B4C-A863-426D-BFA7-41DC449379ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9C51349A-AA2E-43B5-9FC1-19C7FB92EA5F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{F8197B4C-A863-426D-BFA7-41DC449379ED} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BD7E6969-6F51-4BB6-BB12-8FE6C3398EC9}

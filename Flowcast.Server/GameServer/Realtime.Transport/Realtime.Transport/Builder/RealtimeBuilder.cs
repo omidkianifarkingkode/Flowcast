@@ -57,6 +57,7 @@ internal sealed class RealtimeBuilder : IRealtimeBuilder, ICommandRouteConfigura
                 ? sp.GetRequiredService<BinarySender>()
                 : sp.GetRequiredService<JsonSender>();
         });
+        builder.Services.AddScoped<IRealtimeClientMessenger, RealtimeClientMessenger>();
 
         // Receiver
         services.AddSingleton<MessageReceiver>();

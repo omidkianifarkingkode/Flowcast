@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Realtime.Transport")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5e84a62599d45622fbfc028e8bbc6f0b17bef4f2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a4100300dfd970a91e70f1a2f4991762893f506f")]
 [assembly: System.Reflection.AssemblyProductAttribute("Realtime.Transport")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Realtime.Transport")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

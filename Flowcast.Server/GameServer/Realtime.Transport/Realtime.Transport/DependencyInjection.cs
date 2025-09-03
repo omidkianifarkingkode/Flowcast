@@ -3,7 +3,7 @@ using Realtime.Transport.Builder;
 
 namespace Realtime.Transport;
 
-public static class RealtimeDependencyInjection
+public static class DependencyInjection
 {
     public static IRealtimeBuilder AddRealtimeServices(this WebApplicationBuilder builder)
         => new RealtimeBuilder(builder);
