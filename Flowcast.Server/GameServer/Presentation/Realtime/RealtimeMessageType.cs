@@ -9,7 +9,10 @@ public enum RealtimeMessageType : ushort
     Ping = 4,
     Pong = 5,
 
+
+
     // --- Matchmaking (outbound & inbound) ---
+    FindMatch = 1001,
     MatchFound = 10, // server -> client
     MatchAborted = 11, // server -> client
     MatchConfirmed = 12, // server -> client

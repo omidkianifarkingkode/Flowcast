@@ -1,54 +1,74 @@
-﻿//using Application.MatchMakings.Shared;
-//using Application.Realtime.Messaging;
-//using Application.Realtime.Messaging.Contracts;
-//using Application.Realtime.Services;
-//using Domain.Sessions;
-//using Realtime.Transport.Messaging.Sender;
-//using Match = Domain.Matchmaking.Match;
+﻿using Application.MatchMakings.Shared;
+using Domain.Matchmaking;
+using Domain.Sessions;
+using Realtime.Transport.Messaging.Sender;
+using Match = Domain.Matchmaking.Match;
 
-//namespace Infrastructure.Persistence.Matchmaking.Services;
+namespace Infrastructure.Persistence.Matchmaking.Services;
 
-//public sealed class MatchmakingNotifier(IRealtimeMessageSender sender, IRealtimeMessageFactory factory) : IMatchmakingNotifier
-//{
-//    public async Task MatchFound(PlayerId player, Match match, DateTime readyDeadlineUtc, CancellationToken ct)
-//    {
-//        var payload = new MatchFoundCmd
-//        {
-//            MatchId = match.Id.Value,
-//            Mode = match.Mode,
-//            Players = match.Players.Select(p => p.Value).ToArray(),
-//            ReadyDeadlineUnixMs = new DateTimeOffset(readyDeadlineUtc).ToUnixTimeMilliseconds()
-//        };
+public sealed class MatchmakingNotifier(IRealtimeMessageSender messenger) : IMatchmakingNotifier
+{
+    public Task MatchQueued(PlayerId player, Ticket ticket, string? corrId, CancellationToken ct)
+        => messenger.SendToUserAsync(
+            player.Value.ToString("D"),
+            MatchQueuedCmd.Type,
+            new MatchQueuedCmd
+            {
+                TicketId = ticket.Id.Value,
+                Mode = ticket.Mode,
+                EnqueuedAtUtc = ticket.EnqueuedAtUtc,
+                CorrId = corrId
+            },
+            ct);
 
-//        var message = factory.Create(RealtimeMessageType.MatchFound, payload);
+    public Task MatchFound(PlayerId player, Match match, DateTime readyDeadlineUtc, string? corrId, CancellationToken ct)
+        => messenger.SendToUserAsync(
+            player.Value.ToString("D"),
+            MatchFoundCmd.Type,
+            new MatchFoundCmd
+            {
+                MatchId = match.Id.Value,
+                Mode = match.Mode,
+                Players = match.Players.Select(p => p.Value).ToArray(),
+                ReadyDeadlineUnixMs = new DateTimeOffset(readyDeadlineUtc).ToUnixTimeMilliseconds()
+            },
+            ct);
 
-//        await sender.SendToUserAsync(player.Value, message, ct);
-//    }
+    public Task MatchFoundFail(PlayerId player, string mode, string reasonCode, string message, bool retryable, string? corrId, CancellationToken ct)
+        => messenger.SendToUserAsync(
+            player.Value.ToString("D"),
+            MatchFoundFailCmd.Type,
+            new MatchFoundFailCmd
+            {
+                Mode = mode,
+                ReasonCode = reasonCode,
+                Message = message,
+                Retryable = retryable,
+                CorrId = corrId
+            },
+            ct);
 
-//    public async Task MatchAborted(PlayerId player, Match match, string reason, CancellationToken ct)
-//    {
-//        var payload = new MatchAbortedCmd
-//        {
-//            MatchId = match.Id.Value,
-//            Reason = reason
-//        };
+    // keep your existing ones
+    public Task MatchConfirmed(PlayerId player, Match match, CancellationToken ct) =>
+        messenger.SendToUserAsync(
+            player.Value.ToString("D"),
+            MatchConfirmedCmd.Type,
+            new MatchConfirmedCmd
+            {
+                MatchId = match.Id.Value,
+                Mode = match.Mode,
+                Players = match.Players.Select(p => p.Value).ToArray()
+            },
+            ct);
 
-//        var message = factory.Create(RealtimeMessageType.MatchAborted, payload);
-
-//        await sender.SendToUserAsync(player.Value, message, ct);
-//    }
-
-//    public async Task MatchConfirmed(PlayerId player, Match match, CancellationToken ct)
-//    {
-//        var payload = new MatchConfirmedCmd
-//        {
-//            MatchId = match.Id.Value,
-//            Mode = match.Mode,
-//            Players = match.Players.Select(p => p.Value).ToArray()
-//        };
-
-//        var message = factory.Create(RealtimeMessageType.MatchConfirmed, payload);
-
-//        await sender.SendToUserAsync(player.Value, message, ct);
-//    }
-//}
+    public Task MatchAborted(PlayerId player, Match match, string reason, CancellationToken ct) =>
+        messenger.SendToUserAsync(
+            player.Value.ToString("D"),
+            MatchAbortedCmd.Type,
+            new MatchAbortedCmd
+            {
+                MatchId = match.Id.Value,
+                Reason = reason
+            },
+            ct);
+}

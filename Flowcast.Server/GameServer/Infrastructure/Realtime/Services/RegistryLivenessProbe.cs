@@ -1,4 +1,4 @@
-﻿using Application.MatchMakings.Shared;
+﻿using Application.Abstractions.Realtime;
 using Domain.Sessions;
 using Realtime.Transport.UserConnection;
 

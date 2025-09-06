@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Realtime;
 using Application.MatchMakings.Shared;
 using Domain.Games.Services;
 using Domain.Matchmaking;
@@ -57,6 +58,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<IMatchRepository, InMemoryMatchRepository>();
 
         builder.Services.AddSingleton<ILivenessProbe, RegistryLivenessProbe>();
+        builder.Services.AddScoped<IMatchmakingNotifier, MatchmakingNotifier>();
 
         return builder;
     }
