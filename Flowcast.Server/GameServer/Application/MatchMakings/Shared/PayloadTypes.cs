@@ -1,51 +1,23 @@
-﻿using Application.Abstractions.Realtime.Routing;
+﻿using Application.Abstractions.Realtime;
+using Application.Abstractions.Realtime.Routing;
 
 namespace Application.MatchMakings.Shared;
 
-public static class PayloadTypes
+public static class MatchmakingV1
 {
-    public const byte Domain = 2;
+    // Inbound (client → server)
+    public const ushort FindMatch       = MessageDomain.Matchmaking | MessageBits.V1 | MessageBits.REQ | 1;
+    public const ushort Ready           = MessageDomain.Matchmaking | MessageBits.V1 | MessageBits.REQ | 2;
+    public const ushort Cancel          = MessageDomain.Matchmaking | MessageBits.V1 | MessageBits.REQ | 3;
 
-    // v1 Requests (Client -> Server)
-    public const ushort FindMatch = Domain << MessageBits.SHIFT_DOMAIN
-        | MessageBits.DIR_REQ << MessageBits.SHIFT_DIR
-        | MessageBits.DefaultVersion << MessageBits.SHIFT_VER
-        | 1;
-
-    public const ushort Ready = Domain << MessageBits.SHIFT_DOMAIN
-        | MessageBits.DIR_REQ << MessageBits.SHIFT_DIR
-        | MessageBits.DefaultVersion << MessageBits.SHIFT_VER
-        | 2;
-
-    public const ushort Cancel = Domain << MessageBits.SHIFT_DOMAIN
-        | MessageBits.DIR_REQ << MessageBits.SHIFT_DIR
-        | MessageBits.DefaultVersion << MessageBits.SHIFT_VER
-        | 3;
-
-    // v1 Pushes (Server -> Client)
-    public const ushort Queued = Domain << MessageBits.SHIFT_DOMAIN
-        | MessageBits.DIR_PUSH << MessageBits.SHIFT_DIR
-        | MessageBits.DefaultVersion << MessageBits.SHIFT_VER
-        | 0;
-
-    public const ushort Found = Domain << MessageBits.SHIFT_DOMAIN
-        | MessageBits.DIR_PUSH << MessageBits.SHIFT_DIR
-        | MessageBits.DefaultVersion << MessageBits.SHIFT_VER
-        | 1;
-
-    public const ushort FoundFail = Domain << MessageBits.SHIFT_DOMAIN
-        | MessageBits.DIR_PUSH << MessageBits.SHIFT_DIR
-        | MessageBits.DefaultVersion << MessageBits.SHIFT_VER
-        | 2;
-
-    public const ushort Aborted = Domain << MessageBits.SHIFT_DOMAIN
-        | MessageBits.DIR_PUSH << MessageBits.SHIFT_DIR
-        | MessageBits.DefaultVersion << MessageBits.SHIFT_VER
-        | 3;
-
-    public const ushort Confirmed = Domain << MessageBits.SHIFT_DOMAIN
-        | MessageBits.DIR_PUSH << MessageBits.SHIFT_DIR
-        | MessageBits.DefaultVersion << MessageBits.SHIFT_VER
-        | 4;
+    // Outbound (server → client)
+    public const ushort Queued          = MessageDomain.Matchmaking | MessageBits.V1 | MessageBits.PSH | 0;
+    public const ushort Found           = MessageDomain.Matchmaking | MessageBits.V1 | MessageBits.PSH | 1;
+    public const ushort FoundFail       = MessageDomain.Matchmaking | MessageBits.V1 | MessageBits.PSH | 2;
+    public const ushort Aborted         = MessageDomain.Matchmaking | MessageBits.V1 | MessageBits.PSH | 3;
+    public const ushort Confirmed       = MessageDomain.Matchmaking | MessageBits.V2 | MessageBits.PSH | 4;
+    public const ushort CancelFail      = MessageDomain.Matchmaking | MessageBits.V2 | MessageBits.PSH | 5;
+    public const ushort Cancelled       = MessageDomain.Matchmaking | MessageBits.V2 | MessageBits.PSH | 6;
+    public const ushort ReadyAck        = MessageDomain.Matchmaking | MessageBits.V2 | MessageBits.PSH | 7;
+    public const ushort ReadyAckFail    = MessageDomain.Matchmaking | MessageBits.V2 | MessageBits.PSH | 8;
 }
-

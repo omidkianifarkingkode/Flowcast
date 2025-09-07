@@ -1,24 +1,22 @@
-﻿using Application.Abstractions.Messaging;
-using MessagePack;
+﻿using MessagePack;
 using Realtime.Transport.Messaging;
 
 namespace Application.MatchMakings.Shared
 {
     [MessagePackObject]
-    public sealed class MatchQueuedCmd : IPayload
+    public sealed class MatchQueuedCommand : IPayload
     {
-        public const ushort Type = PayloadTypes.Queued;
+        public const ushort Type = MatchmakingV1.Queued;
 
         [Key(0)] public Guid TicketId { get; set; }
         [Key(1)] public string Mode { get; set; } = "";
         [Key(2)] public DateTime EnqueuedAtUtc { get; set; }
-        [Key(3)] public string? CorrId { get; set; }      // optional echo from client
     }
 
     [MessagePackObject]
-    public sealed class MatchFoundCmd : IPayload
+    public sealed class MatchFoundCommand : IPayload
     {
-        public const ushort Type = PayloadTypes.Found;
+        public const ushort Type = MatchmakingV1.Found;
 
         [Key(0)] public Guid MatchId { get; set; }
         [Key(1)] public string Mode { get; set; } = "";
@@ -27,35 +25,74 @@ namespace Application.MatchMakings.Shared
     }
 
     [MessagePackObject]
-    public sealed class MatchFoundFailCmd : IPayload
+    public sealed class MatchFoundFailCommand : IPayload
     {
-        public const ushort Type = PayloadTypes.FoundFail;
+        public const ushort Type = MatchmakingV1.FoundFail;
 
         [Key(0)] public string Mode { get; set; } = "";
         [Key(1)] public string ReasonCode { get; set; } = "";
         [Key(2)] public string Message { get; set; } = "";
         [Key(3)] public bool Retryable { get; set; }
-        [Key(4)] public string? CorrId { get; set; }
     }
 
     [MessagePackObject]
-    public sealed class MatchAbortedCmd : IPayload
+    public sealed class MatchAbortedCommand : IPayload
     {
-        public const ushort Type = PayloadTypes.Aborted;
+        public const ushort Type = MatchmakingV1.Aborted;
 
-        [Key(0)] public Guid MatchId { get; init; }
-        [Key(1)] public string Reason { get; init; } = "";
+        [Key(0)] public Guid MatchId { get; set; }
+        [Key(1)] public string Reason { get; set; } = "";
     }
 
     [MessagePackObject]
-    [RealtimeMessage(PayloadTypes.Confirmed)]
-    public sealed class MatchConfirmedCmd : IPayload
+    public sealed class MatchConfirmedCommand : IPayload
     {
-        public const ushort Type = PayloadTypes.Confirmed;
+        public const ushort Type = MatchmakingV1.Confirmed;
 
-        [Key(0)] public Guid MatchId { get; init; }
-        [Key(1)] public string Mode { get; init; } = "";
-        [Key(2)] public Guid[] Players { get; init; } = Array.Empty<Guid>();
+        [Key(0)] public Guid MatchId { get; set; }
+        [Key(1)] public string Mode { get; set; } = "";
+        [Key(2)] public Guid[] Players { get; set; } = [];
+    }
+
+    [MessagePackObject]
+    public sealed class CancelMatchFailCommand : IPayload
+    {
+        public const ushort Type = MatchmakingV1.CancelFail;
+
+        [Key(0)] public string Mode { get; set; } = "";
+        [Key(1)] public string ReasonCode { get; set; } = "";
+        [Key(2)] public string Message { get; set; } = "";
+    }
+
+    [MessagePackObject]
+    public sealed class TicketCancelledCommand : IPayload
+    {
+        public const ushort Type = MatchmakingV1.Cancelled;
+
+        [Key(0)] public Guid TicketId { get; set; }
+        [Key(1)] public string Mode { get; set; } = "";
+        [Key(2)] public DateTime EnqueuedAtUtc { get; set; }
+        [Key(3)] public string State { get; set; } = "Cancelled"; // could be other (e.g., Failed)
+    }
+
+    [MessagePackObject]
+    public sealed class ReadyAcknowledgedCommand : IPayload
+    {
+        public const ushort Type = MatchmakingV1.ReadyAck;
+
+        [Key(0)] public Guid MatchId { get; set; }
+        [Key(1)] public Guid[] ReadyPlayers { get; set; } = [];
+        [Key(2)] public long? ReadyDeadlineUnixMs { get; set; }  // null if no deadline
+    }
+
+    [MessagePackObject]
+    public sealed class ReadyAcknowledgeFailCommand : IPayload
+    {
+        public const ushort Type = MatchmakingV1.ReadyAckFail;
+
+        [Key(0)] public Guid MatchId { get; set; }
+        [Key(1)] public string ReasonCode { get; set; } = "";
+        [Key(2)] public string Message { get; set; } = "";
     }
 
     //[MessagePackObject]

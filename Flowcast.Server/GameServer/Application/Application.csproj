@@ -8,7 +8,6 @@
 
   <ItemGroup>
   	<ProjectReference Include="..\Domain\Domain.csproj" />
-  	<ProjectReference Include="..\Realtime.Transport\Realtime.Transport\Realtime.Transport.csproj" />
   	<ProjectReference Include="..\SharedKernel\SharedKernel.csproj" />
   </ItemGroup>
 

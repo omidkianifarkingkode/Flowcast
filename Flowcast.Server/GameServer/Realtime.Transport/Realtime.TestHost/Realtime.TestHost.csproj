@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
-    <ProjectReference Include="..\Realtime.Transport\Realtime.Transport.csproj" />
+    <ProjectReference Include="..\Realtime.Core\Realtime.Core.csproj" />
   </ItemGroup>
 
 </Project>
