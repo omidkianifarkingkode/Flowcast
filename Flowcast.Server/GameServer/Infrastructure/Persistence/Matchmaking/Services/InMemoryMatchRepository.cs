@@ -1,10 +1,13 @@
 ﻿using Domain.Matchmaking;
+using Infrastructure.DomainEvents;
+using Microsoft.AspNetCore.Components;
 using SharedKernel;
 using System.Collections.Concurrent;
+using System.Reflection.PortableExecutable;
 
 namespace Infrastructure.Persistence.Matchmaking.Services;
 
-public sealed class InMemoryMatchRepository : IMatchRepository
+public sealed class InMemoryMatchRepository(IDomainEventsDispatcher dispatcher) : IMatchRepository
 {
     private readonly ConcurrentDictionary<MatchId, Match> _store = new();
 
@@ -16,10 +19,16 @@ public sealed class InMemoryMatchRepository : IMatchRepository
         return Task.FromResult(Result.Failure<Match>(MatchErrors.NotFound));
     }
 
-    public Task Save(Match match, CancellationToken ct = default)
+    public async Task Save(Match match, CancellationToken ct = default)
     {
         _store[match.Id] = match;
-        return Task.CompletedTask;
+
+        var events = match.DomainEvents.ToArray();
+        if (events.Length > 0)
+        {
+            await dispatcher.DispatchAsync(events, ct);
+            match.ClearDomainEvents();
+        }
     }
 
     public Task Delete(MatchId id, CancellationToken ct = default)

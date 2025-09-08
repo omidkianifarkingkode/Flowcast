@@ -70,7 +70,7 @@ public sealed class FindMatchHandler(
 
         // 2) Idempotency: if open ticket exists, return its state
         var existingTicket = await tickets.GetOpenByPlayer(command.PlayerId, command.Mode, cancellationToken);
-        if (existingTicket.IsSuccess)
+        if (existingTicket.IsSuccess && existingTicket.Value is not null)
         {
             var openTicket = existingTicket.Value;
             Match? reservedMatch = null;
@@ -82,14 +82,23 @@ public sealed class FindMatchHandler(
                 if (matchResult.IsSuccess)
                 {
                     reservedMatch = matchResult.Value;
-                    deadline = reservedMatch.ReadyDeadlineUtc;
+
+                    var winSec = Math.Max(1, options.Value.ReadyWindowSeconds);
+                    deadline = reservedMatch.ReadyDeadlineUtc ?? clock.UtcNow.AddSeconds(winSec);
 
                     await notifier.MatchFound(command.PlayerId, reservedMatch, deadline ?? clock.UtcNow, cancellationToken);
                 }
                 else
                 {
-                    // stale link: treat as queued
-                    await notifier.MatchQueued(command.PlayerId, openTicket, cancellationToken);
+                    // heal stale PendingReady → mark Failed and requeue with fresh ticket
+                    _ = openTicket.Fail(clock.UtcNow);
+                    await tickets.Save(openTicket, cancellationToken);
+
+                    var healed = Ticket.Create(command.PlayerId, command.Mode, clock.UtcNow);
+                    await tickets.Save(healed, cancellationToken);
+
+                    await notifier.MatchQueued(command.PlayerId, healed, cancellationToken);
+                    return new FindMatchResult(healed, null, null);
                 }
             }
             else
@@ -111,7 +120,11 @@ public sealed class FindMatchHandler(
         var queue = await tickets.GetSearchingByMode(command.Mode, cancellationToken);
         var other = queue.IsSuccess
             ? queue.Value
-                .Where(t => t.PlayerId != command.PlayerId && t.Id != ticket.Id)
+                // ensure Searching + exclude self + (optional)peer liveness gate
+                .Where(t => t.State == TicketState.Searching
+                    && t.PlayerId != command.PlayerId 
+                    && t.Id != ticket.Id
+                    && (!options.Value.RequireHealthyConnection || liveness.IsHealthy(t.PlayerId)))
                 .OrderBy(t => t.EnqueuedAtUtc)
                 .FirstOrDefault()
             : null;
@@ -126,9 +139,12 @@ public sealed class FindMatchHandler(
         // 5) Pair: create Match, move both tickets to PendingReady, begin ready window
         var match = Match.Create(command.Mode, ticket.PlayerId, other.PlayerId, clock.UtcNow);
         var readyWindow = new ReadyWindow(TimeSpan.FromSeconds(options.Value.ReadyWindowSeconds));
-        _ = match.BeginReadyCheck(readyWindow, clock.UtcNow);
-        _ = ticket.MoveToPendingReady(match.Id, clock.UtcNow);
-        _ = other.MoveToPendingReady(match.Id, clock.UtcNow);
+        if(match.BeginReadyCheck(readyWindow, clock.UtcNow) is var r1 && r1.IsFailure)
+            return Result.Failure<FindMatchResult>(r1.Error);
+        if (ticket.MoveToPendingReady(match.Id, clock.UtcNow) is var r2 && r2.IsFailure)
+            return Result.Failure<FindMatchResult>(r2.Error);
+        if (other.MoveToPendingReady(match.Id, clock.UtcNow) is var r3 && r3.IsFailure)
+            return Result.Failure<FindMatchResult>(r3.Error);
 
         await matches.Save(match, cancellationToken);
         await tickets.Save(ticket, cancellationToken);

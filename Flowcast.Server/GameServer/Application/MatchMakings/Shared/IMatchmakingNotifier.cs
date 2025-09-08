@@ -10,7 +10,7 @@ public interface IMatchmakingNotifier
     Task MatchFound(PlayerId player, Match match, DateTime readyDeadlineUtc, CancellationToken ct);
     Task MatchFoundFail(PlayerId player, string mode, string reasonCode, string message, bool retryable, CancellationToken ct);
 
-    Task MatchAborted(PlayerId player, Match match, string reason, CancellationToken ct);
+    Task MatchAborted(PlayerId player, Match match, AbortReason reason, CancellationToken ct);
     Task MatchConfirmed(PlayerId player, Match match, CancellationToken ct);
 
     Task CancelMatchFail(PlayerId player, string mode, string reasonCode, string message, CancellationToken ct);

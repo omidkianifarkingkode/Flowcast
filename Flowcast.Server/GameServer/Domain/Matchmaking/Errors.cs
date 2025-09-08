@@ -15,6 +15,7 @@ public static class MatchErrors
     public static readonly Error NotFound = Error.NotFound("match.not_found", "Match not found.");
     public static readonly Error NotProposed = Error.Conflict("match.not_proposed", "Match is not in Proposed state.");
     public static readonly Error NotInReadyCheck = Error.Conflict("match.not_ready_check", "Match is not in ReadyCheck state.");
+    public static readonly Error AllPlayerNotReady = Error.Conflict("match.all_not_ready", "All Player are not Ready.");
     public static readonly Error PlayerNotInMatch = Error.NotFound("match.player_not_in_match", "Player is not part of this match.");
     public static readonly Error ReadyWindowExpired = Error.Conflict("match.ready_window_expired", "Ready window has expired.");
 }

@@ -59,14 +59,14 @@ public sealed class MatchmakingNotifier(IRealtimeMessageSender messenger) : IMat
             },
             ct);
 
-    public Task MatchAborted(PlayerId player, Match match, string reason, CancellationToken ct) =>
+    public Task MatchAborted(PlayerId player, Match match, AbortReason reason, CancellationToken ct) =>
         messenger.SendToUserAsync(
             player.Value.ToString("D"),
             MatchAbortedCommand.Type,
             new MatchAbortedCommand
             {
                 MatchId = match.Id.Value,
-                Reason = reason
+                Reason = reason.ToString()
             },
             ct);
 

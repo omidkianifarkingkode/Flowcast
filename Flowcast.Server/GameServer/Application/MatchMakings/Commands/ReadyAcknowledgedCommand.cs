@@ -4,6 +4,7 @@ using Application.MatchMakings.Shared;
 using Domain.Matchmaking;
 using Domain.Sessions;
 using MessagePack;
+using Microsoft.Extensions.Logging;
 using Realtime.Transport.Messaging;
 using SharedKernel;
 
@@ -33,33 +34,41 @@ public sealed class AcknowledgeReadyHandler(
     IMatchRepository matches,
     ILivenessProbe liveness,
     IDateTimeProvider clock,
-    IMatchmakingNotifier notifier)
+    IMatchmakingNotifier notifier,
+    ILogger<AcknowledgeReadyHandler> logger)
     : ICommandHandler<AcknowledgeReadyCommand, AcknowledgeReadyResult>
 {
-    public async Task<Result<AcknowledgeReadyResult>> Handle(AcknowledgeReadyCommand cmd, CancellationToken ct)
+    public async Task<Result<AcknowledgeReadyResult>> Handle(AcknowledgeReadyCommand command, CancellationToken cancellationToken)
     {
         // 0) Liveness gate — for READY this should be strict
-        if (!liveness.IsHealthy(cmd.PlayerId))
+        if (!liveness.IsHealthy(command.PlayerId))
         {
-            await NotifyReadyFailAsync(cmd.PlayerId, cmd.MatchId, "mm.not_healthy", "Player connection not healthy.", ct);
+            
+            await notifier.ReadyAcknowledgeFail(command.PlayerId, command.MatchId, MatchmakingErrors.NotHealthy.Code,
+                                                MatchmakingErrors.NotHealthy.Description, cancellationToken);
             return Result.Failure<AcknowledgeReadyResult>(MatchmakingErrors.NotHealthy);
         }
 
         // 1) Load match
-        var mr = await matches.GetById(cmd.MatchId, ct);
-        if (mr.IsFailure)
+        var matchResult = await matches.GetById(command.MatchId, cancellationToken);
+        if (matchResult.IsFailure)
         {
-            await NotifyReadyFailAsync(cmd.PlayerId, cmd.MatchId, mr.Error.Code, mr.Error.Description, ct);
-            return Result.Failure<AcknowledgeReadyResult>(mr.Error);
+            logger.LogWarning("ReadyAck failed to load match {MatchId}. Error: {Code} - {Desc}",
+                command.MatchId, matchResult.Error.Code, matchResult.Error.Description);
+
+            await notifier.ReadyAcknowledgeFail(command.PlayerId, command.MatchId, matchResult.Error.Code,
+                                                matchResult.Error.Description, cancellationToken);
+            return Result.Failure<AcknowledgeReadyResult>(matchResult.Error);
         }
 
-        var match = mr.Value;
+        var match = matchResult.Value;
 
         // 2) Acknowledge
-        var r1 = match.AcknowledgeReady(cmd.PlayerId, clock.UtcNow);
+        var r1 = match.AcknowledgeReady(command.PlayerId, clock.UtcNow);
         if (r1.IsFailure)
         {
-            await NotifyReadyFailAsync(cmd.PlayerId, cmd.MatchId, r1.Error.Code, r1.Error.Description, ct);
+            await notifier.ReadyAcknowledgeFail(command.PlayerId, command.MatchId, r1.Error.Code, r1.Error.Description,
+                                                cancellationToken);
             return Result.Failure<AcknowledgeReadyResult>(r1.Error);
         }
 
@@ -67,40 +76,65 @@ public sealed class AcknowledgeReadyHandler(
         var r2 = match.ConfirmIfAllReady(clock.UtcNow, out var confirmed);
         if (r2.IsFailure)
         {
-            await NotifyReadyFailAsync(cmd.PlayerId, cmd.MatchId, r2.Error.Code, r2.Error.Description, ct);
+            await notifier.ReadyAcknowledgeFail(command.PlayerId, command.MatchId, r2.Error.Code, r2.Error.Description,
+                                                cancellationToken);
             return Result.Failure<AcknowledgeReadyResult>(r2.Error);
         }
-
-        await matches.Save(match, ct);
 
         if (confirmed)
         {
             // 4) Consume all tickets (if PendingReady)
-            foreach (var pid in match.Players)
-            {
-                var open = await tickets.GetOpenByPlayer(pid, match.Mode, ct);
-                if (open.IsSuccess && open.Value is { } t && t.State == TicketState.PendingReady)
-                {
-                    _ = t.Consume();
-                    await tickets.Save(t, ct);
-                }
-            }
+            await ConsumeTickets(match, cancellationToken);
 
-            // Notify both; session allocation will proceed in a separate pipeline (outbox/handler)
+            await matches.Save(match, cancellationToken);
+
+            // Notify all; session allocation will proceed in a separate pipeline (outbox/handler)
             foreach (var pid in match.Players)
-                await notifier.MatchConfirmed(pid, match, ct);
+                await notifier.MatchConfirmed(pid, match, cancellationToken);
+
+            logger.LogInformation("Match {MatchId} confirmed. Session allocation will be triggered via outbox.", match.Id);
 
             return new AcknowledgeReadyResult(match, AllReady: true, ReadyDeadlineUtc: match.ReadyDeadlineUtc);
         }
 
         // 6) Not all ready yet — notify progress to both (or at least to the acknowledging player)
+        await matches.Save(match, cancellationToken);
+
         var readySnapshot = match.ReadyPlayers;
         foreach (var pid in match.Players)
-            await notifier.ReadyAcknowledged(pid, match, readySnapshot, match.ReadyDeadlineUtc, ct);
+            await notifier.ReadyAcknowledged(pid, match, readySnapshot, match.ReadyDeadlineUtc, cancellationToken);
 
         return new AcknowledgeReadyResult(match, AllReady: false, ReadyDeadlineUtc: match.ReadyDeadlineUtc);
     }
 
-    private Task NotifyReadyFailAsync(PlayerId player, MatchId matchId, string code, string message, CancellationToken ct) =>
-        notifier.ReadyAcknowledgeFail(player, matchId, code, message, ct);
+    private async Task ConsumeTickets(Match match, CancellationToken cancellationToken)
+    {
+        foreach (var pid in match.Players)
+        {
+            var open = await tickets.GetOpenByPlayer(pid, match.Mode, cancellationToken);
+
+            if (open.IsFailure && open.Error is not null &&
+                !string.Equals(open.Error.Code, TicketErrors.NotFound.Code, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning("Ticket fetch failed during consume for Player {PlayerId} in mode {Mode}. Error: {Code} - {Desc}",
+                    pid, match.Mode, open.Error.Code, open.Error.Description);
+
+                continue;
+            }
+
+            if (open.IsSuccess && open.Value is { } t && t.State == TicketState.PendingReady)
+            {
+                var consumeResult = t.Consume();
+                if (consumeResult.IsFailure)
+                {
+                    logger.LogWarning("Ticket consume failed for Player {PlayerId} ticket {TicketId}. Error: {Code} - {Desc}",
+                        pid, t.Id, consumeResult.Error.Code, consumeResult.Error.Description);
+                }
+                else
+                {
+                    await tickets.Save(t, cancellationToken);
+                }
+            }
+        }
+    }
 }

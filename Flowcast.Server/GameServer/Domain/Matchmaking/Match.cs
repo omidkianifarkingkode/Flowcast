@@ -35,7 +35,9 @@ public sealed class Match : Entity<MatchId>, IAggregateRoot
 
     public Result BeginReadyCheck(ReadyWindow window, DateTime nowUtc)
     {
-        if (Status != MatchStatus.Proposed) return Result.Failure(MatchErrors.NotProposed);
+        if (Status != MatchStatus.Proposed) 
+            return Result.Failure(MatchErrors.NotProposed);
+
         Status = MatchStatus.ReadyCheck;
         ReadyDeadlineUtc = nowUtc + window.Duration;
         return Result.Success();
@@ -43,12 +45,18 @@ public sealed class Match : Entity<MatchId>, IAggregateRoot
 
     public Result AcknowledgeReady(PlayerId playerId, DateTime utc)
     {
-        if (Status != MatchStatus.ReadyCheck) return Result.Failure(MatchErrors.NotInReadyCheck);
-        if (!_players.Contains(playerId)) return Result.Failure(MatchErrors.PlayerNotInMatch);
-        if (ReadyDeadlineUtc is { } dl && utc > dl) return Result.Failure(MatchErrors.ReadyWindowExpired);
+        if (Status != MatchStatus.ReadyCheck) 
+            return Result.Failure(MatchErrors.NotInReadyCheck);
+
+        if (!_players.Contains(playerId)) 
+            return Result.Failure(MatchErrors.PlayerNotInMatch);
+
+        if (ReadyDeadlineUtc is { } dl && utc > dl)
+            return Result.Failure(MatchErrors.ReadyWindowExpired);
 
         if (_ready.Add(playerId))
             AddDomainEvent(new MatchReadyAcknowledged(Id, playerId, utc));
+
         return Result.Success();
     }
 
@@ -57,8 +65,11 @@ public sealed class Match : Entity<MatchId>, IAggregateRoot
     public Result ConfirmIfAllReady(DateTime utc, out bool confirmed)
     {
         confirmed = false;
-        if (Status != MatchStatus.ReadyCheck) return Result.Failure(MatchErrors.NotInReadyCheck);
-        if (!IsAllReady()) return Result.Success(false);
+        if (Status != MatchStatus.ReadyCheck)
+            return Result.Failure(MatchErrors.NotInReadyCheck);
+
+        if (!IsAllReady()) 
+            return Result.Failure(MatchErrors.AllPlayerNotReady);
 
         Status = MatchStatus.Confirmed;
         AddDomainEvent(new MatchConfirmed(Id, Mode, _players.AsReadOnly(), utc));
@@ -68,7 +79,9 @@ public sealed class Match : Entity<MatchId>, IAggregateRoot
 
     public Result Abort(AbortReason reason, DateTime utc)
     {
-        if (Status is MatchStatus.Confirmed or MatchStatus.Aborted) return Result.Success();
+        if (Status is MatchStatus.Confirmed or MatchStatus.Aborted) 
+            return Result.Success();
+
         Status = MatchStatus.Aborted;
         AbortReason = reason;
         AddDomainEvent(new MatchReadyFailed(Id, reason, utc));

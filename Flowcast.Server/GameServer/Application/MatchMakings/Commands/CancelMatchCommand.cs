@@ -3,6 +3,7 @@ using Application.MatchMakings.Shared;
 using Domain.Matchmaking;
 using Domain.Sessions;
 using MessagePack;
+using Microsoft.Extensions.Logging;
 using Realtime.Transport.Messaging;
 using SharedKernel;
 
@@ -27,7 +28,8 @@ public sealed class CancelMatchHandler(
     ITicketRepository tickets,
     IMatchRepository matches,
     IDateTimeProvider clock,
-    IMatchmakingNotifier notifier)
+    IMatchmakingNotifier notifier,
+    ILogger<CancelMatchHandler> logger)
     : ICommandHandler<CancelMatchCommand, CancelMatchResult>
 {
     public async Task<Result<CancelMatchResult>> Handle(CancelMatchCommand command, CancellationToken cancellationToken)
@@ -37,8 +39,8 @@ public sealed class CancelMatchHandler(
         if (openTicketResult.IsFailure || openTicketResult.Value is null)
         {
             await notifier.CancelMatchFail(command.PlayerId, command.Mode,
-                reasonCode: "mm.ticket_not_found",
-                message: "No open ticket for player/mode.",
+                reasonCode: TicketErrors.NotFound.Code,
+                message: TicketErrors.NotFound.Description,
                 cancellationToken);
             return Result.Failure<CancelMatchResult>(TicketErrors.NotFound);
         }
@@ -75,7 +77,12 @@ public sealed class CancelMatchHandler(
     private async Task AbortMatchAndNotifyPeerAsync(PlayerId requester, MatchId matchId, CancellationToken cancellationToken)
     {
         var matchResult = await matches.GetById(matchId, cancellationToken);
-        if (matchResult.IsFailure) return;
+        if (matchResult.IsFailure)
+        {
+            logger.LogWarning("Failed to fetch match with ID {MatchId}. Error: {ErrorCode} - {ErrorDescription}",
+                matchId, matchResult.Error.Code, matchResult.Error.Description);
+            return;
+        }
 
         var match = matchResult.Value;
 
@@ -84,7 +91,13 @@ public sealed class CancelMatchHandler(
         await matches.Save(match, cancellationToken);
 
         // Notify the peer (the requester will get TicketCancelled separately)
-        var peerId = match.Players.First(p => p != requester);
-        await notifier.MatchAborted(peerId, match, "peer_cancel", cancellationToken);
+        var peerId = match.Players.FirstOrDefault(p => p != requester);
+        if (peerId.Equals(default))
+        {
+            logger.LogWarning("No valid peer found in match {MatchId} when attempting to abort the match.", matchId);
+            return;  // If no peerId is valid, log it and return
+        }
+
+        await notifier.MatchAborted(peerId, match, AbortReason.PeerCancel, cancellationToken);
     }
 }
