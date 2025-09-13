@@ -2,7 +2,6 @@
 using Application.Sessions.Commands;
 using Contracts.V1.Sessions;
 using Domain.Sessions;
-using Presentation.Infrastructure;
 using SharedKernel;
 
 namespace Presentation.Endpoints.Sessions;
