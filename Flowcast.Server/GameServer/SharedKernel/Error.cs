@@ -36,6 +36,9 @@ public record Error
     public static Error Unauthorized(string code, string description) =>
         new(code, description, ErrorType.Unauthorized);
 
+    public static Error Validation(string code, string description) =>
+        new(code, description, ErrorType.Validation);
+
     // Default errors
     public static readonly Error DefaultUnauthorized =
         Unauthorized("Auth.Unauthorized", "The request is not authorized.");

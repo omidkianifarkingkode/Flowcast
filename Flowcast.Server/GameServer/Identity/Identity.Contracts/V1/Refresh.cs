@@ -1,10 +1,13 @@
 ﻿namespace Identity.Contracts.V1;
 
-// 4) Refresh tokens (rotating refresh token model)
+// Refresh tokens (rotating refresh token model)
 public static class Refresh
 {
     public const string Method = "POST";
-    public const string Route = "auth/refresh";
+    public const string Route = "/identity/refresh";
+
+    public const string Summary = "Refresh access/refresh tokens";
+    public const string Description = "Validates the provided refresh token and issues a new access/refresh token pair.";
 
     public record Request(string RefreshToken);
 
@@ -12,6 +15,6 @@ public static class Refresh
         Guid AccountId,
         string AccessToken,
         string RefreshToken,
-        DateTime ExpiresAtUtc
+        DateTimeOffset ExpiresAtUtc
     );
 }

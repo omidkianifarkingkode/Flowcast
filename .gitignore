@@ -87,5 +87,7 @@ Flowcast.Server/GameServer/Realtime.Transport/*/bin
 Flowcast.Server/GameServer/Realtime.Transport/*/obj
 Flowcast.Server/GameServer/Identity/*/bin
 Flowcast.Server/GameServer/Identity/*/obj
+Flowcast.Server/GameServer/Toolkit/*/bin
+Flowcast.Server/GameServer/Toolkit/*/obj
 Flowcast.Unity/*.csproj
 Flowcast.Unity/*.sln
