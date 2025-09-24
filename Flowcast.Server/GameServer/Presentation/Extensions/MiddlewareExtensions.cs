@@ -1,10 +1,8 @@
-﻿using HealthChecks.UI.Client;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+﻿using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Presentation.Endpoints;
-using Presentation.Middleware;
-using Presentation.SwaggerUtilities;
 using Realtime.Transport.Gateway;
-using Serilog;
+using Shared.API.Swagger;
+using Shared.API.Loggings;
 
 namespace Presentation.Extensions;
 

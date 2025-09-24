@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\Shared.Application\Shared.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Realtime.Transport\Realtime.Core\Realtime.Core.csproj" />
+    <ProjectReference Include="..\..\Session\Session.Contracts\Session.Contracts.csproj" />
+    <ProjectReference Include="..\Matchmaking.Contracts\Matchmaking.Contracts.csproj" />
+    <ProjectReference Include="..\Matchmaking.Domain\Matchmaking.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

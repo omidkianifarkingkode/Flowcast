@@ -83,11 +83,12 @@ Flowcast.Unity/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Pr
 Flowcast.Unity/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers.meta
 Flowcast.Server/GameServer/*/bin
 Flowcast.Server/GameServer/*/obj
-Flowcast.Server/GameServer/Realtime.Transport/*/bin
-Flowcast.Server/GameServer/Realtime.Transport/*/obj
-Flowcast.Server/GameServer/Identity/*/bin
-Flowcast.Server/GameServer/Identity/*/obj
-Flowcast.Server/GameServer/Toolkit/*/bin
-Flowcast.Server/GameServer/Toolkit/*/obj
+Flowcast.Server/GameServer/*/*/obj
+Flowcast.Server/GameServer/*/*/bin
+Flowcast.Server/GameServer/*/*/*/obj
+Flowcast.Server/GameServer/*/*/*/bin
+Flowcast.Server/GameServer/*/*/*/*/obj
+Flowcast.Server/GameServer/*/*/*/*/bin
+
 Flowcast.Unity/*.csproj
 Flowcast.Unity/*.sln

@@ -2,7 +2,6 @@
 using Application.Abstractions.Security;
 using Domain.Sessions;
 using Realtime.Transport.UserConnection;
-using SharedKernel;
 
 namespace Application.Sessions.Commands;
 

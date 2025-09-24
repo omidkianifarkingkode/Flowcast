@@ -5,17 +5,24 @@ namespace Presentation.Endpoints;
 
 public static class EndpointExtensions
 {
-    public static IServiceCollection AddEndpoints(this IServiceCollection services, Assembly assembly)
+    public static IServiceCollection AddEndpoints(this IServiceCollection services, Assembly assembly) =>
+        services.AddEndpoints([assembly]);
+
+    public static IServiceCollection AddEndpoints(this IServiceCollection services, params Assembly[] assemblies)
     {
-        ServiceDescriptor[] serviceDescriptors = assembly
-            .DefinedTypes
-            .Where(type => type is { IsAbstract: false, IsInterface: false } &&
-                           type.IsAssignableTo(typeof(IEndpoint)))
-            .Select(type => ServiceDescriptor.Transient(typeof(IEndpoint), type))
+        if (assemblies is null || assemblies.Length == 0)
+            assemblies = [Assembly.GetEntryAssembly()!, Assembly.GetExecutingAssembly()!];
+
+        var descriptors = assemblies
+            .Where(a => a != null)
+            .SelectMany(a => a.DefinedTypes)
+            .Where(t => t is { IsAbstract: false, IsInterface: false } &&
+                        t.IsAssignableTo(typeof(IEndpoint)))
+            .Distinct() // avoid dup types across assemblies
+            .Select(t => ServiceDescriptor.Transient(typeof(IEndpoint), t))
             .ToArray();
 
-        services.TryAddEnumerable(serviceDescriptors);
-
+        services.TryAddEnumerable(descriptors);
         return services;
     }
 

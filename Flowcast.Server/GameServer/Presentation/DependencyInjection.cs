@@ -1,11 +1,9 @@
-﻿using Application.Abstractions.Messaging;
-using Presentation.Endpoints;
+﻿using Presentation.Endpoints;
 using Presentation.Extensions;
 using Presentation.Infrastructure;
-using Presentation.SwaggerUtilities;
-using Realtime.Transport;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Shared.API.Swagger;
 
 namespace Presentation;
 

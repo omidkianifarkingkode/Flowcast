@@ -1,10 +1,10 @@
-﻿using Application.Abstractions.Messaging;
-using Application.Sessions.Queries;
+﻿using Application.Sessions.Queries;
 using Contracts.V1.Sessions;
 using Domain.Sessions;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.Infrastructure;
 using SharedKernel;
+using SharedKernel.Messaging;
 
 namespace Presentation.Endpoints.Sessions;
 

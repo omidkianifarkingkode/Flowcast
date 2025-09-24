@@ -1,8 +1,8 @@
-﻿using Application.Abstractions.Messaging;
-using Application.Users.Register;
+﻿using Application.Users.Register;
 using Presentation.Extensions;
 using Presentation.Infrastructure;
 using SharedKernel;
+using SharedKernel.Messaging;
 
 namespace Presentation.Endpoints.Users;
 
