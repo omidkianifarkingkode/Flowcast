@@ -1,20 +1,15 @@
-using Application;
-using Infrastructure;
 using Presentation;
 using Presentation.Extensions;
-using Serilog;
+using Identity.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.ReadFrom.Configuration(context.Configuration));
+builder.ConfigureAppHost();
 
-builder
-    .AddPresentation()
-    .AddApplication()
-    .AddInfrastructure();
+builder.AddIdentityService();
 
 var app = builder.Build();
 
-app.SetupMiddlewares();
+await app.UseAppHost();
 
 await app.RunAsync();

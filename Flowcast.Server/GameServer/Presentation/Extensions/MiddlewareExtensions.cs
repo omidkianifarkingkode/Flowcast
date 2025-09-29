@@ -1,42 +1,66 @@
-﻿using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Presentation.Endpoints;
+﻿using HealthChecks.UI.Client;
+using Identity.API.Extensions;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Realtime.Transport.Gateway;
-using Shared.API.Swagger;
+using Serilog;
+using Shared.API.Endpoints;
 using Shared.API.Loggings;
+using Shared.API.Swagger;
+using Shared.API.Versioning;
+using System.Threading.Tasks;
 
 namespace Presentation.Extensions;
 
 public static class MiddlewareExtensions
 {
-    public static WebApplication SetupMiddlewares(this WebApplication app)
+    public static async Task<WebApplication> UseAppHost(this WebApplication app)
     {
-        var versionedGroup = app.GetVersionedGroupBuilder();
+        // 1) Error handling as early as possible
+        app.UseExceptionHandler();
 
-        app.MapEndpoints(versionedGroup);
+        //app.UseMiddleware<RequestContextLoggingMiddleware>();
 
+        // 2) HTTPS / HSTS (optional but recommended)
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHsts();
+        }
+        app.UseHttpsRedirection();
+
+        // 3) Swagger (dev only)
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
-
-            app.ApplyMigrations();
+            app.UseSwaggerUI();
         }
 
-        app.MapHealthChecks("health", new HealthCheckOptions
-        {
-            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-        });
+        // 4) Routing (explicit is clearer if you also map controllers)
+        app.UseRouting();
 
-        app.UseMiddleware<RequestContextLoggingMiddleware>();
-
+        // 5) Request logging AFTER routing to capture route template
         app.UseSerilogRequestLogging();
 
-        app.UseExceptionHandler();
+        // 7) Auth
+        await app.UseIdentity(indentity => 
+        {
+            indentity.UseAuthorization = true;
+        });
 
-        app.UseAuthentication();
+        // 8) Map endpoints
+        var versionedGroup = app.GetVersionedGroupBuilder();
+        app.MapEndpoints(versionedGroup);
 
-        app.UseAuthorization();
+        // Controllers (if you use MVC controllers)
+        app.MapControllers();
 
-        app.MapControllers();// REMARK: If you want to use Controllers, you'll need this.
+        // Health checks (often unauthenticated)
+        //app.MapHealthChecks("/health", new HealthCheckOptions
+        //{
+        //    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        //});
+
+        // 9) Realtime (place after auth if it needs identity; ensure it maps endpoints/sockets here)
+        app.UseRealtime();
 
         app.UseRealtime();
 

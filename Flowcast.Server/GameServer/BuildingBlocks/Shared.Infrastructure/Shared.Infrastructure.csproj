@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MatchMaking.Application\Matchmaking.Application.csproj" />
+    <ProjectReference Include="..\..\Realtime.Transport\Realtime.Core\Realtime.Core.csproj" />
+    <ProjectReference Include="..\Shared.Application\Shared.Application.csproj" />
   </ItemGroup>
 
 </Project>

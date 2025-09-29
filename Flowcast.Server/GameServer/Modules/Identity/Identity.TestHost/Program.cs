@@ -2,7 +2,7 @@ using Identity.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddIdentityService(builder.Configuration, setup =>
+builder.AddIdentityService(setup =>
 {
     setup.ConfigureJwtBearer = true;
     setup.ConfigureApiVersioning = true;

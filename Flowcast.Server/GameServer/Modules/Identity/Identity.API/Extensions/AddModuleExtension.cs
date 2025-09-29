@@ -7,6 +7,7 @@ using Identity.API.Persistence.Repositories;
 using Identity.API.Services;
 using Identity.API.Services.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -30,25 +31,25 @@ public static class AddModuleExtension
     public sealed class IdentityInfraOptions
     {
         public bool UseMemoryCache { get; set; } = true;
-        public bool ConfigureJwtBearer { get; set; } = false;
+        public bool ConfigureJwtBearer { get; set; } = true;
         public bool ContributeSwagger { get; set; } = false;
         public bool ConfigureApiVersioning { get; set; } = false;
         public bool ValidateHostPrereqs { get; set; } = false;
     }
 
-    public static IServiceCollection AddIdentityService(this IServiceCollection services, IConfiguration configuration, Action<IdentityInfraOptions>? configure = null)
+    public static WebApplicationBuilder AddIdentityService(this WebApplicationBuilder builder, Action<IdentityInfraOptions>? configure = null)
     {
         var infra = new IdentityInfraOptions();
         configure?.Invoke(infra);
 
-        SetupOptions(services);
-        AddBusinessCommands(services);
-        AddServices(services);
-        AddPersistences(services, configuration);
+        SetupOptions(builder.Services);
+        AddBusinessCommands(builder.Services);
+        AddServices(builder.Services);
+        AddPersistences(builder.Services, builder.Configuration);
 
-        AddInfrastructure(services, infra);
+        AddInfrastructure(builder.Services, infra);
 
-        return services;
+        return builder;
     }
 
     // -------------------- private helpers --------------------
@@ -76,8 +77,14 @@ public static class AddModuleExtension
         {
             services.AddAuthorization();
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer();
+            //services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            //    .AddJwtBearer();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, _ => { });
 
             services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
                 .Configure<IServiceProvider, IOptions<IdentityOptions>>(ConfigureJwtBearer);
@@ -162,6 +169,16 @@ public static class AddModuleExtension
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(Math.Max(0, t.ClockSkewSeconds)),
             NameClaimType = JwtRegisteredClaimNames.Sub
+        };
+
+        o.TokenValidationParameters.ValidAudiences = new[] { t.Audience };
+
+        o.TokenValidationParameters.AudienceValidator = (audiences, _, parameters) =>
+        {
+            var expected = parameters.ValidAudience ?? string.Join(",", parameters.ValidAudiences);
+            log.LogInformation("Token audiences: {Audiences}; Expected: {Expected}", string.Join(",", audiences), expected);
+
+            return audiences.Contains(expected);
         };
 
         o.TokenValidationParameters.IssuerSigningKeyResolver = (_, _, _, _) =>

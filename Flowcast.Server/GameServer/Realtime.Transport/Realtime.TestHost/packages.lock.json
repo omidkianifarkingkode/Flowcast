@@ -515,7 +515,6 @@
           "Microsoft.Extensions.Diagnostics.HealthChecks": "[9.0.7, )",
           "Microsoft.Extensions.Logging.Abstractions": "[9.0.7, )",
           "Newtonsoft.Json": "[13.0.3, )",
-          "Realtime.Core": "[1.0.0, )",
           "Scrutor": "[6.1.0, )",
           "Serilog": "[4.3.0, )",
           "Serilog.AspNetCore": "[9.0.0, )",

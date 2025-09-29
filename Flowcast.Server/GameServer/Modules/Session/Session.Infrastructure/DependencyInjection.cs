@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Session.Application.Shared;
 using Session.Contracts;
 
 namespace Session.Infrastructure;
@@ -19,6 +20,8 @@ public static class DependencyInjection
     private static WebApplicationBuilder AddServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
+        builder.Services.AddSingleton<ISessionNotifier, SessionNotifier>();
+        builder.Services.AddSingleton<IJoinTokenValidator, PassthroughJoinTokenValidator>();
 
         return builder;
     }

@@ -9,13 +9,8 @@
   <ItemGroup>
     <ProjectReference Include="..\BuildingBlocks\Shared.API\Shared.API.csproj" />
     <ProjectReference Include="..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
-    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-	<ProjectReference Include="..\Contracts\Contracts.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Identity.API\Identity.API.csproj" />
 	<ProjectReference Include="..\Realtime.Transport\Realtime.Core\Realtime.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Middleware\" />
   </ItemGroup>
 
 </Project>
