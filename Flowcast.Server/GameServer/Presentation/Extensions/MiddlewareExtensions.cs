@@ -62,8 +62,6 @@ public static class MiddlewareExtensions
         // 9) Realtime (place after auth if it needs identity; ensure it maps endpoints/sockets here)
         app.UseRealtime();
 
-        app.UseRealtime();
-
         return app;
     }
 }
