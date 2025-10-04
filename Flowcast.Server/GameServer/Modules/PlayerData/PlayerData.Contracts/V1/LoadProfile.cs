@@ -7,7 +7,7 @@ namespace PlayerData.Contracts.V1;
 public static class LoadProfile
 {
     public const string Method = "GET";
-    public const string Route = "player-data/profile/{playerId:guid}";
+    public const string Route = "player-data/profile";
 
     public const string Summary = "Load player profile data";
     public const string Description = "Returns the namespaces stored for a player profile. Optionally filter by namespace name.";
