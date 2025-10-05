@@ -1,0 +1,160 @@
+﻿using SharedKernel;
+using System;
+using System.Text.Json;
+
+namespace PlayerProgressStore.Domain;
+
+/// <summary>
+/// Aggregate representing one namespaced document of a player's profile.
+/// Minimal domain: identity + state + basic invariants + progress comparison.
+/// </summary>
+public sealed class PlayerNamespace
+{
+    public Guid PlayerId { get; private set; }
+    public string Namespace { get; private set; } = default!;
+    public VersionToken Version { get; private set; } = VersionToken.None;
+    public ProgressScore Progress { get; private set; } = ProgressScore.Zero;
+    public string Document { get; private set; } = "{}";        // authoritative JSON payload
+    public DocHash Hash { get; private set; } = DocHash.Empty;   // server-computed content hash
+    public DateTimeOffset UpdatedAtUtc { get; private set; }
+
+    private PlayerNamespace() { }
+
+    private PlayerNamespace(
+        Guid playerId,
+        string @namespace,
+        VersionToken version,
+        ProgressScore progress,
+        string document,
+        DocHash hash,
+        DateTimeOffset updatedAtUtc)
+    {
+        if (string.IsNullOrWhiteSpace(@namespace))
+            throw new ArgumentException("Namespace cannot be null or whitespace.", nameof(@namespace));
+
+        PlayerId = playerId;
+        Namespace = @namespace;
+        Version = version;
+        Progress = progress;
+        Document = document;
+        Hash = hash;
+        UpdatedAtUtc = updatedAtUtc;
+    }
+
+    /// <summary>
+    /// Factory to create a new aggregate instance. Validates inputs and returns Result.
+    /// </summary>
+    public static Result<PlayerNamespace> Create(
+        Guid playerId,
+        string @namespace,
+        VersionToken version,
+        ProgressScore progress,
+        string document,
+        DocHash hash,
+        DateTimeOffset updatedAtUtc)
+    {
+        if (playerId == Guid.Empty)
+            return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.EmptyPlayerId);
+
+        if (string.IsNullOrWhiteSpace(@namespace))
+            return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.NamespaceRequired);
+
+        if (progress.Value < 0)
+            return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.InvalidProgress);
+
+        // Clone/own the element
+        var doc = string.IsNullOrWhiteSpace(document) ? "{}" : document;
+
+        var agg = new PlayerNamespace(
+            playerId,
+            @namespace,
+            version,
+            progress,
+            doc,
+            hash,
+            updatedAtUtc);
+
+        return Result.Success(agg);
+    }
+
+    /// <summary>
+    /// Compare incoming progress to decide high-level merge policy.
+    /// - ClientWinsOverwrite: accept incoming document wholly.
+    /// - EqualProgress: caller may perform field-level merge outside the domain layer.
+    /// - ServerKeeps: reject/ignore incoming state.
+    /// </summary>
+    public MergeDecision Decide(ProgressScore incomingProgress)
+    {
+        var cmp = incomingProgress.CompareTo(Progress);
+        if (cmp > 0) return MergeDecision.ClientWinsOverwrite;
+        if (cmp == 0) return MergeDecision.EqualProgress;
+        return MergeDecision.ServerKeeps;
+    }
+
+    /// <summary>
+    /// Return a copy with authoritative state replaced (used after overwrite or after an external merge).
+    /// </summary>
+    public Result<PlayerNamespace> WithReplaced(
+        string newDocument,
+        ProgressScore newProgress,
+        VersionToken newVersion,
+        DocHash newHash,
+        DateTimeOffset nowUtc)
+    {
+        if (newProgress.Value < 0)
+            return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.InvalidProgress);
+
+        var doc = string.IsNullOrWhiteSpace(newDocument) ? "{}" : newDocument;
+
+        var updated = new PlayerNamespace(
+            PlayerId,
+            Namespace,
+            newVersion,
+            newProgress,
+            doc,
+            newHash,
+            nowUtc);
+
+        return Result.Success(updated);
+    }
+
+    /// <summary>
+    /// Convenience helper: attempt full overwrite if client is ahead.
+    /// Returns (updated aggregate) or ClientBehind error.
+    /// </summary>
+    public Result<PlayerNamespace> TryOverwriteIfClientAhead(
+        ProgressScore incomingProgress,
+        string incomingDocument,
+        VersionToken newVersion,
+        DocHash newHash,
+        DateTimeOffset nowUtc)
+    {
+        var decision = Decide(incomingProgress);
+        if (decision == MergeDecision.ServerKeeps)
+            return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.ClientBehind);
+
+        if (decision == MergeDecision.EqualProgress)
+            return Result.Failure<PlayerNamespace>(Error.Conflict(
+                "progress.equal_requires_merge",
+                "Equal progress requires merge; call TryMergeIfEqualProgress."));
+
+        return WithReplaced(incomingDocument, incomingProgress, newVersion, newHash, nowUtc);
+    }
+
+    /// <summary>
+    /// Equal-progress path: the caller supplies the externally-merged document + derived hash/progress/version.
+    /// </summary>
+    public Result<PlayerNamespace> TryMergeIfEqualProgress(
+        ProgressScore incomingProgress,
+        string mergedDocument,
+        VersionToken newVersion,
+        DocHash newHash,
+        DateTimeOffset nowUtc)
+    {
+        if (Decide(incomingProgress) != MergeDecision.EqualProgress)
+            return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.UnknownDecision);
+
+        // Typically progress stays equal after an equal-merge, but we accept caller-provided progress for flexibility
+        return WithReplaced(mergedDocument, incomingProgress, newVersion, newHash, nowUtc);
+    }
+}
