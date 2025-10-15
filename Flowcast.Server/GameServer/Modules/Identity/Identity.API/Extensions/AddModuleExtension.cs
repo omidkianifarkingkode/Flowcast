@@ -24,6 +24,7 @@ using SharedKernel;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
+using IUnitOfWork = Identity.API.Services.IUnitOfWork;
 
 namespace Identity.API.Extensions;
 

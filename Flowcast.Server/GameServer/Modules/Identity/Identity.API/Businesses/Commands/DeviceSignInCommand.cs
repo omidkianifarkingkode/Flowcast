@@ -5,6 +5,7 @@ using Identity.API.Shared;
 using Identity.Contracts.V1.Shared;
 using Shared.Application.Services;
 using SharedKernel;
+using IUnitOfWork = Identity.API.Services.IUnitOfWork;
 
 namespace Identity.API.Businesses.Commands;
 

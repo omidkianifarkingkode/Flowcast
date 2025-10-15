@@ -1,11 +1,6 @@
 ﻿using SharedKernel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PlayerProgressStore.Application.Abstractions;
+namespace Shared.Application.Services;
 
 /// <summary>
 /// Transaction boundary for atomic save.

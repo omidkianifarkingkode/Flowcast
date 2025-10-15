@@ -5,6 +5,7 @@ using Identity.Contracts.V1.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Services;
 using SharedKernel;
+using IUnitOfWork = Identity.API.Services.IUnitOfWork;
 
 namespace Identity.API.Businesses.Commands;
 

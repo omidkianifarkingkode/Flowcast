@@ -795,6 +795,9 @@
       "identity.contracts": {
         "type": "Project"
       },
+      "playerprogressstore.api": {
+        "type": "Project"
+      },
       "realtime.core": {
         "type": "Project",
         "dependencies": {

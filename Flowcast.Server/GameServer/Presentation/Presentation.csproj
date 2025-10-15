@@ -10,6 +10,7 @@
     <ProjectReference Include="..\BuildingBlocks\Shared.API\Shared.API.csproj" />
     <ProjectReference Include="..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Modules\Identity\Identity.API\Identity.API.csproj" />
+    <ProjectReference Include="..\Modules\PlayerProgressStore\PlayerProgressStore.Api\PlayerProgressStore.Api.csproj" />
 	<ProjectReference Include="..\Realtime.Transport\Realtime.Core\Realtime.Core.csproj" />
   </ItemGroup>
 

@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.ConfigureAppHost();
 
 builder.AddIdentityService();
+builder.AddPlayerProgressStore();
 
 var app = builder.Build();
 
