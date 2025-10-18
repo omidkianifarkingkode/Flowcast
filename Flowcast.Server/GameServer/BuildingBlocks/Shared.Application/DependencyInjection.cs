@@ -29,12 +29,12 @@ public static class DependencyInjection
                 .WithScopedLifetime());
 
         // Decorators
-        builder.Services.Decorate(typeof(ICommandHandler<,>), typeof(ValidationDecorator.CommandHandler<,>));
-        builder.Services.Decorate(typeof(ICommandHandler<>), typeof(ValidationDecorator.CommandBaseHandler<>));
+        TryDecorate(builder.Services, typeof(ICommandHandler<,>), typeof(ValidationDecorator.CommandHandler<,>));
+        TryDecorate(builder.Services, typeof(ICommandHandler<>), typeof(ValidationDecorator.CommandBaseHandler<>));
 
-        builder.Services.Decorate(typeof(IQueryHandler<,>), typeof(LoggingDecorator.QueryHandler<,>));
-        builder.Services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingDecorator.CommandHandler<,>));
-        builder.Services.Decorate(typeof(ICommandHandler<>), typeof(LoggingDecorator.CommandBaseHandler<>));
+        TryDecorate(builder.Services, typeof(IQueryHandler<,>), typeof(LoggingDecorator.QueryHandler<,>));
+        TryDecorate(builder.Services, typeof(ICommandHandler<,>), typeof(LoggingDecorator.CommandHandler<,>));
+        TryDecorate(builder.Services, typeof(ICommandHandler<>), typeof(LoggingDecorator.CommandBaseHandler<>));
 
         // Domain event handlers
         builder.Services.Scan(scan => scan.FromAssemblies(assemblies)
@@ -53,6 +53,15 @@ public static class DependencyInjection
         builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
         return builder;
+    }
+
+    private static void TryDecorate(IServiceCollection services, Type serviceType, Type decoratorType)
+    {
+        // Only decorate if any registration exists
+        if (services.Any(s => s.ServiceType.IsGenericType && s.ServiceType.GetGenericTypeDefinition() == serviceType))
+        {
+            services.Decorate(serviceType, decoratorType);
+        }
     }
 
     private static Assembly[] SafeDomainAssemblies()

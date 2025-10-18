@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using PlayerProgressStore.Application.Commands;
 using PlayerProgressStore.Contracts;
@@ -18,8 +19,8 @@ public sealed class SaveProfileEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost(SaveProfile.Route,
-            async (SaveProfile.Request request, ICommandHandler<SaveProfileCommand, PlayerNamespace[]> handler,
-                   IUserContext userContext, HttpContext httpContext, CancellationToken ct) =>
+            async ([FromBody] SaveProfile.Request request, [FromServices] ICommandHandler<SaveProfileCommand, PlayerNamespace[]> handler,
+                   [FromServices] IUserContext userContext, [FromServices] HttpContext httpContext, CancellationToken ct) =>
             {
                 var command = ToCommand(request, userContext.UserId);
 

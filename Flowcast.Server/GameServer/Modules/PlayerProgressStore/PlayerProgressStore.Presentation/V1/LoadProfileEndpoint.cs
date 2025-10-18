@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using PlayerProgressStore.Application.Queries;
 using PlayerProgressStore.Contracts;
@@ -18,8 +19,8 @@ public sealed class LoadProfileEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet(LoadProfile.Route,
-            async (LoadProfile.Request request, IQueryHandler<LoadProfileQuery, PlayerNamespace[]> handler,
-                   IUserContext userContext, HttpContext httpContext, CancellationToken ct) =>
+            async ([AsParameters] LoadProfile.Request request, [FromServices] IQueryHandler<LoadProfileQuery, PlayerNamespace[]> handler,
+                   [FromServices] IUserContext userContext, [FromServices] HttpContext httpContext, CancellationToken ct) =>
         {
             var query = ToQuery(request, userContext.UserId);
 

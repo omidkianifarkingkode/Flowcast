@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>   
-	<ProjectReference Include="..\..\..\BuildingBlocks\Shared.API\Shared.API.csproj" />   
+	<ProjectReference Include="..\..\..\BuildingBlocks\Shared.Presentation\Shared.Presentation.csproj" />   
 	<ProjectReference Include="..\..\..\BuildingBlocks\Shared.Application\Shared.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Identity.Contracts\Identity.Contracts.csproj" />

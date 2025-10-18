@@ -22,7 +22,7 @@ public static class SaveProfile
     /// Batch of namespace writes to apply atomically.
     /// </summary>
     /// <param name="Namespaces">One or more namespace writes.</param>
-    public readonly record struct Request(
+    public sealed record Request(
         IReadOnlyCollection<NamespaceWrite> Namespaces
     );
 
@@ -30,7 +30,7 @@ public static class SaveProfile
     /// Authoritative result after the atomic save is committed.
     /// </summary>
     /// <param name="Namespaces">Committed namespace documents (server truth).</param>
-    public readonly record struct Response(
+    public sealed record Response(
         NamespaceDocument[] Namespaces
     );
 }

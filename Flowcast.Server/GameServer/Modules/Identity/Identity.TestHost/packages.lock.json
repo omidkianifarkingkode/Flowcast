@@ -932,15 +932,21 @@
           "Identity.Contracts": "[1.0.0, )",
           "Microsoft.EntityFrameworkCore.InMemory": "[9.0.9, )",
           "Microsoft.EntityFrameworkCore.SqlServer": "[9.0.9, )",
-          "Shared.API": "[1.0.0, )",
           "Shared.Application": "[1.0.0, )",
+          "Shared.Presentation": "[1.0.0, )",
           "SharedKernel": "[1.0.0, )"
         }
       },
       "identity.contracts": {
         "type": "Project"
       },
-      "shared.api": {
+      "shared.application": {
+        "type": "Project",
+        "dependencies": {
+          "SharedKernel": "[1.0.0, )"
+        }
+      },
+      "shared.presentation": {
         "type": "Project",
         "dependencies": {
           "Asp.Versioning.Http": "[8.1.0, )",
@@ -953,12 +959,6 @@
           "Swashbuckle.AspNetCore.Swagger": "[9.0.3, )",
           "Swashbuckle.AspNetCore.SwaggerGen": "[9.0.3, )",
           "Swashbuckle.AspNetCore.SwaggerUI": "[9.0.3, )"
-        }
-      },
-      "shared.application": {
-        "type": "Project",
-        "dependencies": {
-          "SharedKernel": "[1.0.0, )"
         }
       },
       "sharedkernel": {

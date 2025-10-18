@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\BuildingBlocks\Shared.API\Shared.API.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Shared.Presentation\Shared.Presentation.csproj" />
     <ProjectReference Include="..\PlayerProgressStore.Application\PlayerProgressStore.Application.csproj" />
     <ProjectReference Include="..\PlayerProgressStore.Contracts\PlayerProgressStore.Contracts.csproj" />
     <ProjectReference Include="..\PlayerProgressStore.Infrastructure\PlayerProgressStore.Infrastructure.csproj" />

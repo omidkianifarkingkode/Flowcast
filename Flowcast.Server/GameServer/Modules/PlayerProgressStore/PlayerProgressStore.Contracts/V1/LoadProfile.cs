@@ -1,4 +1,5 @@
-﻿using PlayerProgressStore.Contracts.V1.Shared;
+﻿using Microsoft.AspNetCore.Mvc;
+using PlayerProgressStore.Contracts.V1.Shared;
 
 namespace PlayerProgressStore.Contracts.V1;
 
@@ -17,15 +18,17 @@ public static class LoadProfile
     /// If <see cref="Namespaces"/> is null or empty, the server may return all existing namespaces for the player.
     /// </summary>
     /// <param name="Namespaces">Subset of namespaces to load (e.g., [\"playerStats\",\"inventory\"]).</param>
-    public readonly record struct Request(
-        IReadOnlyCollection<string>? Namespaces = null
-    );
+    public sealed record Request
+    {
+        [FromQuery(Name = "namespaces")]
+        public string[]? Namespaces { get; init; }
+    }
 
     /// <summary>
     /// Authoritative response with one or more namespaces.
     /// </summary>
     /// <param name="Namespaces">Returned namespace documents.</param>
-    public readonly record struct Response(
+    public sealed record Response(
         NamespaceDocument[] Namespaces
     );
 }

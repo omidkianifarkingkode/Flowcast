@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildingBlocks", "BuildingB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedKernel", "BuildingBlocks\SharedKernel\SharedKernel.csproj", "{CBA795EA-9ACD-037E-D90D-2FEC634F28E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.API", "BuildingBlocks\Shared.API\Shared.API.csproj", "{843551A6-1FFC-843C-EA00-05D95E657DA3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Presentation", "BuildingBlocks\Shared.Presentation\Shared.Presentation.csproj", "{843551A6-1FFC-843C-EA00-05D95E657DA3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{287EC64B-9984-4D58-B1FD-BA8040A21F9A}"
 EndProject
