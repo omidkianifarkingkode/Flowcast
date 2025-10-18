@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using PlayerProgressStore.Application;
+using PlayerProgressStore.Application.Services;
 using SharedKernel;
 
 namespace PlayerProgressStore.Infrastructure.Services;

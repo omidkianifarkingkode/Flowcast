@@ -1,4 +1,4 @@
-﻿using PlayerProgressStore.Application;
+﻿using PlayerProgressStore.Application.Services;
 using PlayerProgressStore.Domain;
 using System.Security.Cryptography;
 using System.Text;

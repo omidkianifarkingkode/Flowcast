@@ -4,7 +4,7 @@ namespace Shared.Application.Authentication;
 
 public interface IUserContext
 {
-    Guid UserId { get; }
+    string UserId { get; }
 
-    Guid? GetUserId(HttpContext context);
+    string? GetUserId(HttpContext context);
 }

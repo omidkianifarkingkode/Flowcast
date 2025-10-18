@@ -24,10 +24,8 @@ public static class LoadProfile
     /// <summary>
     /// Authoritative response with one or more namespaces.
     /// </summary>
-    /// <param name="PlayerId">The player identifier.</param>
     /// <param name="Namespaces">Returned namespace documents.</param>
     public readonly record struct Response(
-        Guid PlayerId,
         NamespaceDocument[] Namespaces
     );
 }

@@ -29,10 +29,8 @@ public static class SaveProfile
     /// <summary>
     /// Authoritative result after the atomic save is committed.
     /// </summary>
-    /// <param name="PlayerId">The player identifier.</param>
     /// <param name="Namespaces">Committed namespace documents (server truth).</param>
     public readonly record struct Response(
-        Guid PlayerId,
         NamespaceDocument[] Namespaces
     );
 }

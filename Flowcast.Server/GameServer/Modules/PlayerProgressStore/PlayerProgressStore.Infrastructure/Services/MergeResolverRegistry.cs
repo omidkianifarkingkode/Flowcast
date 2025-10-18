@@ -1,4 +1,4 @@
-﻿using PlayerProgressStore.Application;
+﻿using PlayerProgressStore.Application.Services;
 
 namespace PlayerProgressStore.Infrastructure.Services;
 

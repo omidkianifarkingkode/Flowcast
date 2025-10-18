@@ -11,8 +11,4 @@
     <ProjectReference Include="..\PlayerProgressStore.Domain\PlayerProgressStore.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Abstractions\" />
-  </ItemGroup>
-
 </Project>

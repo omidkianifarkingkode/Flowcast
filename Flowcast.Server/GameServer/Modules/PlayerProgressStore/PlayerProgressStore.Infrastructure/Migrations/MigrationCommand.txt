@@ -1,0 +1,3 @@
+dotnet ef migrations add InitialPlayerProgress -p ".\Modules\PlayerProgressStore\PlayerProgressStore.Infrastructure\PlayerProgressStore.Infrastructure.csproj" -s ".\Presentation\Presentation.csproj" -c ApplicationDbContext -o Migrations\PlayerProgress
+
+dotnet ef database update InitialPlayerProgress -p ".\Modules\PlayerProgressStore\PlayerProgressStore.Infrastructure\PlayerProgressStore.Infrastructure.csproj" -s ".\Presentation\Presentation.csproj" -c ApplicationDbContext

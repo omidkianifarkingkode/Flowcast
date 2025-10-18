@@ -10,7 +10,7 @@ namespace PlayerProgressStore.Domain;
 /// </summary>
 public sealed class PlayerNamespace
 {
-    public Guid PlayerId { get; private set; }
+    public string PlayerId { get; private set; }
     public string Namespace { get; private set; } = default!;
     public VersionToken Version { get; private set; } = VersionToken.None;
     public ProgressScore Progress { get; private set; } = ProgressScore.Zero;
@@ -21,7 +21,7 @@ public sealed class PlayerNamespace
     private PlayerNamespace() { }
 
     private PlayerNamespace(
-        Guid playerId,
+        string playerId,
         string @namespace,
         VersionToken version,
         ProgressScore progress,
@@ -45,7 +45,7 @@ public sealed class PlayerNamespace
     /// Factory to create a new aggregate instance. Validates inputs and returns Result.
     /// </summary>
     public static Result<PlayerNamespace> Create(
-        Guid playerId,
+        string playerId,
         string @namespace,
         VersionToken version,
         ProgressScore progress,
@@ -53,7 +53,7 @@ public sealed class PlayerNamespace
         DocHash hash,
         DateTimeOffset updatedAtUtc)
     {
-        if (playerId == Guid.Empty)
+        if (string.IsNullOrWhiteSpace(playerId))
             return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.EmptyPlayerId);
 
         if (string.IsNullOrWhiteSpace(@namespace))

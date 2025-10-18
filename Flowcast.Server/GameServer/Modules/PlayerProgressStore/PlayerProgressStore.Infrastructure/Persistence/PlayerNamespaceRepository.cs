@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PlayerProgressStore.Application;
+using PlayerProgressStore.Application.Services;
 using PlayerProgressStore.Domain;
 using SharedKernel;
 
@@ -9,7 +9,7 @@ namespace PlayerProgressStore.Infrastructure.Persistence
     public class PlayerNamespaceRepository(ApplicationDbContext context) : IPlayerNamespaceRepository
     {
         public async Task<Result<IReadOnlyList<PlayerNamespace>>> LoadAsync(
-            Guid playerId,
+            string playerId,
             IReadOnlyCollection<string>? namespaces,
             CancellationToken ct)
         {
@@ -28,7 +28,7 @@ namespace PlayerProgressStore.Infrastructure.Persistence
         }
 
         public async Task<Result<IReadOnlyList<PlayerNamespace>>> UpsertAtomicAsync(
-            Guid playerId,
+            string playerId,
             IReadOnlyList<PlayerNamespace> updated,
             CancellationToken ct)
         {

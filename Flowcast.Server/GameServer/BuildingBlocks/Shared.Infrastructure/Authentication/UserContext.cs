@@ -4,21 +4,15 @@ using System.Security.Claims;
 
 namespace Shared.Infrastructure.Authentication;
 
-internal sealed class UserContext : IUserContext
+internal sealed class UserContext(IHttpContextAccessor httpContextAccessor) : IUserContext
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public UserContext(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
 
     // Gets the current user ID from the current HTTP context or throws if unavailable
-    public Guid UserId => GetUserId(_httpContextAccessor.HttpContext)
+    public string UserId => GetUserId(httpContextAccessor.HttpContext)
                           ?? throw new ApplicationException("User context is unavailable");
 
     // Try to get the user ID from any HttpContext (for flexibility/testing)
-    public Guid? GetUserId(HttpContext? context)
+    public string? GetUserId(HttpContext? context)
     {
         if (context == null) return null;
 
@@ -34,23 +28,23 @@ internal sealed class UserContext : IUserContext
         return GetUserIdFromCookies(context);
     }
 
-    private static Guid? GetUserIdFromJwt(ClaimsPrincipal? user)
+    private static string? GetUserIdFromJwt(ClaimsPrincipal? user)
     {
         if (user == null) return null;
 
         var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        return userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var id) ? id : null;
+        return userIdClaim?.Value;
     }
 
-    private static Guid? GetUserIdFromQueryString(HttpContext context)
+    private static string? GetUserIdFromQueryString(HttpContext context)
     {
         var userIdQuery = context.Request.Query["userId"];
-        return Guid.TryParse(userIdQuery, out var id) ? id : null;
+        return userIdQuery;
     }
 
-    private static Guid? GetUserIdFromCookies(HttpContext context)
+    private static string? GetUserIdFromCookies(HttpContext context)
     {
         var userIdCookie = context.Request.Cookies["userId"];
-        return Guid.TryParse(userIdCookie, out var id) ? id : null;
+        return userIdCookie;
     }
 }

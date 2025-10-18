@@ -1,16 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using PlayerProgressStore.Application.Abstractions;
+using PlayerProgressStore.Application.Services;
 using PlayerProgressStore.Domain;
 using Shared.Application.Messaging;
 using Shared.Application.Services;
 using SharedKernel;
-using System.ComponentModel;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace PlayerProgressStore.Application;
+namespace PlayerProgressStore.Application.Commands;
 
 public sealed record SaveProfileCommand(
-    Guid PlayerId,
+    string PlayerId,
     IReadOnlyCollection<NamespaceWriteDto> Namespaces
 ) : ICommand<PlayerNamespace[]>;
 
@@ -104,7 +102,7 @@ public sealed class SaveProfileCommandHandler(
         return Result.Success();
     }
 
-    private async Task<Result<Dictionary<string, PlayerNamespace>>> LoadCurrentAsMapAsync(Guid playerId,
+    private async Task<Result<Dictionary<string, PlayerNamespace>>> LoadCurrentAsMapAsync(string playerId,
         IReadOnlyCollection<string> namespaces, CancellationToken ct)
     {
         var currentResult = await repo.LoadAsync(playerId, namespaces, ct);
@@ -115,7 +113,7 @@ public sealed class SaveProfileCommandHandler(
         return Result.Success(map);
     }
 
-    private async Task<Result<List<PlayerNamespace>>> BuildUpdatedListAsync(Guid playerId,
+    private async Task<Result<List<PlayerNamespace>>> BuildUpdatedListAsync(string playerId,
         IReadOnlyCollection<NamespaceWriteDto> writes, Dictionary<string, PlayerNamespace> currentByNamespaces,
         DateTimeOffset nowUtc, CancellationToken ct)
     {
@@ -141,7 +139,7 @@ public sealed class SaveProfileCommandHandler(
         return Result.Success(updated);
     }
 
-    private async Task<Result<PlayerNamespace[]>> PersistAtomicallyAsync(Guid playerId,
+    private async Task<Result<PlayerNamespace[]>> PersistAtomicallyAsync(string playerId,
         IReadOnlyList<PlayerNamespace> updated, CancellationToken ct)
     {
         return await unitOfWork.ExecuteAsync(async token =>
@@ -159,7 +157,7 @@ public sealed class SaveProfileCommandHandler(
     // Core per-namespace decision
     // ----------------------------
 
-    private async Task<Result<PlayerNamespace>> BuildUpdatedAggregateAsync(Guid playerId, NamespaceWriteDto write,
+    private async Task<Result<PlayerNamespace>> BuildUpdatedAggregateAsync(string playerId, NamespaceWriteDto write,
         PlayerNamespace? existingOrNull, DateTimeOffset nowUtc, CancellationToken ct)
     {
         // A) Normalize/validate client inputs (progress, version).
@@ -224,7 +222,7 @@ public sealed class SaveProfileCommandHandler(
     }
 
     /// <summary>Create a new aggregate (first write).</summary>
-    private Result<PlayerNamespace> CreateNewAggregate(Guid playerId, string @namespace, ProgressScore progress,
+    private Result<PlayerNamespace> CreateNewAggregate(string playerId, string @namespace, ProgressScore progress,
         string canonicalDoc, DocHash hash, DateTimeOffset nowUtc)
     {
         var newVersion = versions.Next(VersionToken.None); // first server version

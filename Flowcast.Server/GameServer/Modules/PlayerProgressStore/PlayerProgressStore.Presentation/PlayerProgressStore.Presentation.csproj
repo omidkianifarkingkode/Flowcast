@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\Shared.API\Shared.API.csproj" />
+    <ProjectReference Include="..\PlayerProgressStore.Application\PlayerProgressStore.Application.csproj" />
+    <ProjectReference Include="..\PlayerProgressStore.Contracts\PlayerProgressStore.Contracts.csproj" />
+    <ProjectReference Include="..\PlayerProgressStore.Infrastructure\PlayerProgressStore.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

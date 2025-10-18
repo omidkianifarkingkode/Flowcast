@@ -10,8 +10,15 @@
     <ProjectReference Include="..\BuildingBlocks\Shared.API\Shared.API.csproj" />
     <ProjectReference Include="..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Modules\Identity\Identity.API\Identity.API.csproj" />
-    <ProjectReference Include="..\Modules\PlayerProgressStore\PlayerProgressStore.Api\PlayerProgressStore.Api.csproj" />
+    <ProjectReference Include="..\Modules\PlayerProgressStore\PlayerProgressStore.Presentation\PlayerProgressStore.Presentation.csproj" />
 	<ProjectReference Include="..\Realtime.Transport\Realtime.Core\Realtime.Core.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
 </Project>

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PlayerProgressStore.Domain;
 
 namespace PlayerProgressStore.Infrastructure.Persistence.Configs;
@@ -8,32 +9,49 @@ public class PlayerNamespaceConfiguration : IEntityTypeConfiguration<PlayerNames
 {
     public void Configure(EntityTypeBuilder<PlayerNamespace> builder)
     {
-        builder.ToTable("PlayerNamespaces"); // Map to table "PlayerNamespaces"
+        builder.ToTable("PlayerNamespaces");
 
-        builder.HasKey(x => new { x.PlayerId, x.Namespace }); // Composite key: PlayerId + Namespace
+        // Composite key
+        builder.HasKey(x => new { x.PlayerId, x.Namespace });
 
         builder.Property(x => x.PlayerId)
             .IsRequired();
 
         builder.Property(x => x.Namespace)
             .IsRequired()
-            .HasMaxLength(100); // Limiting namespace length
+            .HasMaxLength(100);
 
+        // VersionToken <-> string
         builder.Property(x => x.Version)
             .IsRequired()
-            .HasConversion(v => v.Value, v => new VersionToken(v)) // Use custom VersionToken
-            .HasMaxLength(50); // Limiting version string length
+            .HasConversion(
+                v => v.Value,
+                v => new VersionToken(v))
+            .HasMaxLength(50)
+            .IsUnicode(false);
 
+        // ProgressScore <-> long (bigint)
         builder.Property(x => x.Progress)
-            .IsRequired();
+            .IsRequired()
+            .HasConversion(
+                p => p.Value,
+                v => new ProgressScore(v))
+            .HasColumnType("bigint");
 
+        // JSON document (let it be large)
         builder.Property(x => x.Document)
             .IsRequired()
-            .HasMaxLength(4000); // Adjust depending on expected document size (SQL Server text column)
+            .HasColumnType("nvarchar(max)");
 
+        // DocHash <-> string
         builder.Property(x => x.Hash)
             .IsRequired()
-            .HasMaxLength(256); // SHA256 hash length
+            .HasConversion(
+                h => h.Value,
+                v => new DocHash(v))
+            // SHA-256 hex = 64 chars; base64 = 44. Use what your format needs.
+            .HasMaxLength(64)
+            .IsUnicode(false);
 
         builder.Property(x => x.UpdatedAtUtc)
             .IsRequired();

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using PlayerProgressStore.Application;
+using PlayerProgressStore.Application.Services;
 using PlayerProgressStore.Infrastructure.Persistence;
 using PlayerProgressStore.Infrastructure.Services;
 using Shared.Application.Services;
@@ -13,12 +13,29 @@ namespace PlayerProgressStore.Infrastructure
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddPlayerProgressStore(
-            this WebApplicationBuilder builder)
+        public static WebApplicationBuilder AddInfrastructure(this WebApplicationBuilder builder)
         {
             SetupOptions(builder.Services);
 
-            // DbContext (Scoped)
+            AddPersistance(builder);
+            AddServices(builder);
+
+            return builder;
+        }
+
+        private static void SetupOptions(IServiceCollection services)
+        {
+            services.AddOptions<PlayerProgressOptions>()
+                .BindConfiguration(PlayerProgressOptions.SectionName)
+                .ValidateDataAnnotations()
+                .Validate(o => o is not null, "PlayerProgress options missing")
+                .ValidateOnStart();
+
+            services.AddSingleton<IValidateOptions<PlayerProgressOptions>, PlayerProgressOptionsValidator>();
+        }
+
+        private static void AddPersistance(WebApplicationBuilder builder)
+        {
             builder.Services.AddDbContext<ApplicationDbContext>(opt =>
             {
                 var section = builder.Configuration.GetSection(PlayerProgressOptions.SectionName);
@@ -40,15 +57,16 @@ namespace PlayerProgressStore.Infrastructure
 
             builder.Services.AddScoped<IPlayerNamespaceRepository, PlayerNamespaceRepository>();
             builder.Services.AddKeyedScoped<IUnitOfWork, UnitOfWork<ApplicationDbContext>>("playerprogress");
+        }
 
-            // Core services (Singleton)
+        private static void AddServices(WebApplicationBuilder builder)
+        {
             builder.Services.AddSingleton<ICanonicalJsonService, CanonicalJsonService>();
             builder.Services.AddSingleton<IContentHashService, ContentHashService>();
             builder.Services.AddSingleton<IVersionTokenService, VersionTokenService>();
             builder.Services.AddSingleton<INamespaceValidationPolicy, NamespaceValidationPolicy>();
             builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
-            // Merge resolvers & registry (Singleton)
             builder.Services.AddSingleton<IMergeResolverRegistry>(sp =>
             {
                 var reg = new MergeResolverRegistry();
@@ -59,19 +77,6 @@ namespace PlayerProgressStore.Infrastructure
                 // Default resolver is internal to the registry (fallback)
                 return reg;
             });
-
-            return builder;
-        }
-
-        private static void SetupOptions(IServiceCollection services)
-        {
-            services.AddOptions<PlayerProgressOptions>()
-                .BindConfiguration(PlayerProgressOptions.SectionName)
-                .ValidateDataAnnotations()
-                .Validate(o => o is not null, "PlayerProgress options missing")
-                .ValidateOnStart();
-
-            services.AddSingleton<IValidateOptions<PlayerProgressOptions>, PlayerProgressOptionsValidator>();
         }
     }
 }

@@ -1,13 +1,7 @@
 ﻿using PlayerProgressStore.Domain;
-using Shared.Application.Messaging;
 using SharedKernel;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
-namespace PlayerProgressStore.Application;
+namespace PlayerProgressStore.Application.Services;
 
 /// <summary>
 /// Persistence access for PlayerNamespace aggregates.
@@ -17,7 +11,7 @@ public interface IPlayerNamespaceRepository
 {
     /// <summary>Load namespaces for a player. If namespaces is null or empty, returns all.</summary>
     Task<Result<IReadOnlyList<PlayerNamespace>>> LoadAsync(
-        Guid playerId,
+        string playerId,
         IReadOnlyCollection<string>? namespaces,
         CancellationToken ct);
 
@@ -26,7 +20,7 @@ public interface IPlayerNamespaceRepository
     /// Returns authoritative copies as stored.
     /// </summary>
     Task<Result<IReadOnlyList<PlayerNamespace>>> UpsertAtomicAsync(
-        Guid playerId,
+        string playerId,
         IReadOnlyList<PlayerNamespace> updated,
         CancellationToken ct);
 }
