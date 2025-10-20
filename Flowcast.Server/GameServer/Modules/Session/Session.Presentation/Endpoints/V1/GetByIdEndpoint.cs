@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Session.Application.Queries;
 using Session.Domain;
-using Shared.API.Endpoints;
 using Shared.Application.Messaging;
+using Shared.Presentation.Endpoints;
 using SharedKernel;
 
 namespace Session.Presentation.Endpoints.V1;

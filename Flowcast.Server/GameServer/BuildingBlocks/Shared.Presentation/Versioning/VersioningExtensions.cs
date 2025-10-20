@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Shared.API.Versioning;
+namespace Shared.Presentation.Versioning;
 
 public static class VersioningExtensions
 {

@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Session.Application.Commands;
 using Session.Domain;
-using Shared.API.Endpoints;
 using Shared.Application.Messaging;
+using Shared.Presentation.Endpoints;
 using SharedKernel;
 
 namespace Session.Presentation.Endpoints.V1;

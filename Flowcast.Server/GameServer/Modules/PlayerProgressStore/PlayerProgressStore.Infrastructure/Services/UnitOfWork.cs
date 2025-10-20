@@ -1,4 +1,4 @@
-﻿using PlayerProgressStore.Infrastructure.Persistence;
+﻿using PlayerProgressStore.Infrastructure.Persistences;
 using Shared.Infrastructure.Database;
 
 namespace PlayerProgressStore.Infrastructure.Services;

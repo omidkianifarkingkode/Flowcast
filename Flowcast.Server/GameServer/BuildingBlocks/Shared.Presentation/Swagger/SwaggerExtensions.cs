@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
-using Shared.API.Swagger;
+using Shared.Presentation.Swagger;
 
-namespace Shared.API.Swagger;
+namespace Shared.Presentation.Swagger;
 
 public static class SwaggerExtensions
 {

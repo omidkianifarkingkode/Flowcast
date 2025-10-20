@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Routing;
 
-namespace Shared.API.Endpoints;
+namespace Shared.Presentation.Endpoints;
 
 public interface IEndpoint
 {

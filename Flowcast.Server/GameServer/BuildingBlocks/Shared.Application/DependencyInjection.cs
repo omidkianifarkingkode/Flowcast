@@ -50,8 +50,6 @@ public static class DependencyInjection
 
     public static WebApplicationBuilder AddSharedServices(this WebApplicationBuilder builder) 
     {
-        builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-
         return builder;
     }
 

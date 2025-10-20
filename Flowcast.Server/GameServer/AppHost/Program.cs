@@ -1,14 +1,15 @@
-using Identity.API.Extensions;
+using AppHost.Extensions;
+using Identity.Presentation;
 using PlayerProgressStore.Presentation;
 using Presentation;
-using Presentation.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.ConfigureAppHost();
-
-builder.AddIdentityService();
-builder.AddPlayerProgress();
+builder
+    .ConfigureAppHost()
+    .ConfigureBuildingBlocks()
+    .AddIdentity()
+    .AddPlayerProgress();
 
 var app = builder.Build();
 

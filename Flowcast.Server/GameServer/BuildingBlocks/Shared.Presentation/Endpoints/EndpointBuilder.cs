@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using SharedKernel;
 
-namespace Shared.API.Endpoints;
+namespace Shared.Presentation.Endpoints;
 
 public class EndpointBuilder<TRequest, TResponse>
 {

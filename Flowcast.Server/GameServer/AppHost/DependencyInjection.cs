@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Presentation.Infrastructure;
 using Serilog;
-using Shared.API.Swagger;
-using Shared.API.Versioning;
+using Shared.Infrastructure;
+using Shared.Presentation.Swagger;
+using Shared.Presentation.Versioning;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -11,6 +12,13 @@ namespace Presentation;
 
 public static class DependencyInjection
 {
+    internal static WebApplicationBuilder ConfigureBuildingBlocks(this WebApplicationBuilder builder) 
+    {
+        builder.AddInfrastructure();
+
+        return builder;
+    }
+
     public static WebApplicationBuilder ConfigureAppHost(this WebApplicationBuilder builder)
     {
         // Logging
@@ -53,7 +61,7 @@ public static class DependencyInjection
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
 
-
+        builder.Services.AddMemoryCache();
 
         //builder.AddRealtimeServices()
         //    .DiscoverMessagesFrom(typeof(Application.DependencyInjection).Assembly)

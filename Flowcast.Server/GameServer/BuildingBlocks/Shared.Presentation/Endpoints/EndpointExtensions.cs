@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Shared.Presentation.Versioning;
 using System.Reflection;
 
-namespace Shared.API.Endpoints;
+namespace Shared.Presentation.Endpoints;
 
 public static class EndpointExtensions
 {
@@ -28,7 +29,7 @@ public static class EndpointExtensions
     {
         IEnumerable<IEndpoint> endpoints = app.Services.GetRequiredService<IEnumerable<IEndpoint>>();
 
-        IEndpointRouteBuilder builder = routeGroupBuilder is null ? app : routeGroupBuilder;
+        IEndpointRouteBuilder builder = routeGroupBuilder is null ? app.GetVersionedGroupBuilder() : routeGroupBuilder;
 
         foreach (IEndpoint endpoint in endpoints)
         {

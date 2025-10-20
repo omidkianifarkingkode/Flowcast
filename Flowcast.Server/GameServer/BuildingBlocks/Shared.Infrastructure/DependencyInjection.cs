@@ -2,13 +2,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Authentication;
-using Shared.Application.Realtime;
 using Shared.Application.Services;
-using Shared.Infrastructure;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Authorization;
-using Shared.Infrastructure.DomainEvents;
-using Shared.Infrastructure.Realtime.Services;
+using Shared.Infrastructure.Services;
 
 namespace Shared.Infrastructure;
 
@@ -28,7 +25,7 @@ public static class DependencyInjection
 
         builder.Services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
 
-        builder.Services.AddSingleton<ILivenessProbe, RegistryLivenessProbe>();
+        //builder.Services.AddSingleton<ILivenessProbe, RegistryLivenessProbe>();
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IUserContext, UserContext>();
@@ -38,8 +35,8 @@ public static class DependencyInjection
 
     private static WebApplicationBuilder AddHealthChecks(this WebApplicationBuilder builder)
     {
-        builder.Services
-            .AddHealthChecks();
+        //builder.Services
+        //    .AddHealthChecks();
         //.AddNpgSql(builder.Configuration.GetConnectionString("Database")!);
 
         return builder;

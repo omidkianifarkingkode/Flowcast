@@ -1,15 +1,11 @@
-﻿using HealthChecks.UI.Client;
-using Identity.API.Extensions;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+﻿using Identity.Presentation;
 using Realtime.Transport.Gateway;
 using Serilog;
-using Shared.API.Endpoints;
-using Shared.API.Loggings;
-using Shared.API.Swagger;
-using Shared.API.Versioning;
-using System.Threading.Tasks;
+using Shared.Infrastructure.Database;
+using Shared.Presentation.Endpoints;
+using Shared.Presentation.Swagger;
 
-namespace Presentation.Extensions;
+namespace AppHost.Extensions;
 
 public static class MiddlewareExtensions
 {
@@ -30,6 +26,8 @@ public static class MiddlewareExtensions
         // 3) Swagger (dev only)
         if (app.Environment.IsDevelopment())
         {
+            await app.ApplyAllMigrationsAsync();
+
             app.UseSwagger();
             app.UseSwaggerUI();
         }
@@ -41,14 +39,10 @@ public static class MiddlewareExtensions
         app.UseSerilogRequestLogging();
 
         // 7) Auth
-        await app.UseIdentity(indentity => 
-        {
-            indentity.UseAuthorization = true;
-        });
+        await app.UseIdentity();
 
         // 8) Map endpoints
-        var versionedGroup = app.GetVersionedGroupBuilder();
-        app.MapEndpoints(versionedGroup);
+        app.MapEndpoints();
 
         // Controllers (if you use MVC controllers)
         app.MapControllers();

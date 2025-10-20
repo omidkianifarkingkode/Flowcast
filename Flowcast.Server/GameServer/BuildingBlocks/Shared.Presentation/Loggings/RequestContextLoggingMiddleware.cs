@@ -2,19 +2,12 @@
 using Microsoft.Extensions.Primitives;
 using Serilog.Context;
 
-namespace Shared.API.Loggings;
+namespace Shared.Presentation.Loggings;
 
-public class RequestContextLoggingMiddleware
+public class RequestContextLoggingMiddleware(RequestDelegate next)
 {
     private const string CorrelationIdHeaderName = "Correlation-Id";
     private const string CorrelationPropertyName = "CorrelationId";
-
-    private readonly RequestDelegate _next;
-
-    public RequestContextLoggingMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
 
     public async Task Invoke(HttpContext context)
     {
@@ -22,7 +15,7 @@ public class RequestContextLoggingMiddleware
 
         using (LogContext.PushProperty(CorrelationPropertyName, correlationId))
         {
-            await _next(context);
+            await next(context);
         }
     }
 

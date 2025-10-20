@@ -9,6 +9,22 @@ using System.Threading.Tasks;
 
 public class UnitOfWork<TContext>(TContext context) : IUnitOfWork where TContext : DbContext
 {
+    public async Task<Result> SaveChangesAsync(CancellationToken ct = default)
+    {
+        using var transaction = await context.Database.BeginTransactionAsync(ct);
+        try
+        {
+            await context.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(ct);
+            return Result.Failure(Error.Failure("database.save_error", ex.Message));
+        }
+    }
+
     public async Task<Result> ExecuteAsync(Func<CancellationToken, Task<Result>> action, CancellationToken ct = default)
     {
         using var transaction = await context.Database.BeginTransactionAsync(ct);
