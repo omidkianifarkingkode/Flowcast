@@ -13,7 +13,7 @@ namespace PlayerProgressStore.Contracts.V1.Shared;
 /// <param name="UpdatedAtUtc">Last update timestamp in UTC.</param>
 public readonly record struct NamespaceDocument(
     string Namespace,
-    string Document,
+    JsonElement Document,
     string Version,
     long Progress,
     string Hash,
