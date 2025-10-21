@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using System.Text.Json;
 using PlayerProgressStore.Application.Queries;
 using PlayerProgressStore.Contracts;
 using PlayerProgressStore.Contracts.V1;
@@ -51,7 +52,7 @@ public sealed class LoadProfileEndpoint : IEndpoint
         var docs = playerNamespaces
             .Select(x => new NamespaceDocument(
                 x.Namespace,
-                x.Document,
+                ParseDocument(x.Document),
                 x.Version.Value,
                 x.Progress.Value,
                 x.Hash.Value,
@@ -60,4 +61,17 @@ public sealed class LoadProfileEndpoint : IEndpoint
 
         return new LoadProfile.Response(docs);
     }
+
+    private static JsonElement ParseDocument(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            using var empty = JsonDocument.Parse("{}");
+            return empty.RootElement.Clone();
+        }
+
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement.Clone();
+    }
+
 }

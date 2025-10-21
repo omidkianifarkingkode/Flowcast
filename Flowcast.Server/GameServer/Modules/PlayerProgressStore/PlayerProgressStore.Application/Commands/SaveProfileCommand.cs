@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 using PlayerProgressStore.Application.Services;
 using PlayerProgressStore.Domain;
 using Shared.Application.Messaging;
@@ -14,7 +15,7 @@ public sealed record SaveProfileCommand(
 
 public readonly record struct NamespaceWriteDto(
     string Namespace,
-    string Document,
+    JsonElement Document,
     long Progress,
     string? ClientVersion,
     string? ClientHash
@@ -210,9 +211,19 @@ public sealed class SaveProfileCommandHandler(
     }
 
     /// <summary>Canonicalize JSON string and compute content hash.</summary>
-    private Result<(string Canonical, DocHash Hash)> CanonicalizeAndHash(string? json)
+    private Result<(string Canonical, DocHash Hash)> CanonicalizeAndHash(JsonElement json)
     {
-        var canonicalResult = canonicalJson.Canonicalize(json ?? "{}");
+        var raw = json.ValueKind switch
+        {
+            JsonValueKind.Undefined => "{}",
+            JsonValueKind.Null => "{}",
+            _ => json.GetRawText(),
+        };
+
+        if (string.IsNullOrWhiteSpace(raw))
+            raw = "{}";
+
+        var canonicalResult = canonicalJson.Canonicalize(raw);
         if (canonicalResult.IsFailure)
             return Result.Failure<(string, DocHash)>(canonicalResult.Error);
 

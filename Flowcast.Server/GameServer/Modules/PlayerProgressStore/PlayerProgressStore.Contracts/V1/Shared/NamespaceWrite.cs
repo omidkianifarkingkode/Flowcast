@@ -17,7 +17,7 @@ namespace PlayerProgressStore.Contracts.V1.Shared;
 /// </param>
 public readonly record struct NamespaceWrite(
     string Namespace,
-    string Document,
+    JsonElement Document,
     long Progress,
     string? ClientVersion = null,
     string? ClientHash = null
