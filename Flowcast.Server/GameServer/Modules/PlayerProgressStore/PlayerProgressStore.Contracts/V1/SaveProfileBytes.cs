@@ -1,0 +1,32 @@
+using PlayerProgressStore.Contracts.V1.Shared;
+
+namespace PlayerProgressStore.Contracts.V1;
+
+/// <summary>
+/// Atomic batch save for one or more namespaces represented as byte arrays.
+/// </summary>
+public static class SaveProfileBytes
+{
+    public const string Method = "POST";
+    public const string Route = "player-progress/profile/bytes";
+    public const string Summary = "Save player progress data (atomic, byte arrays)";
+    public const string Description =
+        "Creates or replaces namespaces for a player profile atomically using byte array payloads. " +
+        "Server enforces progress-first conflict handling and returns authoritative copies.";
+
+    /// <summary>
+    /// Batch of namespace writes to apply atomically.
+    /// </summary>
+    /// <param name="Namespaces">One or more namespace writes.</param>
+    public sealed record Request(
+        IReadOnlyCollection<NamespaceBinaryWrite> Namespaces
+    );
+
+    /// <summary>
+    /// Authoritative result after the atomic save is committed.
+    /// </summary>
+    /// <param name="Namespaces">Committed namespace documents (server truth).</param>
+    public sealed record Response(
+        NamespaceBinaryDocument[] Namespaces
+    );
+}
