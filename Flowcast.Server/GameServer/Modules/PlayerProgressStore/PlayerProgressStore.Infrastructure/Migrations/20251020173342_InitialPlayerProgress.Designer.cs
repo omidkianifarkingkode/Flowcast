@@ -35,9 +35,9 @@ namespace PlayerProgressStore.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Document")
+                    b.Property<byte[]>("Document")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("Hash")
                         .IsRequired()
@@ -60,6 +60,29 @@ namespace PlayerProgressStore.Infrastructure.Migrations
                     b.HasKey("PlayerId", "Namespace");
 
                     b.ToTable("PlayerNamespaces", "PlayerProgress");
+
+                    b.OwnsOne("PlayerProgressStore.Domain.DocumentMetadata", "Metadata", b1 =>
+                        {
+                            b1.Property<string>("Compression")
+                                .HasColumnName("DocumentCompression")
+                                .HasMaxLength(50)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(50)");
+
+                            b1.Property<string>("ContentType")
+                                .HasColumnName("DocumentContentType")
+                                .HasMaxLength(150)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(150)");
+
+                            b1.Property<string>("Encoding")
+                                .HasColumnName("DocumentEncoding")
+                                .HasMaxLength(50)
+                                .IsUnicode(false)
+                                .HasColumnType("varchar(50)");
+
+                            b1.WithOwner();
+                        });
                 });
 #pragma warning restore 612, 618
         }

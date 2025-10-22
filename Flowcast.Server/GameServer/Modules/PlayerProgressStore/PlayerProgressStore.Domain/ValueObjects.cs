@@ -1,4 +1,5 @@
-﻿using SharedKernel;
+using System;
+using SharedKernel;
 
 namespace PlayerProgressStore.Domain;
 
@@ -32,4 +33,33 @@ public readonly record struct DocHash(string Value)
     public override string ToString() => Value ?? "";
     public static Result<DocHash> Create(string? value)
         => Result.Success(new DocHash(value?.Trim() ?? ""));
+}
+
+public readonly record struct DocumentMetadata(string ContentType, string? Encoding, string? Compression)
+{
+    public static DocumentMetadata Default => new("application/octet-stream", null, null);
+
+    public static DocumentMetadata JsonUtf8(string? compression = null)
+        => new("application/json", "utf-8", string.IsNullOrWhiteSpace(compression) ? null : compression.Trim());
+
+    public bool IsJsonUtf8 =>
+        string.Equals(ContentType, "application/json", StringComparison.OrdinalIgnoreCase) &&
+        (Encoding is null || string.Equals(Encoding, "utf-8", StringComparison.OrdinalIgnoreCase));
+
+    public DocumentMetadata Normalize()
+    {
+        var normalizedContentType = string.IsNullOrWhiteSpace(ContentType)
+            ? Default.ContentType
+            : ContentType.Trim();
+
+        var normalizedEncoding = string.IsNullOrWhiteSpace(Encoding)
+            ? null
+            : Encoding.Trim();
+
+        var normalizedCompression = string.IsNullOrWhiteSpace(Compression)
+            ? null
+            : Compression.Trim();
+
+        return new DocumentMetadata(normalizedContentType, normalizedEncoding, normalizedCompression);
+    }
 }

@@ -1,12 +1,10 @@
-﻿using System.Text.Json;
-
 namespace PlayerProgressStore.Contracts.V1.Shared;
 
 /// <summary>
 /// Client → Server write model for a single namespace.
 /// </summary>
 /// <param name="Namespace">Logical document bucket (e.g., "playerStats", "inventory", or "global").</param>
-/// <param name="Document">The client document payload (JSON).</param>
+/// <param name="Document">The client document payload.</param>
 /// <param name="Progress">Semantic gameplay progress metric used for conflict resolution.</param>
 /// <param name="ClientVersion">
 /// The last server version the client saw for this namespace (sync anchor).
@@ -17,7 +15,7 @@ namespace PlayerProgressStore.Contracts.V1.Shared;
 /// </param>
 public readonly record struct NamespaceWrite(
     string Namespace,
-    JsonElement Document,
+    byte[]? Document,
     long Progress,
     string? ClientVersion = null,
     string? ClientHash = null

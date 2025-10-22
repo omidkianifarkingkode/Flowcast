@@ -1,5 +1,3 @@
-﻿using System.Text.Json;
-
 namespace PlayerProgressStore.Contracts.V1.Shared;
 
 /// <summary>
@@ -13,7 +11,7 @@ namespace PlayerProgressStore.Contracts.V1.Shared;
 /// <param name="UpdatedAtUtc">Last update timestamp in UTC.</param>
 public readonly record struct NamespaceDocument(
     string Namespace,
-    JsonElement Document,
+    byte[] Document,
     string Version,
     long Progress,
     string Hash,
