@@ -23,7 +23,10 @@ namespace PlayerProgressStore.Infrastructure.Migrations
                     Namespace = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Version = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: false),
                     Progress = table.Column<long>(type: "bigint", nullable: false),
-                    Document = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Document = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
+                    DocumentContentType = table.Column<string>(type: "varchar(150)", unicode: false, maxLength: 150, nullable: true),
+                    DocumentEncoding = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: true),
+                    DocumentCompression = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: true),
                     Hash = table.Column<string>(type: "varchar(64)", unicode: false, maxLength: 64, nullable: false),
                     UpdatedAtUtc = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },

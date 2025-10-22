@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PlayerProgressStore.Domain;
@@ -38,10 +38,30 @@ public class PlayerNamespaceConfiguration : IEntityTypeConfiguration<PlayerNames
                 v => new ProgressScore(v))
             .HasColumnType("bigint");
 
-        // JSON document (let it be large)
+        // Document payload stored as raw bytes
         builder.Property(x => x.Document)
             .IsRequired()
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("varbinary(max)");
+
+        builder.OwnsOne(x => x.Metadata, metadata =>
+        {
+            metadata.Property(m => m.ContentType)
+                .HasColumnName("DocumentContentType")
+                .HasMaxLength(150)
+                .IsUnicode(false);
+
+            metadata.Property(m => m.Encoding)
+                .HasColumnName("DocumentEncoding")
+                .HasMaxLength(50)
+                .IsUnicode(false);
+
+            metadata.Property(m => m.Compression)
+                .HasColumnName("DocumentCompression")
+                .HasMaxLength(50)
+                .IsUnicode(false);
+
+            metadata.WithOwner();
+        });
 
         // DocHash <-> string
         builder.Property(x => x.Hash)

@@ -1,6 +1,5 @@
-﻿using SharedKernel;
+using SharedKernel;
 using System;
-using System.Text.Json;
 
 namespace PlayerProgressStore.Domain;
 
@@ -14,7 +13,8 @@ public sealed class PlayerNamespace
     public string Namespace { get; private set; } = default!;
     public VersionToken Version { get; private set; } = VersionToken.None;
     public ProgressScore Progress { get; private set; } = ProgressScore.Zero;
-    public string Document { get; private set; } = "{}";        // authoritative JSON payload
+    public byte[] Document { get; private set; } = Array.Empty<byte>();
+    public DocumentMetadata Metadata { get; private set; } = DocumentMetadata.JsonUtf8();
     public DocHash Hash { get; private set; } = DocHash.Empty;   // server-computed content hash
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
@@ -25,7 +25,8 @@ public sealed class PlayerNamespace
         string @namespace,
         VersionToken version,
         ProgressScore progress,
-        string document,
+        byte[] document,
+        DocumentMetadata metadata,
         DocHash hash,
         DateTimeOffset updatedAtUtc)
     {
@@ -36,7 +37,8 @@ public sealed class PlayerNamespace
         Namespace = @namespace;
         Version = version;
         Progress = progress;
-        Document = document;
+        Document = OwnDocument(document);
+        Metadata = NormalizeMetadata(metadata);
         Hash = hash;
         UpdatedAtUtc = updatedAtUtc;
     }
@@ -49,7 +51,8 @@ public sealed class PlayerNamespace
         string @namespace,
         VersionToken version,
         ProgressScore progress,
-        string document,
+        byte[] document,
+        DocumentMetadata metadata,
         DocHash hash,
         DateTimeOffset updatedAtUtc)
     {
@@ -62,15 +65,13 @@ public sealed class PlayerNamespace
         if (progress.Value < 0)
             return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.InvalidProgress);
 
-        // Clone/own the element
-        var doc = string.IsNullOrWhiteSpace(document) ? "{}" : document;
-
         var agg = new PlayerNamespace(
             playerId,
             @namespace,
             version,
             progress,
-            doc,
+            document,
+            metadata,
             hash,
             updatedAtUtc);
 
@@ -95,7 +96,8 @@ public sealed class PlayerNamespace
     /// Return a copy with authoritative state replaced (used after overwrite or after an external merge).
     /// </summary>
     public Result<PlayerNamespace> WithReplaced(
-        string newDocument,
+        byte[] newDocument,
+        DocumentMetadata metadata,
         ProgressScore newProgress,
         VersionToken newVersion,
         DocHash newHash,
@@ -104,14 +106,13 @@ public sealed class PlayerNamespace
         if (newProgress.Value < 0)
             return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.InvalidProgress);
 
-        var doc = string.IsNullOrWhiteSpace(newDocument) ? "{}" : newDocument;
-
         var updated = new PlayerNamespace(
             PlayerId,
             Namespace,
             newVersion,
             newProgress,
-            doc,
+            newDocument,
+            metadata,
             newHash,
             nowUtc);
 
@@ -124,7 +125,8 @@ public sealed class PlayerNamespace
     /// </summary>
     public Result<PlayerNamespace> TryOverwriteIfClientAhead(
         ProgressScore incomingProgress,
-        string incomingDocument,
+        byte[] incomingDocument,
+        DocumentMetadata metadata,
         VersionToken newVersion,
         DocHash newHash,
         DateTimeOffset nowUtc)
@@ -138,7 +140,7 @@ public sealed class PlayerNamespace
                 "progress.equal_requires_merge",
                 "Equal progress requires merge; call TryMergeIfEqualProgress."));
 
-        return WithReplaced(incomingDocument, incomingProgress, newVersion, newHash, nowUtc);
+        return WithReplaced(incomingDocument, metadata, incomingProgress, newVersion, newHash, nowUtc);
     }
 
     /// <summary>
@@ -146,7 +148,8 @@ public sealed class PlayerNamespace
     /// </summary>
     public Result<PlayerNamespace> TryMergeIfEqualProgress(
         ProgressScore incomingProgress,
-        string mergedDocument,
+        byte[] mergedDocument,
+        DocumentMetadata metadata,
         VersionToken newVersion,
         DocHash newHash,
         DateTimeOffset nowUtc)
@@ -155,6 +158,24 @@ public sealed class PlayerNamespace
             return Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.UnknownDecision);
 
         // Typically progress stays equal after an equal-merge, but we accept caller-provided progress for flexibility
-        return WithReplaced(mergedDocument, incomingProgress, newVersion, newHash, nowUtc);
+        return WithReplaced(mergedDocument, metadata, incomingProgress, newVersion, newHash, nowUtc);
+    }
+
+    private static byte[] OwnDocument(byte[]? document)
+    {
+        if (document is null || document.Length == 0)
+            return Array.Empty<byte>();
+
+        var copy = new byte[document.Length];
+        Buffer.BlockCopy(document, 0, copy, 0, document.Length);
+        return copy;
+    }
+
+    private static DocumentMetadata NormalizeMetadata(DocumentMetadata metadata)
+    {
+        if (metadata == default)
+            return DocumentMetadata.JsonUtf8();
+
+        return metadata.Normalize();
     }
 }

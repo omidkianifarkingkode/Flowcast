@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using System.Linq;
 using System.Text.Json;
 using PlayerProgressStore.Application.Commands;
 using PlayerProgressStore.Contracts;
@@ -45,7 +46,7 @@ public sealed class SaveProfileEndpoint : IEndpoint
         var dto = request.Namespaces
             .Select(x => new NamespaceWriteDto(
                 x.Namespace,
-                x.Document,
+                ParseDocument(x.Document),
                 x.Progress,
                 x.ClientVersion,
                 x.ClientHash))
@@ -61,7 +62,7 @@ public sealed class SaveProfileEndpoint : IEndpoint
         var docs = playerNamespaces
             .Select(x => new NamespaceDocument(
                 x.Namespace,
-                ParseDocument(x.Document),
+                x.Document.ToArray(),
                 x.Version.Value,
                 x.Progress.Value,
                 x.Hash.Value,
@@ -71,15 +72,15 @@ public sealed class SaveProfileEndpoint : IEndpoint
         return new SaveProfile.Response(docs);
     }
 
-    private static JsonElement ParseDocument(string json)
+    private static JsonElement ParseDocument(byte[]? document)
     {
-        if (string.IsNullOrWhiteSpace(json))
+        if (document is null || document.Length == 0)
         {
             using var empty = JsonDocument.Parse("{}");
             return empty.RootElement.Clone();
         }
 
-        using var doc = JsonDocument.Parse(json);
+        using var doc = JsonDocument.Parse(document);
         return doc.RootElement.Clone();
     }
 
