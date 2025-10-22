@@ -4,9 +4,11 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>facce101-6dc7-4091-a9be-d1a0586da8ad</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BuildingBlocks\Shared.Infrastructure\Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\BuildingBlocks\Shared.Presentation\Shared.Presentation.csproj" />
     <ProjectReference Include="..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Modules\Identity\Identity.Presentation\Identity.Presentation.csproj" />

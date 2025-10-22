@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Infrastructure.Extensions;
 using System.Reflection;
 
 namespace Shared.Infrastructure.Database;
@@ -11,7 +12,7 @@ public static class MigrationStartup
 {
     public static async Task ApplyAllMigrationsAsync(this WebApplication app)
     {
-        if (!app.Environment.IsDevelopment())
+        if (!app.Environment.IsLocalOrDevelopement())
             return;
 
         using var scope = app.Services.CreateScope();

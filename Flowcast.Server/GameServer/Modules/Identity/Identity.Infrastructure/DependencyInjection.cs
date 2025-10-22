@@ -53,9 +53,11 @@ public static class DependencyInjection
     {
         builder.Services.AddDbContext<ApplicationDbContext>(opt =>
         {
-            var identitySection = builder.Configuration.GetSection("Identity");
+            var identitySection = builder.Configuration.GetSection(IdentityOptions.SectionName);
             var opts = identitySection.Get<IdentityOptions>()!;
             var useInMemory = identitySection.GetValue<bool>("UseInMemoryDatabase");
+
+            var connectionString = builder.Configuration.GetModuleConnectionString(IdentityOptions.SectionName);
 
             if (useInMemory)
             {
@@ -63,7 +65,7 @@ public static class DependencyInjection
             }
             else
             {
-                opt.UseSqlServer(opts.ConnectionString);
+                opt.UseSqlServer(connectionString);
             }
         });
 

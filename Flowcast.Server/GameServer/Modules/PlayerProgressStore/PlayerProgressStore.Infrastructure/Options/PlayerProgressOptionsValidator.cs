@@ -10,15 +10,6 @@ public sealed class PlayerProgressOptionsValidator : IValidateOptions<PlayerProg
         if (options is null)
             return ValidateOptionsResult.Fail("PlayerProgress options missing.");
 
-        if (!options.UseInMemoryDatabase && string.IsNullOrWhiteSpace(options.ConnectionString))
-            return ValidateOptionsResult.Fail("PlayerProgress: ConnectionString is required when UseInMemoryDatabase is false.");
-
-        if (string.IsNullOrWhiteSpace(options.Schema))
-            return ValidateOptionsResult.Fail("PlayerProgress: Schema is required.");
-
-        if (string.IsNullOrWhiteSpace(options.PlayerNamespacesTable))
-            return ValidateOptionsResult.Fail("PlayerProgress: PlayerNamespacesTable is required.");
-
         return ValidateOptionsResult.Success;
     }
 }

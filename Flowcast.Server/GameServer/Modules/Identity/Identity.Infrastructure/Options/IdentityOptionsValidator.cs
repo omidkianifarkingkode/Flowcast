@@ -18,10 +18,6 @@ public sealed class IdentityOptionsValidator : IValidateOptions<IdentityOptions>
         if (options is null)
             return ValidateOptionsResult.Fail("Identity options missing.");
 
-        // --- Database ---
-        if (!options.UseInMemoryDatabase && string.IsNullOrWhiteSpace(options.ConnectionString))
-            errors.Add("Identity:ConnectionString is required when UseInMemoryDatabase is false.");
-
         // --- TokenOptions ---
         var t = options.TokenOptions;
         if (string.IsNullOrWhiteSpace(t.Issuer))

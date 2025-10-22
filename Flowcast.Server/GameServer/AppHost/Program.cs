@@ -1,9 +1,13 @@
+using AppHost;
 using AppHost.Extensions;
 using Identity.Presentation;
 using PlayerProgressStore.Presentation;
-using Presentation;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = Directory.GetCurrentDirectory()
+});
 
 builder
     .ConfigureAppHost()
@@ -13,6 +17,7 @@ builder
 
 var app = builder.Build();
 
-await app.UseAppHost();
+app.LogEnvironmentStartup();
 
+await app.UseAppHost();
 await app.RunAsync();

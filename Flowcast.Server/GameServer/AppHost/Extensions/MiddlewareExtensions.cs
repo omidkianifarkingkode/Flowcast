@@ -4,6 +4,7 @@ using Serilog;
 using Shared.Infrastructure.Database;
 using Shared.Presentation.Endpoints;
 using Shared.Presentation.Swagger;
+using Shared.Infrastructure.Extensions;
 
 namespace AppHost.Extensions;
 
@@ -17,14 +18,14 @@ public static class MiddlewareExtensions
         //app.UseMiddleware<RequestContextLoggingMiddleware>();
 
         // 2) HTTPS / HSTS (optional but recommended)
-        if (!app.Environment.IsDevelopment())
+        if (!app.Environment.IsLocalOrDevelopement())
         {
             app.UseHsts();
         }
         app.UseHttpsRedirection();
 
         // 3) Swagger (dev only)
-        if (app.Environment.IsDevelopment())
+        if (app.Environment.IsLocalOrDevelopement())
         {
             await app.ApplyAllMigrationsAsync();
 

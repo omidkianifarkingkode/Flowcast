@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using Shared.Application.Authentication;
 using Shared.Application.Services;
 using Shared.Infrastructure.Authentication;
@@ -25,10 +26,15 @@ public static class DependencyInjection
 
         builder.Services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
 
+        builder.Services.AddMemoryCache();
+
         //builder.Services.AddSingleton<ILivenessProbe, RegistryLivenessProbe>();
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IUserContext, UserContext>();
+
+        builder.Host.UseSerilog(
+            (ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
         return builder;
     }
@@ -44,8 +50,6 @@ public static class DependencyInjection
 
     private static WebApplicationBuilder AddAuthorizationInternal(this WebApplicationBuilder builder)
     {
-        builder.Services.AddAuthorization();
-
         builder.Services.AddScoped<PermissionProvider>();
 
         builder.Services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();

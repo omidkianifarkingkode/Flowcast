@@ -45,13 +45,15 @@ namespace PlayerProgressStore.Infrastructure
                 var opts = section.Get<PlayerProgressOptions>()!;
                 var useInMemory = section.GetValue<bool>(nameof(PlayerProgressOptions.UseInMemoryDatabase));
 
+                var connectionString = builder.Configuration.GetModuleConnectionString(PlayerProgressOptions.SectionName);
+
                 if (useInMemory)
                 {
                     opt.UseInMemoryDatabase("PlayerProgress");
                 }
                 else
                 {
-                    opt.UseSqlServer(opts.ConnectionString!, sql =>
+                    opt.UseSqlServer(connectionString, sql =>
                     {
                         sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
                     });
