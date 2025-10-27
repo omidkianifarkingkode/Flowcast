@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using PlayerProgressStore.Contracts.V1.Shared;
 
 namespace PlayerProgressStore.Contracts.V1;
