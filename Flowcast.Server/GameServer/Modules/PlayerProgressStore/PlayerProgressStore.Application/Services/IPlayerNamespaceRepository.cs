@@ -1,4 +1,5 @@
-﻿using PlayerProgressStore.Domain;
+using System;
+using PlayerProgressStore.Domain;
 using SharedKernel;
 
 namespace PlayerProgressStore.Application.Services;
@@ -26,20 +27,11 @@ public interface IPlayerNamespaceRepository
 }
 
 /// <summary>
-/// Computes stable content hashes (e.g., "sha256:abcd…") from canonical JSON text.
+/// Computes stable content hashes (e.g., "sha256:abcd…") from raw document bytes.
 /// </summary>
 public interface IContentHashService
 {
-    DocHash Compute(string canonicalJson);
-}
-
-/// <summary>
-/// Produces a canonical JSON string (stable key ordering, trimmed whitespace) for hashing and caching.
-/// </summary>
-public interface ICanonicalJsonService
-{
-    /// <summary>Input may be any JSON text; output must be stable for semantically-equal inputs.</summary>
-    Result<string> Canonicalize(string json);
+    DocHash Compute(ReadOnlySpan<byte> document);
 }
 
 
@@ -62,9 +54,9 @@ public interface IMergeResolver
 
     /// <summary>
     /// Merge current server document with client document (equal progress).
-    /// Returns merged JSON string (canonical or raw; hashing happens separately).
+    /// Returns merged document bytes owned by the resolver.
     /// </summary>
-    Result<string> Merge(string serverJson, string clientJson);
+    Result<byte[]> Merge(byte[] serverDocument, byte[] clientDocument);
 }
 
 /// <summary>

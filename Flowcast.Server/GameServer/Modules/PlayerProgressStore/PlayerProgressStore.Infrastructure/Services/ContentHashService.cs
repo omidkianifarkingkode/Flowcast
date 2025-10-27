@@ -1,15 +1,15 @@
-﻿using PlayerProgressStore.Application.Services;
+using PlayerProgressStore.Application.Services;
 using PlayerProgressStore.Domain;
+using System;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace PlayerProgressStore.Infrastructure.Services;
 
 public class ContentHashService : IContentHashService
 {
-    public DocHash Compute(string canonicalJson)
+    public DocHash Compute(ReadOnlySpan<byte> document)
     {
-        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(canonicalJson));
+        var hashBytes = SHA256.HashData(document);
         var hashString = Convert.ToBase64String(hashBytes);
         return new DocHash(hashString);
     }

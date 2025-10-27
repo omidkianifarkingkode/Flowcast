@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,7 +68,6 @@ namespace PlayerProgressStore.Infrastructure
 
         private static WebApplicationBuilder AddServices(this WebApplicationBuilder builder)
         {
-            builder.Services.AddSingleton<ICanonicalJsonService, CanonicalJsonService>();
             builder.Services.AddSingleton<IContentHashService, ContentHashService>();
             builder.Services.AddSingleton<IVersionTokenService, VersionTokenService>();
             builder.Services.AddSingleton<INamespaceValidationPolicy, NamespaceValidationPolicy>();

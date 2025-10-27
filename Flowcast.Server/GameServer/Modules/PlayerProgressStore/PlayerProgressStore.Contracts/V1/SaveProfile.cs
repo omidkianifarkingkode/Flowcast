@@ -1,4 +1,4 @@
-﻿using PlayerProgressStore.Contracts.V1.Shared;
+using PlayerProgressStore.Contracts.V1.Shared;
 
 namespace PlayerProgressStore.Contracts.V1;
 

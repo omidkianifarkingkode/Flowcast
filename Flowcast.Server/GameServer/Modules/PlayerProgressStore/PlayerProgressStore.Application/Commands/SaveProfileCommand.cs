@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Linq;
 using PlayerProgressStore.Application.Services;
 using PlayerProgressStore.Domain;
 using Shared.Application.Messaging;
@@ -15,7 +16,7 @@ public sealed record SaveProfileCommand(
 
 public readonly record struct NamespaceWriteDto(
     string Namespace,
-    JsonElement Document,
+    byte[] Document,
     long Progress,
     string? ClientVersion,
     string? ClientHash
@@ -24,7 +25,6 @@ public readonly record struct NamespaceWriteDto(
 public sealed class SaveProfileCommandHandler(
     IPlayerNamespaceRepository repo,
     INamespaceValidationPolicy namespacePolicy,
-    ICanonicalJsonService canonicalJson,
     IContentHashService hashes,
     IVersionTokenService versions,
     IMergeResolverRegistry mergeResolvers,
@@ -36,13 +36,13 @@ public sealed class SaveProfileCommandHandler(
     //  validate(write)
     //load current docs for all namespaces in batch
     //for each write:
-    //  canonical = canonicalize(write.Document)
-    //  hash = sha256(canonical)
-    //  if no existing -> CREATE(canonical, hash)
+    //  document = normalize(write.Document)
+    //  hash = sha256(document)
+    //  if no existing -> CREATE(document, hash)
     //  else:
     //    case Decide(write.Progress vs existing.Progress) :
-    //      > : OVERWRITE(canonical, hash)
-    //      = : MERGE(existing.Document, canonical) → canonicalize → hash → REPLACE
+    //      > : OVERWRITE(document, hash)
+    //      = : MERGE(existing.Document, document) → normalize → hash → REPLACE
     //      < : REJECT(fail batch)
     //transaction {
     //  upsert all updated namespaces atomically
@@ -168,16 +168,12 @@ public sealed class SaveProfileCommandHandler(
 
         (ProgressScore incomingProgress, VersionToken clientVersion) = normalizeResult.Value;
 
-        // B) Canonicalize and hash the incoming document once.
-        var canonHashRes = CanonicalizeAndHash(write.Document);
-        if (canonHashRes.IsFailure)
-            return Result.Failure<PlayerNamespace>(canonHashRes.Error);
-
-        var (canonical, newHash) = canonHashRes.Value;
+        // B) Normalize and hash the incoming document once.
+        var (normalizedDocument, newHash) = NormalizeAndHash(write.Document);
 
         // C) CREATE path (no existing document).
         if (existingOrNull is null)
-            return CreateNewAggregate(playerId, write.Namespace, incomingProgress, canonical, newHash, nowUtc);
+            return CreateNewAggregate(playerId, write.Namespace, incomingProgress, normalizedDocument, newHash, nowUtc);
 
         // D) Existing doc → decide policy based on progress.
         var existing = existingOrNull;
@@ -185,8 +181,8 @@ public sealed class SaveProfileCommandHandler(
 
         return decision switch
         {
-            MergeDecision.ClientWinsOverwrite => OverwriteAggregate(existing, incomingProgress, canonical, newHash, nowUtc),
-            MergeDecision.EqualProgress => await MergeEqualProgressAsync(existing, incomingProgress, canonical, nowUtc, ct),
+            MergeDecision.ClientWinsOverwrite => OverwriteAggregate(existing, incomingProgress, normalizedDocument, newHash, nowUtc),
+            MergeDecision.EqualProgress => await MergeEqualProgressAsync(existing, incomingProgress, normalizedDocument, nowUtc),
             MergeDecision.ServerKeeps => Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.ClientBehind),
             _ => Result.Failure<PlayerNamespace>(PlayerNamespaceErrors.UnknownDecision),
         };
@@ -210,72 +206,63 @@ public sealed class SaveProfileCommandHandler(
         return Result.Success((progressResult.Value, clientVersion));
     }
 
-    /// <summary>Canonicalize JSON string and compute content hash.</summary>
-    private Result<(string Canonical, DocHash Hash)> CanonicalizeAndHash(JsonElement json)
-    {
-        var raw = json.ValueKind switch
-        {
-            JsonValueKind.Undefined => "{}",
-            JsonValueKind.Null => "{}",
-            _ => json.GetRawText(),
-        };
-
-        if (string.IsNullOrWhiteSpace(raw))
-            raw = "{}";
-
-        var canonicalResult = canonicalJson.Canonicalize(raw);
-        if (canonicalResult.IsFailure)
-            return Result.Failure<(string, DocHash)>(canonicalResult.Error);
-
-        var canonical = canonicalResult.Value;
-        var hash = hashes.Compute(canonical);
-        return Result.Success((canonical, hash));
-    }
-
     /// <summary>Create a new aggregate (first write).</summary>
     private Result<PlayerNamespace> CreateNewAggregate(string playerId, string @namespace, ProgressScore progress,
-        string canonicalDoc, DocHash hash, DateTimeOffset nowUtc)
+        byte[] document, DocHash hash, DateTimeOffset nowUtc)
     {
         var newVersion = versions.Next(VersionToken.None); // first server version
-        return PlayerNamespace.Create(playerId, @namespace, newVersion, progress, canonicalDoc, hash, nowUtc);
+        return PlayerNamespace.Create(playerId, @namespace, newVersion, progress, document, hash, nowUtc);
     }
 
     /// <summary>Overwrite existing aggregate when client is ahead.</summary>
     private Result<PlayerNamespace> OverwriteAggregate(PlayerNamespace existing, ProgressScore progress,
-        string canonicalDoc, DocHash hash, DateTimeOffset nowUtc)
+        byte[] document, DocHash hash, DateTimeOffset nowUtc)
     {
         if (existing.Hash.Equals(hash))
             return Result.Success(existing);
 
         var nextVersion = versions.Next(existing.Version);
-        return existing.WithReplaced(canonicalDoc, progress, nextVersion, hash, nowUtc);
+        return existing.WithReplaced(document, progress, nextVersion, hash, nowUtc);
     }
 
     /// <summary>Equal-progress merge using namespace-specific resolver.</summary>
     private Task<Result<PlayerNamespace>> MergeEqualProgressAsync(PlayerNamespace existing,
-        ProgressScore incomingProgress, string clientCanonical, DateTimeOffset nowUtc, CancellationToken ct)
+        ProgressScore incomingProgress, byte[] clientDocument, DateTimeOffset nowUtc)
     {
         // 1) Resolve merge (server vs client).
         var resolver = mergeResolvers.Get(existing.Namespace);
-        var mergedRes = resolver.Merge(serverJson: existing.Document, clientJson: clientCanonical);
+        var mergedRes = resolver.Merge(existing.Document, clientDocument);
         if (mergedRes.IsFailure)
             return Task.FromResult(Result.Failure<PlayerNamespace>(mergedRes.Error));
 
-        // 2) Canonicalize merged output and recompute hash.
-        var mergedCanonRes = canonicalJson.Canonicalize(mergedRes.Value);
-        if (mergedCanonRes.IsFailure)
-            return Task.FromResult(Result.Failure<PlayerNamespace>(mergedCanonRes.Error));
-
-        var mergedCanonical = mergedCanonRes.Value;
-        var mergedHash = hashes.Compute(mergedCanonical);
+        // 2) Normalize merged output and recompute hash.
+        var mergedBytes = CloneDocument(mergedRes.Value);
+        var mergedHash = hashes.Compute(mergedBytes);
 
         // 3) Replace with merged doc and bump version.
         var nextVersion = versions.Next(existing.Version);
         return Task.FromResult(existing.TryMergeIfEqualProgress(
             incomingProgress,
-            mergedCanonical,
+            mergedBytes,
             nextVersion,
             mergedHash,
             nowUtc));
+    }
+
+    private (byte[] Document, DocHash Hash) NormalizeAndHash(byte[]? document)
+    {
+        var normalized = CloneDocument(document);
+        var hash = hashes.Compute(normalized);
+        return (normalized, hash);
+    }
+
+    private static byte[] CloneDocument(byte[]? document)
+    {
+        if (document is null || document.Length == 0)
+            return Array.Empty<byte>();
+
+        var copy = new byte[document.Length];
+        Buffer.BlockCopy(document, 0, copy, 0, document.Length);
+        return copy;
     }
 }

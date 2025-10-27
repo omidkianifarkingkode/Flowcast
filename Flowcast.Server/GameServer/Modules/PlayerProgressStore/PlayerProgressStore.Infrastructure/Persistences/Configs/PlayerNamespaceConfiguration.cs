@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PlayerProgressStore.Domain;
@@ -38,10 +38,10 @@ public class PlayerNamespaceConfiguration : IEntityTypeConfiguration<PlayerNames
                 v => new ProgressScore(v))
             .HasColumnType("bigint");
 
-        // JSON document (let it be large)
+        // JSON document stored as UTF-8 bytes (allow large payloads)
         builder.Property(x => x.Document)
             .IsRequired()
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("varbinary(max)");
 
         // DocHash <-> string
         builder.Property(x => x.Hash)
