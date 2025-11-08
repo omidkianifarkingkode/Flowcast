@@ -1,11 +1,13 @@
 {
-    "name": "Flowcast.FlowPipeline.Extension",
+    "name": "Flowcast.Realtime.Tests",
     "rootNamespace": "",
     "references": [
-        "FlowPipeline.Runtime",
+        "LogKit.Runtime",
         "Flowcast.Realtime"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

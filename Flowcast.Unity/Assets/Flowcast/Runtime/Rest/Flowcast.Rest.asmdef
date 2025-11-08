@@ -1,9 +1,8 @@
 {
-    "name": "Flowcast.FlowPipeline.Extension",
+    "name": "Flowcast.Rest",
     "rootNamespace": "",
     "references": [
-        "FlowPipeline.Runtime",
-        "Flowcast.Realtime"
+        "Flowcast.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

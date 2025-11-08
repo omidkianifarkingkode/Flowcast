@@ -1,11 +1,13 @@
 {
-    "name": "Flowcast.FlowPipeline.Extension",
+    "name": "Flowcast.Rest.Editor",
     "rootNamespace": "",
     "references": [
-        "FlowPipeline.Runtime",
-        "Flowcast.Realtime"
+        "Flowcast.Rest",
+        "Flowcast.Core"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

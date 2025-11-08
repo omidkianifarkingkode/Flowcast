@@ -1,11 +1,12 @@
 {
-    "name": "Flowcast.FlowPipeline.Extension",
+    "name": "Flowcast.Realtime.Editor",
     "rootNamespace": "",
     "references": [
-        "FlowPipeline.Runtime",
         "Flowcast.Realtime"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

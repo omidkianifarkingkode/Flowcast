@@ -3,9 +3,9 @@
     "rootNamespace": "",
     "references": [
         "Flowcast.VContainer.Runtime",
-        "Flowcast.Runtime",
-        "Flowcast.Tests",
-        "VContainer"
+        "VContainer",
+        "Flowcast.Realtime.Tests",
+        "Flowcast.Realtime"
     ],
     "includePlatforms": [
         "Editor"

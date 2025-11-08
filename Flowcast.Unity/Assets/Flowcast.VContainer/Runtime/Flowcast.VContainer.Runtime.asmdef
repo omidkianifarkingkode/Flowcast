@@ -2,8 +2,8 @@
     "name": "Flowcast.VContainer.Runtime",
     "rootNamespace": "",
     "references": [
-        "Flowcast.Runtime",
-        "VContainer"
+        "VContainer",
+        "Flowcast.Realtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

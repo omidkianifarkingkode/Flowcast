@@ -1,0 +1,44 @@
+<linker>
+  <!-- Flowcast Core: common models & generics -->
+  <assembly fullname="Flowcast.Core">
+    <type fullname="Flowcast.Core.Common.Result`1" preserve="all"/>
+    <type fullname="Flowcast.Core.Common.Error" preserve="all"/>
+    <type fullname="Flowcast.Core.Common.RawResponse" preserve="all"/>
+    <type fullname="Flowcast.Core.Common.Headers" preserve="all"/>
+    <type fullname="Flowcast.Core.Serialization.UnityJsonSerializer" preserve="all"/>
+    <type fullname="Flowcast.Core.Serialization.SerializerRegistry" preserve="all"/>
+    <type fullname="Flowcast.Core.Environments.Environment" preserve="all"/>
+    <type fullname="Flowcast.Core.Environments.EnvironmentSet" preserve="all"/>
+    <type fullname="Flowcast.Core.Environments.FlowcastClientSettings" preserve="all"/>
+    <type fullname="Flowcast.Core.Environments.EnvironmentProvider" preserve="all"/>
+    <type fullname="Flowcast.Core.Auth.SimpleBearerAuthProvider" preserve="all"/>
+    <type fullname="Flowcast.Core.Auth.SimpleRefreshingAuthProvider" preserve="all"/>
+  </assembly>
+
+  <!-- Flowcast Rest -->
+  <assembly fullname="Flowcast.Rest">
+    <type fullname="Flowcast.Rest.Client.RestClient" preserve="all"/>
+    <type fullname="Flowcast.Rest.Client.ApiRequest" preserve="all"/>
+    <type fullname="Flowcast.Rest.Client.ApiResponse" preserve="all"/>
+    <type fullname="Flowcast.Rest.Pipeline.AuthBehavior" preserve="all"/>
+    <type fullname="Flowcast.Rest.Pipeline.LoggingBehavior" preserve="all"/>
+    <type fullname="Flowcast.Rest.Pipeline.RetryBehavior" preserve="all"/>
+    <type fullname="Flowcast.Rest.Pipeline.CacheBehavior" preserve="all"/>
+    <type fullname="Flowcast.Rest.Transport.UnityWebRequestTransport" preserve="all"/>
+    <type fullname="Flowcast.Rest.Transport.MockTransport" preserve="all"/>
+    <type fullname="Flowcast.Rest.Transport.MockResponse" preserve="all"/>
+    <type fullname="Flowcast.Rest.Workbench.RequestAsset" preserve="all"/>
+  </assembly>
+
+  <!-- UnityWebRequest bits (can be stripped by IL2CPP if not referenced) -->
+  <assembly fullname="UnityEngine.UnityWebRequestModule">
+    <type fullname="UnityEngine.Networking.UnityWebRequest" preserve="all"/>
+    <type fullname="UnityEngine.Networking.DownloadHandlerBuffer" preserve="all"/>
+    <type fullname="UnityEngine.Networking.UploadHandlerRaw" preserve="all"/>
+  </assembly>
+
+  <!-- UnityEngine JSON serializer -->
+  <assembly fullname="UnityEngine.CoreModule">
+    <type fullname="UnityEngine.JsonUtility" preserve="all"/>
+  </assembly>
+</linker>
