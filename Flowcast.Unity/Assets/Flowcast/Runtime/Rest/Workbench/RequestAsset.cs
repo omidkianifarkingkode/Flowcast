@@ -11,6 +11,13 @@ namespace Flowcast.Rest.Workbench
     {
         public enum MethodKind { GET, POST, PUT, PATCH, DELETE, HEAD }
 
+        [Header("Identity")]
+        [Tooltip("Unique identifier for this request asset. Leave empty to auto-generate.")]
+        public string RequestId;
+
+        [Tooltip("Optional friendly name when referencing this request asset by name.")]
+        public string DisplayName;
+
         [Header("Request")]
         public MethodKind Method = MethodKind.GET;
 
@@ -50,5 +57,18 @@ namespace Flowcast.Rest.Workbench
 
         [Header("Notes (optional)")]
         [TextArea(2, 6)] public string Notes;
+
+        private void OnValidate()
+        {
+            if (string.IsNullOrWhiteSpace(RequestId))
+            {
+                RequestId = Guid.NewGuid().ToString("N");
+            }
+
+            if (string.IsNullOrEmpty(DisplayName))
+            {
+                DisplayName = name;
+            }
+        }
     }
 }
