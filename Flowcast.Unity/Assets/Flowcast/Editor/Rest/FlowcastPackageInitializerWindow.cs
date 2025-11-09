@@ -6,6 +6,7 @@ using Flowcast.Core.Environments;
 using Flowcast.Rest.Bootstrap;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditorInternal;
 using UnityEngine;
 using Environment = Flowcast.Core.Environments.Environment;
 
@@ -22,6 +23,8 @@ namespace Flowcast.Editor.Core
         private const string SettingsAssetPath = SettingsFolderPath + "/FlowcastRestSettings.asset";
         private const string DevEnvironmentPath = SettingsFolderPath + "/Environment.Dev.asset";
         private const string ReleaseEnvironmentPath = SettingsFolderPath + "/Environment.Release.asset";
+        private const string RestAsmdefPath = "Assets/Flowcast/Runtime/Rest/Flowcast.Rest.asmdef";
+        private const string CoreAsmdefPath = "Assets/Flowcast/Runtime/Core/Flowcast.Core.asmdef";
 
         [MenuItem("Flowcast/Package Setup", priority = 10)]
         public static void ShowWindow()
@@ -74,6 +77,9 @@ namespace Flowcast.Editor.Core
 
             SetDefineForAllTargets(FlowcastUnitaskDefine, hasUniTask);
             SetDefineForAllTargets(FlowcastNewtonsoftDefine, hasNewtonsoft);
+
+            EnsureAsmdefReference(RestAsmdefPath, "UniTask", hasUniTask);
+            EnsureAsmdefReference(CoreAsmdefPath, "Newtonsoft.Json", hasNewtonsoft);
 
             Debug.Log($"[Flowcast] Define symbols updated. {FlowcastUnitaskDefine}={(hasUniTask ? "ON" : "OFF")}, {FlowcastNewtonsoftDefine}={(hasNewtonsoft ? "ON" : "OFF")}");
         }
@@ -208,17 +214,9 @@ namespace Flowcast.Editor.Core
                 environmentsProp.GetArrayElementAtIndex(1).objectReferenceValue = releaseEnv;
             }
 
-            var defaultEnvProp = serializedSettings.FindProperty("defaultEnvironment");
-            if (defaultEnvProp != null)
-            {
-                defaultEnvProp.objectReferenceValue = devEnv;
-            }
-
-            var preferredEnvProp = serializedSettings.FindProperty("preferredEnvironment");
-            if (preferredEnvProp != null)
-            {
-                preferredEnvProp.objectReferenceValue = devEnv;
-            }
+            SetEnvironmentProperty(serializedSettings, "editorEnvironment", devEnv);
+            SetEnvironmentProperty(serializedSettings, "developmentEnvironment", devEnv);
+            SetEnvironmentProperty(serializedSettings, "releaseEnvironment", releaseEnv);
 
             serializedSettings.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(settings);
@@ -353,6 +351,91 @@ namespace Flowcast.Editor.Core
                     }
                 }
             }
+        }
+
+        private static void SetEnvironmentProperty(SerializedObject settings, string propertyName, Environment env)
+        {
+            var property = settings.FindProperty(propertyName);
+            if (property != null)
+            {
+                property.objectReferenceValue = env;
+            }
+        }
+
+        private static void EnsureAsmdefReference(string asmdefAssetPath, string reference, bool enabled)
+        {
+            var asmdef = AssetDatabase.LoadAssetAtPath<AssemblyDefinitionAsset>(asmdefAssetPath);
+            if (asmdef == null)
+            {
+                Debug.LogWarning($"[Flowcast] Unable to locate asmdef at '{asmdefAssetPath}'.");
+                return;
+            }
+
+            AsmdefData data;
+            try
+            {
+                data = JsonUtility.FromJson<AsmdefData>(asmdef.text);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Flowcast] Failed to parse asmdef '{asmdefAssetPath}': {ex.Message}");
+                return;
+            }
+
+            var refs = data.references != null ? new List<string>(data.references) : new List<string>();
+            var changed = false;
+
+            if (enabled)
+            {
+                if (!refs.Contains(reference))
+                {
+                    refs.Add(reference);
+                    changed = true;
+                }
+            }
+            else
+            {
+                if (refs.Remove(reference))
+                {
+                    changed = true;
+                }
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            data.references = refs.Count > 0 ? refs.ToArray() : null;
+            var json = JsonUtility.ToJson(data, true);
+            File.WriteAllText(asmdefAssetPath, json);
+            AssetDatabase.ImportAsset(asmdefAssetPath);
+            Debug.Log($"[Flowcast] Updated '{asmdefAssetPath}' references -> {(refs.Count > 0 ? string.Join(", ", refs) : "<none>")}");
+        }
+
+        [Serializable]
+        private class AsmdefData
+        {
+            public string name;
+            public string rootNamespace;
+            public string[] references;
+            public string[] includePlatforms;
+            public string[] excludePlatforms;
+            public bool allowUnsafeCode;
+            public bool overrideReferences;
+            public string[] precompiledReferences;
+            public bool autoReferenced = true;
+            public string[] defineConstraints;
+            public VersionDefine[] versionDefines;
+            public bool noEngineReferences;
+        }
+
+        [Serializable]
+        private class VersionDefine
+        {
+            public string name;
+            public string expression;
+            public string define;
         }
     }
 }

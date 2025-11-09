@@ -15,8 +15,7 @@ namespace Flowcast.Core.Environments
         public struct Configuration
         {
             public IReadOnlyList<Environment> Environments;
-            public Environment DefaultEnvironment;
-            public Environment PreferredEnvironment;
+            public Func<Environment> ResolveInitialEnvironment;
             public bool PersistSelection;
             public string PrefsKey;
         }
@@ -26,8 +25,7 @@ namespace Flowcast.Core.Environments
 
         private Environment _current;
         private IReadOnlyList<Environment> _environments = Array.Empty<Environment>();
-        private Environment _defaultEnvironment;
-        private Environment _preferredEnvironment;
+        private Func<Environment> _resolveInitialEnvironment;
         private bool _persistSelection = true;
         private string _prefsKey = DefaultPrefsKey;
         private bool _configured;
@@ -59,11 +57,16 @@ namespace Flowcast.Core.Environments
         public void Configure(Configuration configuration)
         {
             _environments = configuration.Environments ?? Array.Empty<Environment>();
-            _defaultEnvironment = configuration.DefaultEnvironment;
-            if (_defaultEnvironment == null && _environments.Count > 0)
-                _defaultEnvironment = _environments[0];
+            _resolveInitialEnvironment = configuration.ResolveInitialEnvironment ?? (() =>
+            {
+                foreach (var env in _environments)
+                {
+                    if (env != null)
+                        return env;
+                }
 
-            _preferredEnvironment = configuration.PreferredEnvironment;
+                return null;
+            });
             _persistSelection = configuration.PersistSelection;
             _prefsKey = string.IsNullOrWhiteSpace(configuration.PrefsKey) ? DefaultPrefsKey : configuration.PrefsKey;
 
@@ -113,11 +116,29 @@ namespace Flowcast.Core.Environments
                 }
             }
 
-            if (_current == null && _preferredEnvironment != null)
-                _current = _preferredEnvironment;
+            if (_current == null && _resolveInitialEnvironment != null)
+            {
+                try
+                {
+                    _current = _resolveInitialEnvironment();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[Flowcast] Failed to resolve initial environment: {ex.Message}\n{ex}");
+                }
+            }
 
             if (_current == null)
-                _current = _defaultEnvironment;
+            {
+                foreach (var env in _environments)
+                {
+                    if (env != null)
+                    {
+                        _current = env;
+                        break;
+                    }
+                }
+            }
 
             if (_current != null && _current.EnableLogging)
                 Debug.Log($"[Flowcast] Initial environment: '{_current.DisplayName}' ({_current.Id})");

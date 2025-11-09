@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Flowcast.Core.Environments;
+using Flowcast.Rest.Workbench;
 using UnityEngine;
 using Environment = Flowcast.Core.Environments.Environment;
 
@@ -17,17 +18,24 @@ namespace Flowcast.Rest.Bootstrap
         [Tooltip("Available environments (Dev, Test, Prod...).")]
         [SerializeField] private List<Environment> environments = new();
 
-        [Tooltip("Environment used when no persisted or preferred selection is available.")]
-        [SerializeField] private Environment defaultEnvironment;
+        [Header("Active Environment")]
+        [Tooltip("Environment used while running in the Unity Editor.")]
+        [SerializeField] private Environment editorEnvironment;
 
-        [Tooltip("Preferred environment used on first run before player selection.")]
-        [SerializeField] private Environment preferredEnvironment;
+        [Tooltip("Environment used when the application runs as a development build.")]
+        [SerializeField] private Environment developmentEnvironment;
+
+        [Tooltip("Environment used when the application runs as a non-development build.")]
+        [SerializeField] private Environment releaseEnvironment;
 
         [Tooltip("Persist last selected environment across sessions (PlayerPrefs).")]
         [SerializeField] private bool persistSelection = true;
 
         [Tooltip("Optional PlayerPrefs key override for the active environment id.")]
         [SerializeField] private string prefsKey = EnvironmentProvider.DefaultPrefsKey;
+
+        [Header("Workbench")]
+        [SerializeField] private List<RequestAsset> requestAssets = new();
 
         [Header("Auth (optional, OAuth2 refresh)")]
         public bool UseOAuth2;
@@ -46,17 +54,37 @@ namespace Flowcast.Rest.Bootstrap
 
         public IReadOnlyList<Environment> Environments => environments;
 
-        public Environment DefaultEnvironment =>
-            defaultEnvironment != null ? defaultEnvironment :
-            (environments.Count > 0 ? environments[0] : null);
+        public Environment EditorEnvironment => ResolveOrFallback(editorEnvironment);
 
-        public Environment PreferredEnvironment => preferredEnvironment;
+        public Environment DevelopmentEnvironment => ResolveOrFallback(developmentEnvironment, releaseEnvironment);
+
+        public Environment ReleaseEnvironment => ResolveOrFallback(releaseEnvironment, developmentEnvironment);
+
+        public Environment ActiveEnvironment
+        {
+            get
+            {
+                if (Application.isEditor)
+                {
+                    return ResolveOrFallback(editorEnvironment, developmentEnvironment, releaseEnvironment);
+                }
+
+                if (Debug.isDebugBuild)
+                {
+                    return ResolveOrFallback(developmentEnvironment, releaseEnvironment, editorEnvironment);
+                }
+
+                return ResolveOrFallback(releaseEnvironment, developmentEnvironment, editorEnvironment);
+            }
+        }
 
         public bool PersistSelection => persistSelection;
 
         public string PrefsKey => string.IsNullOrWhiteSpace(prefsKey)
             ? EnvironmentProvider.DefaultPrefsKey
             : prefsKey;
+
+        public IReadOnlyList<RequestAsset> RequestAssets => requestAssets;
 
         public bool TryGetById(string id, out Environment env)
         {
@@ -81,11 +109,36 @@ namespace Flowcast.Rest.Bootstrap
             return new EnvironmentProvider.Configuration
             {
                 Environments = environments,
-                DefaultEnvironment = DefaultEnvironment,
-                PreferredEnvironment = preferredEnvironment,
+                ResolveInitialEnvironment = GetActiveEnvironment,
                 PersistSelection = persistSelection,
                 PrefsKey = prefsKey
             };
+        }
+
+        public Environment GetActiveEnvironment() => ActiveEnvironment;
+
+        private Environment ResolveOrFallback(params Environment[] candidates)
+        {
+            if (candidates != null)
+            {
+                foreach (var candidate in candidates)
+                {
+                    if (candidate != null)
+                    {
+                        return candidate;
+                    }
+                }
+            }
+
+            foreach (var environment in environments)
+            {
+                if (environment != null)
+                {
+                    return environment;
+                }
+            }
+
+            return null;
         }
     }
 }
