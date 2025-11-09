@@ -1,21 +1,37 @@
-﻿// Runtime/Core/Environments/EnvironmentProvider.cs
+// Runtime/Core/Environments/EnvironmentProvider.cs
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Flowcast.Core.Environments
 {
     /// <summary>
-    /// Minimal runtime provider (no DI). Lazy-initializes from FlowcastClientSettings in Resources.
+    /// Minimal runtime provider (no DI). Configure once at startup to populate environments.
     /// </summary>
     public sealed class EnvironmentProvider : IEnvironmentProvider
     {
         public const string DefaultPrefsKey = "flowcast.active_env";
 
+        public struct Configuration
+        {
+            public IReadOnlyList<Environment> Environments;
+            public Environment DefaultEnvironment;
+            public Environment PreferredEnvironment;
+            public bool PersistSelection;
+            public string PrefsKey;
+        }
+
         private static EnvironmentProvider _instance;
         public static EnvironmentProvider Instance => _instance ??= new EnvironmentProvider();
 
         private Environment _current;
-        private FlowcastClientSettings _settings;
+        private IReadOnlyList<Environment> _environments = Array.Empty<Environment>();
+        private Environment _defaultEnvironment;
+        private Environment _preferredEnvironment;
+        private bool _persistSelection = true;
+        private string _prefsKey = DefaultPrefsKey;
+        private bool _configured;
+        private bool _warnedUnconfigured;
 
         public event Action<Environment> Changed;
 
@@ -25,7 +41,7 @@ namespace Flowcast.Core.Environments
         {
             get
             {
-                EnsureInitialized();
+                EnsureConfigured();
                 return _current;
             }
         }
@@ -34,81 +50,104 @@ namespace Flowcast.Core.Environments
         {
             get
             {
-                EnsureInitialized();
-                return _settings.PersistSelection ? PlayerPrefs.GetString(_settings.PrefsKey, string.Empty) : string.Empty;
+                EnsureConfigured();
+                if (!_configured || !_persistSelection) return string.Empty;
+                return PlayerPrefs.GetString(_prefsKey, string.Empty);
             }
+        }
+
+        public void Configure(Configuration configuration)
+        {
+            _environments = configuration.Environments ?? Array.Empty<Environment>();
+            _defaultEnvironment = configuration.DefaultEnvironment;
+            if (_defaultEnvironment == null && _environments.Count > 0)
+                _defaultEnvironment = _environments[0];
+
+            _preferredEnvironment = configuration.PreferredEnvironment;
+            _persistSelection = configuration.PersistSelection;
+            _prefsKey = string.IsNullOrWhiteSpace(configuration.PrefsKey) ? DefaultPrefsKey : configuration.PrefsKey;
+
+            _configured = true;
+            _warnedUnconfigured = false;
+
+            InitializeCurrentFromConfiguration();
         }
 
         public void Set(Environment env)
         {
-            EnsureInitialized();
-            if (env == null || _current == env) return;
+            EnsureConfigured();
+            if (!_configured || env == null || _current == env) return;
 
             _current = env;
 
-            if (_settings.PersistSelection)
+            if (_persistSelection)
             {
-                PlayerPrefs.SetString(_settings.PrefsKey, env.Id);
+                PlayerPrefs.SetString(_prefsKey, env.Id);
                 PlayerPrefs.Save();
             }
 
             Changed?.Invoke(_current);
-            if (_settings != null && _settings.EnvironmentSet != null)
-            {
-                if (_current != null && _current.EnableLogging)
-                    Debug.Log($"[Flowcast] Active environment set to '{_current.DisplayName}' ({_current.Id})");
-            }
+
+            if (_current != null && _current.EnableLogging)
+                Debug.Log($"[Flowcast] Active environment set to '{_current.DisplayName}' ({_current.Id})");
         }
 
         public void ClearPersistedSelection()
         {
-            EnsureInitialized();
-            if (_settings.PersistSelection)
-            {
-                PlayerPrefs.DeleteKey(_settings.PrefsKey);
-            }
+            EnsureConfigured();
+            if (!_configured || !_persistSelection) return;
+
+            PlayerPrefs.DeleteKey(_prefsKey);
         }
 
-        private void EnsureInitialized()
+        private void InitializeCurrentFromConfiguration()
         {
-            if (_settings != null) return;
+            _current = null;
 
-            _settings = FlowcastClientSettings.LoadFromResources();
-            if (_settings == null)
+            if (_persistSelection)
             {
-                Debug.LogWarning("[Flowcast] ClientSettings not found in Resources/Flowcast/ClientSettings. Using empty defaults.");
-                _current = null;
-                return;
-            }
-
-            var set = _settings.EnvironmentSet;
-            if (set == null)
-            {
-                Debug.LogWarning("[Flowcast] EnvironmentSet not assigned in ClientSettings.");
-                _current = _settings.PreferredEnvironment;
-                return;
-            }
-
-            // 1) Load persisted id if enabled
-            if (_settings.PersistSelection)
-            {
-                var persistedId = PlayerPrefs.GetString(_settings.PrefsKey, string.Empty);
-                if (!string.IsNullOrWhiteSpace(persistedId) && set.TryGetById(persistedId, out var persisted))
+                var persistedId = PlayerPrefs.GetString(_prefsKey, string.Empty);
+                if (!string.IsNullOrWhiteSpace(persistedId) && TryFindById(persistedId, out var persisted))
                 {
                     _current = persisted;
                 }
             }
 
-            // 2) Preferred in settings
-            if (_current == null && _settings.PreferredEnvironment != null)
-                _current = _settings.PreferredEnvironment;
+            if (_current == null && _preferredEnvironment != null)
+                _current = _preferredEnvironment;
 
-            // 3) Default in set
             if (_current == null)
-                _current = set.DefaultEnvironmentFallback;
+                _current = _defaultEnvironment;
 
             if (_current != null && _current.EnableLogging)
                 Debug.Log($"[Flowcast] Initial environment: '{_current.DisplayName}' ({_current.Id})");
+        }
+
+        private bool TryFindById(string id, out Environment env)
+        {
+            if (!string.IsNullOrEmpty(id))
+            {
+                foreach (var e in _environments)
+                {
+                    if (e != null && string.Equals(e.Id, id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        env = e;
+                        return true;
+                    }
+                }
+            }
+
+            env = null;
+            return false;
+        }
+
+        private void EnsureConfigured()
+        {
+            if (_configured) return;
+
+            if (_warnedUnconfigured) return;
+            _warnedUnconfigured = true;
+            Debug.LogWarning("[Flowcast] EnvironmentProvider has not been configured. Assign FlowcastRestSettings on FlowcastRestBootstrapper.");
         }
     }
 
@@ -122,5 +161,8 @@ namespace Flowcast.Core.Environments
         public static void Set(Environment env) => EnvironmentProvider.Instance.Set(env);
 
         public static void ClearPersistedSelection() => EnvironmentProvider.Instance.ClearPersistedSelection();
+
+        public static void Configure(EnvironmentProvider.Configuration configuration)
+            => EnvironmentProvider.Instance.Configure(configuration);
     }
 }

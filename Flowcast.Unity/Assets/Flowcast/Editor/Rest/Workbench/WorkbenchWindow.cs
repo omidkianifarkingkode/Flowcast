@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Flowcast.Core.Cache;
 using Flowcast.Core.Environments;
+using Flowcast.Rest.Bootstrap;
 using Flowcast.Core.Serialization;
 using Flowcast.Rest.Client;
 using Flowcast.Rest.Pipeline;
@@ -55,7 +56,7 @@ namespace Flowcast.Rest.Editor
         private RequestAsset _loadedAsset;
 
         // Environment set
-        private FlowcastClientSettings _settings;
+        private FlowcastRestSettings _settings;
         private int _envIndex = 0;
         private string[] _envDisplayNames = Array.Empty<string>();
         private Environment[] _envRefs = Array.Empty<Environment>();
@@ -81,7 +82,7 @@ namespace Flowcast.Rest.Editor
 
         private void OnEnable()
         {
-            _settings = FlowcastClientSettings.LoadFromResources();
+            _settings = FlowcastRestSettingsLoader.Load();
             RebuildEnvList();
         }
 
@@ -94,15 +95,15 @@ namespace Flowcast.Rest.Editor
 
         private void RebuildEnvList()
         {
-            if (_settings?.EnvironmentSet == null || _settings.EnvironmentSet.Environments.Count == 0)
+            if (_settings?.Environments == null || _settings.Environments.Count == 0)
             {
-                _envDisplayNames = new[] { "(no EnvironmentSet)" };
+                _envDisplayNames = new[] { "(no FlowcastRestSettings)" };
                 _envRefs = Array.Empty<Environment>();
                 _envIndex = 0;
                 return;
             }
 
-            var list = _settings.EnvironmentSet.Environments;
+            var list = _settings.Environments;
             _envRefs = new Environment[list.Count];
             _envDisplayNames = new string[list.Count];
             for (int i = 0; i < list.Count; i++)
@@ -631,6 +632,17 @@ namespace Flowcast.Rest.Editor
                 var path = AssetDatabase.GUIDToAssetPath(g);
                 var asset = AssetDatabase.LoadAssetAtPath<RequestAsset>(path);
                 if (asset != null) _savedAssets.Add(asset);
+            }
+        }
+
+        private static class FlowcastRestSettingsLoader
+        {
+            public static FlowcastRestSettings Load()
+            {
+                var guids = AssetDatabase.FindAssets("t:Flowcast.Rest.Bootstrap.FlowcastRestSettings");
+                if (guids.Length == 0) return null;
+                var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                return AssetDatabase.LoadAssetAtPath<FlowcastRestSettings>(path);
             }
         }
 

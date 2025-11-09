@@ -1,4 +1,4 @@
-﻿// Runtime/Rest/Bootstrap/FlowcastRestBootstrapper.cs
+// Runtime/Rest/Bootstrap/FlowcastRestBootstrapper.cs
 using System;
 using UnityEngine;
 using Flowcast.Core.Cache;
@@ -13,33 +13,22 @@ using Environment = Flowcast.Core.Environments.Environment;
 
 namespace Flowcast.Rest.Bootstrap
 {
-    /// <summary> Drop on a GameObject to configure Flowcast.Rest from Core Environment + knobs. </summary>
+    /// <summary> Drop on a GameObject to configure Flowcast.Rest from FlowcastRestSettings. </summary>
     public sealed class FlowcastRestBootstrapper : MonoBehaviour
     {
-        [Header("Environment")]
-        public Environment OptionalSelectEnvironment; // if assigned, Set() this env at Awake
-
-        [Header("Auth (optional, OAuth2 refresh)")]
-        public bool UseOAuth2;
-        public string TokenEndpoint;
-        public string ClientId;
-        public string ClientSecret;
-        public string InitialAccessToken;
-        public string InitialRefreshToken;
-
-        [Header("Serialization")]
-        public bool PreferNewtonsoftIfDefined = false; // requires scripting define FLOWCAST_NEWTONSOFT_JSON
-
-        [Header("Recording")]
-        public bool EnableRecorder = false;
-        public string RecordDirectory = "FlowcastRecords";
+        [SerializeField] private FlowcastRestSettings settings;
 
         private void Awake()
         {
-            // 1) Ensure environment
+            if (settings == null)
+            {
+                Debug.LogError("[Flowcast] FlowcastRestBootstrapper requires FlowcastRestSettings.");
+                return;
+            }
+
+            // 1) Ensure environment provider is configured
             var envProvider = EnvironmentProvider.Instance;
-            if (OptionalSelectEnvironment != null)
-                envProvider.Set(OptionalSelectEnvironment);
+            envProvider.Configure(settings.CreateConfiguration());
 
             var env = envProvider.Current;
             if (env == null)
@@ -48,9 +37,9 @@ namespace Flowcast.Rest.Bootstrap
             }
 
             // 2) Build services
-            var serializers = CreateSerializers();
+            var serializers = CreateSerializers(settings);
             var cache = new MemoryCacheProvider(256);
-            var auth = CreateAuth();
+            var auth = CreateAuth(settings);
 
             var options = CreateRestClientOptionsFromEnv(env);
 
@@ -90,29 +79,29 @@ namespace Flowcast.Rest.Bootstrap
                 Debug.Log($"[Flowcast] Rest bootstrap ready for env '{env.DisplayName}' ({env.Id}).");
         }
 
-        private ISerializerRegistry CreateSerializers()
+        private ISerializerRegistry CreateSerializers(FlowcastRestSettings restSettings)
         {
             ISerializer json = new UnityJsonSerializer();
 #if FLOWCAST_NEWTONSOFT_JSON
-            if (PreferNewtonsoftIfDefined) json = new NewtonsoftJsonSerializer();
+            if (restSettings.PreferNewtonsoftIfDefined) json = new NewtonsoftJsonSerializer();
 #endif
             var reg = new SerializerRegistry(json);
             // register XML or others if you like
             return reg;
         }
 
-        private IAuthProvider CreateAuth()
+        private IAuthProvider CreateAuth(FlowcastRestSettings restSettings)
         {
-            if (!UseOAuth2) return null;
-            if (string.IsNullOrWhiteSpace(TokenEndpoint) || string.IsNullOrWhiteSpace(ClientId))
+            if (!restSettings.UseOAuth2) return null;
+            if (string.IsNullOrWhiteSpace(restSettings.TokenEndpoint) || string.IsNullOrWhiteSpace(restSettings.ClientId))
                 return null;
 
             return new OAuth2RefreshingAuthProvider(
-                tokenEndpoint: TokenEndpoint,
-                clientId: ClientId,
-                clientSecret: ClientSecret,
-                initialAccessToken: InitialAccessToken,
-                initialRefreshToken: InitialRefreshToken);
+                tokenEndpoint: restSettings.TokenEndpoint,
+                clientId: restSettings.ClientId,
+                clientSecret: restSettings.ClientSecret,
+                initialAccessToken: restSettings.InitialAccessToken,
+                initialRefreshToken: restSettings.InitialRefreshToken);
         }
 
         private ITransport CreateTransport(Environment env)
