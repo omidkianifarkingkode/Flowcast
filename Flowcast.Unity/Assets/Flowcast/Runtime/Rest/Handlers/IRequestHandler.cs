@@ -1,16 +1,16 @@
-// Runtime/Rest/Handlers/IRequestHandler.cs
+// Runtime/Rest/Client/IRequestHandler.cs
 using System.Threading;
 using System.Threading.Tasks;
 using Flowcast.Core.Common;
-using Flowcast.Rest.Client;
 
-namespace Flowcast.Rest.Handlers
+namespace Flowcast.Rest.Client
 {
     public interface IRequestHandler<TResponse>
     {
-        /// Build the ApiRequest (you can use env to build URLs if needed).
+        /// Build a complete ApiRequest (absolute URL recommended).
         ApiRequest Build();
-        /// Map ApiResponse -> Result<TResponse> (you can parse or use RawResponse).
+
+        /// Map the low-level ApiResponse to a domain Result<TResponse>.
         Task<Result<TResponse>> MapAsync(ApiResponse response, CancellationToken ct);
     }
 }

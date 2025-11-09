@@ -1,40 +1,41 @@
 ﻿// Runtime/Rest/Client/RestClient.cs
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Flowcast.Core.Auth;
 using Flowcast.Core.Common;
 using Flowcast.Core.Environments;
 using Flowcast.Core.Serialization;
 using Flowcast.Rest.Pipeline;
 using Flowcast.Rest.Transport;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Flowcast.Rest.Client
 {
-    public sealed class RestClient
+    public sealed partial class RestClient
     {
         private readonly IEnvironmentProvider _env;
         private readonly ITransport _transport;
         private readonly ISerializerRegistry _serializers;
         private readonly List<IPipelineBehavior> _pipeline = new();
+        private readonly RestClientOptions _options;
 
         public RestClient(
             IEnvironmentProvider envProvider = null,
             ITransport transport = null,
             ISerializerRegistry serializers = null,
             IAuthProvider auth = null,
+            RestClientOptions options = null,
             bool addDefaultLogging = true)
         {
             _env = envProvider ?? EnvironmentProvider.Instance;
             _transport = transport ?? new UnityWebRequestTransport();
-
-            // KISS: JSON-only by default, registry allows future plug-ins
             _serializers = serializers ?? new SerializerRegistry(new UnityJsonSerializer());
+            _options = options ?? new RestClientOptions();
 
-            // tiny default pipeline: Auth → Logging
             if (auth != null) _pipeline.Add(new AuthBehavior(auth));
+
             if (addDefaultLogging) _pipeline.Add(new LoggingBehavior(_env));
         }
 
@@ -47,13 +48,20 @@ namespace Flowcast.Rest.Client
         public sealed class RequestBuilder
         {
             private readonly RestClient _client;
-            private readonly ApiRequest _req = new ApiRequest();
+            private readonly ApiRequest _req = new();
 
             internal RequestBuilder(RestClient client, string method, string pathOrAbsoluteUrl)
             {
                 _client = client;
                 _req.Method = string.IsNullOrWhiteSpace(method) ? "GET" : method.ToUpperInvariant();
                 _req.Url = BuildUrl(client._env.Current, pathOrAbsoluteUrl);
+                _req.Policy = ClonePolicy(_client._options.DefaultPolicy);
+
+                if (_client._options.PolicySelector != null)
+                {
+                    var adjusted = _client._options.PolicySelector(_req, _req.Policy);
+                    if (adjusted != null) _req.Policy = adjusted;
+                }
 
                 var env = client._env.Current;
                 if (env != null)
@@ -70,6 +78,22 @@ namespace Flowcast.Rest.Client
                 if (!baseUrl.EndsWith("/")) baseUrl += "/";
                 if (pathOrAbsolute.StartsWith("/")) pathOrAbsolute = pathOrAbsolute.Substring(1);
                 return new Uri(baseUrl + pathOrAbsolute);
+            }
+
+            private static RequestPolicy ClonePolicy(RequestPolicy src)
+            {
+                if (src == null) return new RequestPolicy();
+                return new RequestPolicy
+                {
+                    Features = src.Features,
+                    CacheTtlSeconds = src.CacheTtlSeconds,
+                    CacheSWR = src.CacheSWR,
+                    RateLimitKey = src.RateLimitKey,
+                    RetryMaxAttempts = src.RetryMaxAttempts,
+                    RetryBaseDelayMs = src.RetryBaseDelayMs,
+                    IdempotencyKey = src.IdempotencyKey,
+                    CompressAlways = src.CompressAlways
+                };
             }
 
             public RequestBuilder WithHeader(string name, string value) { _req.SetHeader(name, value); return this; }
@@ -93,6 +117,60 @@ namespace Flowcast.Rest.Client
                 if (_req.Method == "GET") _req.Method = "POST";
                 return this;
             }
+
+            public RequestBuilder RequireAuth() { _req.Policy.Features = _req.Policy.Features.With(RequestFeatures.Auth); return this; }
+            public RequestBuilder NoAuth() { _req.Policy.Features = _req.Policy.Features.Without(RequestFeatures.Auth); return this; }
+
+            public RequestBuilder EnableCache(int? ttlSeconds = null, bool? swr = null)
+            {
+                _req.Policy.Features = _req.Policy.Features.With(RequestFeatures.Caching);
+                _req.Policy.CacheTtlSeconds = ttlSeconds;
+                _req.Policy.CacheSWR = swr;
+                return this;
+            }
+            public RequestBuilder NoCache() { _req.Policy.Features = _req.Policy.Features.Without(RequestFeatures.Caching); return this; }
+
+            public RequestBuilder WithRetry(int? maxAttempts = null, int? baseDelayMs = null)
+            {
+                _req.Policy.Features = _req.Policy.Features.With(RequestFeatures.Retry);
+                _req.Policy.RetryMaxAttempts = maxAttempts;
+                _req.Policy.RetryBaseDelayMs = baseDelayMs;
+                return this;
+            }
+            public RequestBuilder NoRetry() { _req.Policy.Features = _req.Policy.Features.Without(RequestFeatures.Retry); return this; }
+
+            public RequestBuilder WithRateLimitKey(string key)
+            {
+                _req.Policy.Features = _req.Policy.Features.With(RequestFeatures.RateLimit);
+                _req.Policy.RateLimitKey = key;
+                return this;
+            }
+
+            public RequestBuilder WithIdempotencyKey(string key = null)
+            {
+                _req.Policy.Features = _req.Policy.Features.With(RequestFeatures.Idempotency);
+                _req.Policy.IdempotencyKey = key ?? IdempotencyKey.New();
+                _req.SetHeader("Idempotency-Key", _req.Policy.IdempotencyKey);
+                return this;
+            }
+            public RequestBuilder NoIdempotency() { _req.Policy.Features = _req.Policy.Features.Without(RequestFeatures.Idempotency); return this; }
+
+            public RequestBuilder CompressRequest(bool always = false)
+            {
+                _req.Policy.Features = _req.Policy.Features.With(RequestFeatures.CompressRequest);
+                _req.Policy.CompressAlways = always;
+                return this;
+            }
+            public RequestBuilder NoCompressRequest() { _req.Policy.Features = _req.Policy.Features.Without(RequestFeatures.CompressRequest); return this; }
+
+            public RequestBuilder DecompressResponse()
+            {
+                _req.Policy.Features = _req.Policy.Features.With(RequestFeatures.DecompressResp);
+                return this;
+            }
+
+            public RequestBuilder Record() { _req.Policy.Features = _req.Policy.Features.With(RequestFeatures.Record); return this; }
+            public RequestBuilder NoRecord() { _req.Policy.Features = _req.Policy.Features.Without(RequestFeatures.Record); return this; }
 
             public Task<Result<T>> AsResultAsync<T>(CancellationToken ct = default)
                 => ExecuteAsync<T>(ct);

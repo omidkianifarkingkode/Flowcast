@@ -16,6 +16,9 @@ namespace Flowcast.Rest.Pipeline
 
         public async Task<ApiResponse> HandleAsync(ApiRequest req, CancellationToken ct, PipelineNext next)
         {
+            if (req.Policy == null || !req.Policy.Features.Has(RequestFeatures.Logging))
+                return await next(req, ct).ConfigureAwait(false);
+
             var enable = _env.Current != null && _env.Current.EnableLogging;
             long startedMs = 0;
             if (enable) startedMs = Stopwatch.GetTimestamp();

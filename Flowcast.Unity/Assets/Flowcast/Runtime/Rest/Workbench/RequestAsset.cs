@@ -29,6 +29,18 @@ namespace Flowcast.Rest.Workbench
         [Header("Headers (optional)")]
         public List<Header> Headers = new();
 
+        [Header("Policy")]
+        public bool RequireAuth;
+        public bool EnableCache;
+        public int CacheTtlSeconds = 0;  // 0 = behavior default
+        public bool CacheSWR = true;
+        public bool DisableRetry;
+        public string RateLimitKey;
+        public bool UseIdempotencyKey;
+        public bool CompressRequest;
+        public bool DecompressResponse;
+        public bool RecordRequest;
+
         [Serializable]
         public struct Header
         {

@@ -14,6 +14,8 @@ namespace Flowcast.Rest.Client
         public string MediaType { get; set; } // Content-Type for request
         public int? TimeoutSeconds { get; set; }
 
+        public RequestPolicy Policy { get; set; } = RequestPolicy.Default;
+
         public void SetHeader(string name, string value) => Headers.Set(name, value);
     }
 }

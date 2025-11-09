@@ -1,23 +1,16 @@
-// Runtime/Rest/Pipeline/AuthBehavior.cs
+// Runtime/Rest/Pipeline/AuthBehavior.cs  (superset)
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using Flowcast.Core.Auth;
 using Flowcast.Rest.Client;
 
 namespace Flowcast.Rest.Pipeline
 {
-    /// Adds Authorization before send.
-    /// If response is 401 and a refreshing provider is available:
-    ///  - single-flight refresh (one refresh for concurrent requests)
-    ///  - replay original request ONCE if safe:
-    ///      * always for GET/HEAD
-    ///      * for non-GET only when "Idempotency-Key" header exists
     public sealed class AuthBehavior : IPipelineBehavior
     {
         private readonly IAuthProvider _auth;
         private readonly IRefreshingAuthProvider _refreshing;
-        private readonly SemaphoreSlim _refreshLock = new(1, 1);
+        private readonly System.Threading.SemaphoreSlim _refreshLock = new(1, 1);
 
         public AuthBehavior(IAuthProvider authProvider)
         {
@@ -27,58 +20,52 @@ namespace Flowcast.Rest.Pipeline
 
         public async Task<ApiResponse> HandleAsync(ApiRequest req, CancellationToken ct, PipelineNext next)
         {
-            // 1) Attach current token (if any)
-            if (_auth != null)
-            {
-                var token = await _auth.GetAccessTokenAsync(ct).ConfigureAwait(false);
-                if (!string.IsNullOrEmpty(token))
-                    req.SetHeader("Authorization", "Bearer " + token);
-            }
+            if (req.Policy == null || !req.Policy.Features.Has(RequestFeatures.Auth))
+                return await next(req, ct).ConfigureAwait(false);
 
+            AttachAuth(req, _auth, token: await _auth?.GetAccessTokenAsync(ct));
             var resp = await next(req, ct).ConfigureAwait(false);
 
-            // 2) On 401, try refresh+replay (once)
             if (resp.Status == 401 && _refreshing != null && !HasAuthRetriedMarker(req))
             {
-                // Avoid multiple refresh calls under concurrency (single-flight)
                 await _refreshLock.WaitAsync(ct).ConfigureAwait(false);
                 try
                 {
-                    // Another request may have refreshed while we waited; recheck token usefulness by trying refresh anyway.
                     var ok = await _refreshing.RefreshAsync(ct).ConfigureAwait(false);
-                    if (!ok) return resp; // still 401 -> give up as Auth error
+                    if (!ok) return resp;
 
-                    // Mark request to avoid infinite loops
                     MarkAuthRetried(req);
-
-                    // Re-attach new token and replay if safe
-                    var method = (req.Method ?? "GET").ToUpperInvariant();
-                    var canReplay =
-                        method == "GET" || method == "HEAD" ||
-                        req.Headers.TryGet("Idempotency-Key", out _);
-
-                    if (!canReplay)
-                        return resp; // don't risk duplicating writes
-
-                    // Replace Authorization header
-                    var token = await _auth.GetAccessTokenAsync(ct).ConfigureAwait(false);
-                    if (!string.IsNullOrEmpty(token))
-                        req.SetHeader("Authorization", "Bearer " + token);
-
-                    // Replay once
-                    var replay = await next(req, ct).ConfigureAwait(false);
-                    return replay;
+                    AttachAuth(req, _auth, token: await _auth.GetAccessTokenAsync(ct));
+                    resp = await next(req, ct).ConfigureAwait(false);
                 }
-                finally
-                {
-                    _refreshLock.Release();
-                }
+                finally { _refreshLock.Release(); }
             }
-
             return resp;
         }
 
-        // We use a tiny internal marker header to prevent infinite loops.
+        private static void AttachAuth(ApiRequest req, IAuthProvider auth, string token)
+        {
+            switch (auth)
+            {
+                case null:
+                    return;
+
+                case BasicAuthProvider basic:
+                    req.SetHeader("Authorization", basic.AuthorizationHeader);
+                    return;
+
+                case ApiKeyAuthProvider apiKey:
+                    if (!string.IsNullOrEmpty(apiKey.HeaderName))
+                        req.SetHeader(apiKey.HeaderName, apiKey.HeaderValue);
+                    return;
+
+                default:
+                    if (!string.IsNullOrEmpty(token))
+                        req.SetHeader("Authorization", "Bearer " + token);
+                    return;
+            }
+        }
+
         private static bool HasAuthRetriedMarker(ApiRequest req)
             => req.Headers.TryGet("X-Flowcast-Auth-Retried", out _);
 

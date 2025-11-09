@@ -1,4 +1,4 @@
-// Editor/Rest/Workbench/WorkbenchWindow.cs
+﻿// Editor/Rest/Workbench/WorkbenchWindow.cs
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
@@ -60,6 +60,8 @@ namespace Flowcast.Rest.Editor
         private List<RequestAsset> _savedAssets = new();
         private string _savedSearch = "";
         private double _lastSearchRefresh;
+
+        private string _curlInput = "";
 
         private CancellationTokenSource _cts;
 
@@ -268,6 +270,27 @@ namespace Flowcast.Rest.Editor
             }
             EditorGUILayout.EndScrollView();
 
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField("Import from cURL", EditorStyles.boldLabel);
+            _curlInput = EditorGUILayout.TextArea(_curlInput, GUILayout.MinHeight(60));
+            if (GUILayout.Button("Parse cURL → Load Request", GUILayout.Height(24)))
+            {
+                if (CurlImportUtility.TryParse(_curlInput, out var m, out var absUrl, out var hs, out var b, out var ct))
+                {
+                    _method = m;
+                    _useRelative = false;
+                    _pathOrUrl = absUrl;
+                    _headers.Clear(); _headers.AddRange(hs);
+                    _body = b ?? "";
+                    _contentType = string.IsNullOrWhiteSpace(ct) ? _contentType : ct;
+                    ShowNotification(new GUIContent("cURL imported"));
+                }
+                else
+                {
+                    ShowNotification(new GUIContent("Failed to parse cURL"));
+                }
+            }
+
 
             EditorGUILayout.EndVertical();
         }
@@ -369,6 +392,15 @@ namespace Flowcast.Rest.Editor
 
             // Build request
             var builder = client.Send(MethodToString(_method), _useRelative ? _pathOrUrl : ResolveAbsoluteUrl());
+
+            if (_loadedAsset.RequireAuth) builder.RequireAuth();
+            if (_loadedAsset.EnableCache) builder.EnableCache(_loadedAsset.CacheTtlSeconds > 0 ? _loadedAsset.CacheTtlSeconds : (int?)null, _loadedAsset.CacheSWR);
+            if (_loadedAsset.DisableRetry) builder.NoRetry();
+            if (!string.IsNullOrEmpty(_loadedAsset.RateLimitKey)) builder.WithRateLimitKey(_loadedAsset.RateLimitKey);
+            if (_loadedAsset.UseIdempotencyKey) builder.WithIdempotencyKey();
+            if (_loadedAsset.CompressRequest) builder.CompressRequest();
+            if (_loadedAsset.DecompressResponse) builder.DecompressResponse();
+            if (_loadedAsset.RecordRequest) builder.Record();
 
             foreach (var h in _headers)
             {

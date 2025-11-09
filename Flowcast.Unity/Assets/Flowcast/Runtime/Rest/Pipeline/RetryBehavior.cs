@@ -1,9 +1,10 @@
 ﻿// Runtime/Rest/Pipeline/RetryBehavior.cs
+using Flowcast.Rest.Client;
 using System;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using Flowcast.Rest.Client;
 
 namespace Flowcast.Rest.Pipeline
 {
@@ -26,6 +27,12 @@ namespace Flowcast.Rest.Pipeline
 
         public async Task<ApiResponse> HandleAsync(ApiRequest req, CancellationToken ct, PipelineNext next)
         {
+            if (req.Policy == null || !req.Policy.Features.Has(RequestFeatures.Retry))
+                return await next(req, ct).ConfigureAwait(false);
+
+            var attempts = req.Policy.RetryMaxAttempts ?? _maxAttempts;
+            var baseDelayMs = req.Policy.RetryBaseDelayMs ?? _baseDelayMs;
+
             var attempt = 1;
             ApiResponse last = null;
 
@@ -33,10 +40,10 @@ namespace Flowcast.Rest.Pipeline
             {
                 last = await next(req, ct).ConfigureAwait(false);
 
-                if (attempt >= _maxAttempts || !ShouldRetry(req, last))
+                if (attempt >= attempts || !ShouldRetry(req, last))
                     return last;
 
-                var delay = GetDelay(last, attempt);
+                var delay = GetDelay(last, attempt, baseDelayMs);
                 try
                 {
                     await Task.Delay(delay, ct).ConfigureAwait(false);
@@ -63,7 +70,7 @@ namespace Flowcast.Rest.Pipeline
             return req.Headers.TryGet("Idempotency-Key", out _);
         }
 
-        private TimeSpan GetDelay(ApiResponse resp, int attempt)
+        private TimeSpan GetDelay(ApiResponse resp, int attempt, int delay)
         {
             // Retry-After
             if (resp.Headers.TryGet("Retry-After", out var ra))
@@ -80,8 +87,8 @@ namespace Flowcast.Rest.Pipeline
             }
 
             // expo backoff with jitter
-            var exp = Math.Min(_maxDelayMs, _baseDelayMs * (1 << Math.Min(6, attempt - 1)));
-            var jitter = new Random().Next(_baseDelayMs / 2, exp);
+            var exp = Math.Min(_maxDelayMs, delay * (1 << Math.Min(6, attempt - 1)));
+            var jitter = new Random().Next(delay / 2, exp);
             return TimeSpan.FromMilliseconds(jitter);
         }
     }
