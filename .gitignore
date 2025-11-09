@@ -94,3 +94,4 @@ Flowcast.Unity/*.csproj
 Flowcast.Unity/*.sln
 Flowcast.Server/GameServer/AppHost/Configs/appsettings.Secrets.json
 Flowcast.Server/GameServer/AppHost/Configs/appsettings.*.Secrets.json
+Flowcast.Unity/Assets/Contents
