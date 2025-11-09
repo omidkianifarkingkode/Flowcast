@@ -86,6 +86,43 @@ namespace Flowcast.Rest.Bootstrap
 
         public IReadOnlyList<RequestAsset> RequestAssets => requestAssets;
 
+        public bool TryGetRequestAsset(string nameOrId, out RequestAsset asset)
+        {
+            if (!string.IsNullOrEmpty(nameOrId))
+            {
+                foreach (var request in requestAssets)
+                {
+                    if (request == null)
+                    {
+                        continue;
+                    }
+
+                    if (!string.IsNullOrEmpty(request.RequestId) &&
+                        string.Equals(request.RequestId, nameOrId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        asset = request;
+                        return true;
+                    }
+
+                    if (!string.IsNullOrEmpty(request.DisplayName) &&
+                        string.Equals(request.DisplayName, nameOrId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        asset = request;
+                        return true;
+                    }
+
+                    if (string.Equals(request.name, nameOrId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        asset = request;
+                        return true;
+                    }
+                }
+            }
+
+            asset = null;
+            return false;
+        }
+
         public bool TryGetById(string id, out Environment env)
         {
             if (!string.IsNullOrEmpty(id))

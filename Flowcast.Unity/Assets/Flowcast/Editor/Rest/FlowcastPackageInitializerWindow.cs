@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Flowcast.Core.Environments;
 using Flowcast.Rest.Bootstrap;
+using Flowcast.Rest.Workbench;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditorInternal;
@@ -20,9 +21,11 @@ namespace Flowcast.Editor.Core
         private const string FlowcastUnitaskDefine = "FLOWCAST_UNITASK";
         private const string FlowcastNewtonsoftDefine = "FLOWCAST_NEWTONSOFT_JSON";
         private const string SettingsFolderPath = "Assets/Contents/Flowcast";
+        private const string EnvironmentsFolderPath = SettingsFolderPath + "/Environments";
+        private const string RequestAssetsFolderPath = SettingsFolderPath + "/Requests";
         private const string SettingsAssetPath = SettingsFolderPath + "/FlowcastRestSettings.asset";
-        private const string DevEnvironmentPath = SettingsFolderPath + "/Environment.Dev.asset";
-        private const string ReleaseEnvironmentPath = SettingsFolderPath + "/Environment.Release.asset";
+        private const string DevEnvironmentPath = EnvironmentsFolderPath + "/flowcast.env.dev.asset";
+        private const string ReleaseEnvironmentPath = EnvironmentsFolderPath + "/flowcast.env.release.asset";
         private const string RestAsmdefPath = "Assets/Flowcast/Runtime/Rest/Flowcast.Rest.asmdef";
         private const string CoreAsmdefPath = "Assets/Flowcast/Runtime/Core/Flowcast.Core.asmdef";
 
@@ -59,6 +62,18 @@ namespace Flowcast.Editor.Core
                 {
                     LocateRestSettings();
                 }
+            }
+
+            EditorGUILayout.Space(12f);
+
+            EditorGUILayout.LabelField("API Requests", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Creates a Flowcast RequestAsset ScriptableObject inside Assets/Contents/Flowcast/Requests and registers it with FlowcastRestSettings.",
+                MessageType.Info);
+
+            if (GUILayout.Button("Create Request Asset"))
+            {
+                CreateRequestAsset();
             }
 
             EditorGUILayout.Space(12f);
@@ -192,6 +207,8 @@ namespace Flowcast.Editor.Core
         private static void InitializeRestSettings()
         {
             EnsureFolderExists(SettingsFolderPath);
+            EnsureFolderExists(EnvironmentsFolderPath);
+            EnsureFolderExists(RequestAssetsFolderPath);
 
             var devEnv = EnsureEnvironmentAsset(DevEnvironmentPath, "dev", "Development", "https://api.dev.example.com");
             var releaseEnv = EnsureEnvironmentAsset(ReleaseEnvironmentPath, "release", "Release", "https://api.example.com");
@@ -248,8 +265,65 @@ namespace Flowcast.Editor.Core
                 environment.BaseUrl = baseUrl;
             }
 
+            environment.name = Path.GetFileNameWithoutExtension(assetPath);
             EditorUtility.SetDirty(environment);
             return environment;
+        }
+
+        private static void CreateRequestAsset()
+        {
+            EnsureFolderExists(SettingsFolderPath);
+            EnsureFolderExists(RequestAssetsFolderPath);
+
+            var asset = ScriptableObject.CreateInstance<RequestAsset>();
+            asset.DisplayName = "New API Request";
+            if (string.IsNullOrEmpty(asset.RequestId))
+            {
+                asset.RequestId = Guid.NewGuid().ToString("N");
+            }
+
+            var assetPath = AssetDatabase.GenerateUniqueAssetPath(RequestAssetsFolderPath + "/Flowcast.Request.asset");
+            AssetDatabase.CreateAsset(asset, assetPath);
+
+            var settings = FindRestSettings();
+            if (settings != null)
+            {
+                var serializedSettings = new SerializedObject(settings);
+                var requestAssetsProp = serializedSettings.FindProperty("requestAssets");
+                if (requestAssetsProp != null)
+                {
+                    var alreadyPresent = false;
+                    for (int i = 0; i < requestAssetsProp.arraySize; i++)
+                    {
+                        if (requestAssetsProp.GetArrayElementAtIndex(i).objectReferenceValue == asset)
+                        {
+                            alreadyPresent = true;
+                            break;
+                        }
+                    }
+
+                    if (!alreadyPresent)
+                    {
+                        var index = requestAssetsProp.arraySize;
+                        requestAssetsProp.arraySize++;
+                        requestAssetsProp.GetArrayElementAtIndex(index).objectReferenceValue = asset;
+                        serializedSettings.ApplyModifiedPropertiesWithoutUndo();
+                        EditorUtility.SetDirty(settings);
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[Flowcast] FlowcastRestSettings not found. Initialize settings before creating request assets.");
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
+
+            Debug.Log($"[Flowcast] RequestAsset created at '{assetPath}'.");
         }
 
         private static void LocateRestSettings()
