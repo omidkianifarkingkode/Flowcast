@@ -213,11 +213,10 @@ namespace Flowcast.Rest.Client
                         return Result<T>.Success((T)(object)raw, meta);
                     }
 
-                    var media = (resp.MediaType ?? "").ToLowerInvariant();
-                    if (_client._serializers.TryGet(media, out var deser) || media.Contains("+json") || media.Contains("application/json"))
-                        deser ??= _client._serializers.Default;
+                    var media = resp.MediaType ?? string.Empty;
+                    var deser = ResolveDeserializer(media);
 
-                    if (deser != null && (media.Contains("json") || deser == _client._serializers.Default))
+                    if (deser != null)
                     {
                         try
                         {
@@ -255,6 +254,30 @@ namespace Flowcast.Rest.Client
                 if (status >= 400 && status < 500) return ErrorKind.Client;
                 if (status == 0) return ErrorKind.Unknown;
                 return ErrorKind.Server;
+            }
+
+            private ISerializer ResolveDeserializer(string responseMediaType)
+            {
+                if (_client._serializers.TryGet(responseMediaType, out var serializer))
+                    return serializer;
+
+                if (_req.Headers.TryGet("Accept", out var acceptHeader))
+                {
+                    var accepts = acceptHeader.Split(',');
+                    foreach (var accept in accepts)
+                    {
+                        var trimmed = accept.Trim();
+                        if (trimmed.Length == 0) continue;
+                        if (_client._serializers.TryGet(trimmed, out serializer))
+                            return serializer;
+                    }
+                }
+
+                // fall back to default JSON serializer when media type is unspecified or JSON-ish
+                if (string.IsNullOrWhiteSpace(responseMediaType) || responseMediaType.IndexOf("json", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return _client._serializers.Default;
+
+                return null;
             }
         }
     }

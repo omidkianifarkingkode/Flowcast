@@ -113,7 +113,18 @@ namespace Flowcast.Rest.Pipeline
                     ApplyCachingHeaders(key, resp); // renew TTL from headers
             }
             catch { /* swallow */ }
-            finally { gate.Release(); }
+            finally
+            {
+                gate.Release();
+                if (_revalGates.TryRemove(key, out var removed))
+                {
+                    removed.Dispose();
+                }
+                else
+                {
+                    gate.Dispose();
+                }
+            }
         }
 
         private void Store(string key, ApiResponse resp)

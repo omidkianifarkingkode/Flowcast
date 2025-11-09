@@ -8,46 +8,66 @@ namespace Flowcast.Core.Cache
     public sealed class MemoryCacheProvider : ICacheProvider
     {
         private readonly Dictionary<string, CacheEntry> _map = new(StringComparer.Ordinal);
+        private readonly object _lock = new();
         private readonly int _maxEntries;
 
         public MemoryCacheProvider(int maxEntries = 256) { _maxEntries = Math.Max(16, maxEntries); }
 
         public bool TryGet(string key, out CacheEntry entry)
         {
-            if (_map.TryGetValue(key, out entry))
+            lock (_lock)
             {
-                if (entry.ExpiresUtc.HasValue && entry.ExpiresUtc.Value <= DateTimeOffset.UtcNow)
+                if (_map.TryGetValue(key, out entry))
                 {
-                    _map.Remove(key);
-                    entry = null;
-                    return false;
+                    if (entry.ExpiresUtc.HasValue && entry.ExpiresUtc.Value <= DateTimeOffset.UtcNow)
+                    {
+                        _map.Remove(key);
+                        entry = null;
+                        return false;
+                    }
+                    return true;
                 }
-                return true;
+                return false;
             }
-            return false;
         }
 
         public void Set(string key, CacheEntry entry)
         {
-            // naive eviction: if over limit, clear oldest by StoredAtUtc
-            if (_map.Count >= _maxEntries)
+            lock (_lock)
             {
-                string oldestKey = null;
-                DateTimeOffset oldest = DateTimeOffset.MaxValue;
-                foreach (var kv in _map)
+                // naive eviction: if over limit, clear oldest by StoredAtUtc
+                if (_map.Count >= _maxEntries)
                 {
-                    if (kv.Value.StoredAtUtc < oldest)
+                    string oldestKey = null;
+                    DateTimeOffset oldest = DateTimeOffset.MaxValue;
+                    foreach (var kv in _map)
                     {
-                        oldest = kv.Value.StoredAtUtc;
-                        oldestKey = kv.Key;
+                        if (kv.Value.StoredAtUtc < oldest)
+                        {
+                            oldest = kv.Value.StoredAtUtc;
+                            oldestKey = kv.Key;
+                        }
                     }
+                    if (oldestKey != null) _map.Remove(oldestKey);
                 }
-                if (oldestKey != null) _map.Remove(oldestKey);
+                _map[key] = entry;
             }
-            _map[key] = entry;
         }
 
-        public void Remove(string key) => _map.Remove(key);
-        public void Clear() => _map.Clear();
+        public void Remove(string key)
+        {
+            lock (_lock)
+            {
+                _map.Remove(key);
+            }
+        }
+
+        public void Clear()
+        {
+            lock (_lock)
+            {
+                _map.Clear();
+            }
+        }
     }
 }

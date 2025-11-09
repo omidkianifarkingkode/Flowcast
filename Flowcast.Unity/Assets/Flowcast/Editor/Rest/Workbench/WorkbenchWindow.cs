@@ -33,6 +33,18 @@ namespace Flowcast.Rest.Editor
 
         private TransportMode _transportMode = TransportMode.Real;
 
+        // Policy flags (used for ad-hoc requests and mirrored to/from assets)
+        private bool _policyRequireAuth;
+        private bool _policyEnableCache;
+        private int _policyCacheTtlSeconds;
+        private bool _policyCacheSwr = true;
+        private bool _policyDisableRetry;
+        private string _policyRateLimitKey = string.Empty;
+        private bool _policyUseIdempotencyKey;
+        private bool _policyCompressRequest;
+        private bool _policyDecompressResponse;
+        private bool _policyRecordRequest;
+
         // Mock response fields (used only when TransportMode.Mock)
         private int _mockStatus = 200;
         private int _mockLatencyMs = 0;
@@ -177,6 +189,24 @@ namespace Flowcast.Rest.Editor
                 _contentType = EditorGUILayout.TextField(_contentType);
                 EditorGUILayout.EndHorizontal();
             }
+
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField("Policy", EditorStyles.boldLabel);
+            _policyRequireAuth = EditorGUILayout.ToggleLeft("Require Auth", _policyRequireAuth);
+            _policyEnableCache = EditorGUILayout.ToggleLeft("Enable Cache", _policyEnableCache);
+            using (new EditorGUI.DisabledGroupScope(!_policyEnableCache))
+            {
+                EditorGUI.indentLevel++;
+                _policyCacheTtlSeconds = EditorGUILayout.IntField("TTL Seconds (0 = default)", _policyCacheTtlSeconds);
+                _policyCacheSwr = EditorGUILayout.ToggleLeft("Stale-While-Revalidate", _policyCacheSwr);
+                EditorGUI.indentLevel--;
+            }
+            _policyDisableRetry = EditorGUILayout.ToggleLeft("Disable Retry", _policyDisableRetry);
+            _policyRateLimitKey = EditorGUILayout.TextField("Rate Limit Key", _policyRateLimitKey);
+            _policyUseIdempotencyKey = EditorGUILayout.ToggleLeft("Use Idempotency Key", _policyUseIdempotencyKey);
+            _policyCompressRequest = EditorGUILayout.ToggleLeft("Compress Request", _policyCompressRequest);
+            _policyDecompressResponse = EditorGUILayout.ToggleLeft("Decompress Response", _policyDecompressResponse);
+            _policyRecordRequest = EditorGUILayout.ToggleLeft("Record Request", _policyRecordRequest);
 
             EditorGUILayout.EndScrollView();
 
@@ -393,14 +423,18 @@ namespace Flowcast.Rest.Editor
             // Build request
             var builder = client.Send(MethodToString(_method), _useRelative ? _pathOrUrl : ResolveAbsoluteUrl());
 
-            if (_loadedAsset.RequireAuth) builder.RequireAuth();
-            if (_loadedAsset.EnableCache) builder.EnableCache(_loadedAsset.CacheTtlSeconds > 0 ? _loadedAsset.CacheTtlSeconds : (int?)null, _loadedAsset.CacheSWR);
-            if (_loadedAsset.DisableRetry) builder.NoRetry();
-            if (!string.IsNullOrEmpty(_loadedAsset.RateLimitKey)) builder.WithRateLimitKey(_loadedAsset.RateLimitKey);
-            if (_loadedAsset.UseIdempotencyKey) builder.WithIdempotencyKey();
-            if (_loadedAsset.CompressRequest) builder.CompressRequest();
-            if (_loadedAsset.DecompressResponse) builder.DecompressResponse();
-            if (_loadedAsset.RecordRequest) builder.Record();
+            if (_policyRequireAuth) builder.RequireAuth();
+            if (_policyEnableCache)
+            {
+                var ttl = _policyCacheTtlSeconds > 0 ? _policyCacheTtlSeconds : (int?)null;
+                builder.EnableCache(ttl, _policyCacheSwr);
+            }
+            if (_policyDisableRetry) builder.NoRetry();
+            if (!string.IsNullOrWhiteSpace(_policyRateLimitKey)) builder.WithRateLimitKey(_policyRateLimitKey);
+            if (_policyUseIdempotencyKey) builder.WithIdempotencyKey();
+            if (_policyCompressRequest) builder.CompressRequest();
+            if (_policyDecompressResponse) builder.DecompressResponse();
+            if (_policyRecordRequest) builder.Record();
 
             foreach (var h in _headers)
             {
@@ -494,6 +528,16 @@ namespace Flowcast.Rest.Editor
             asset.Body = _body;
             asset.BodyContentType = _contentType;
             asset.Headers = new List<RequestAsset.Header>(_headers);
+            asset.RequireAuth = _policyRequireAuth;
+            asset.EnableCache = _policyEnableCache;
+            asset.CacheTtlSeconds = _policyCacheTtlSeconds;
+            asset.CacheSWR = _policyCacheSwr;
+            asset.DisableRetry = _policyDisableRetry;
+            asset.RateLimitKey = _policyRateLimitKey;
+            asset.UseIdempotencyKey = _policyUseIdempotencyKey;
+            asset.CompressRequest = _policyCompressRequest;
+            asset.DecompressResponse = _policyDecompressResponse;
+            asset.RecordRequest = _policyRecordRequest;
 
             var path = EditorUtility.SaveFilePanelInProject("Save Request Asset", "RequestAsset", "asset", "Choose a location for the request asset");
             if (!string.IsNullOrEmpty(path))
@@ -515,6 +559,16 @@ namespace Flowcast.Rest.Editor
             _loadedAsset.Body = _body;
             _loadedAsset.BodyContentType = _contentType;
             _loadedAsset.Headers = new List<RequestAsset.Header>(_headers);
+            _loadedAsset.RequireAuth = _policyRequireAuth;
+            _loadedAsset.EnableCache = _policyEnableCache;
+            _loadedAsset.CacheTtlSeconds = _policyCacheTtlSeconds;
+            _loadedAsset.CacheSWR = _policyCacheSwr;
+            _loadedAsset.DisableRetry = _policyDisableRetry;
+            _loadedAsset.RateLimitKey = _policyRateLimitKey;
+            _loadedAsset.UseIdempotencyKey = _policyUseIdempotencyKey;
+            _loadedAsset.CompressRequest = _policyCompressRequest;
+            _loadedAsset.DecompressResponse = _policyDecompressResponse;
+            _loadedAsset.RecordRequest = _policyRecordRequest;
             EditorUtility.SetDirty(_loadedAsset);
             AssetDatabase.SaveAssets();
         }
@@ -529,6 +583,16 @@ namespace Flowcast.Rest.Editor
             _contentType = _loadedAsset.BodyContentType;
             _headers.Clear();
             if (_loadedAsset.Headers != null) _headers.AddRange(_loadedAsset.Headers);
+            _policyRequireAuth = _loadedAsset.RequireAuth;
+            _policyEnableCache = _loadedAsset.EnableCache;
+            _policyCacheTtlSeconds = _loadedAsset.CacheTtlSeconds;
+            _policyCacheSwr = _loadedAsset.CacheSWR;
+            _policyDisableRetry = _loadedAsset.DisableRetry;
+            _policyRateLimitKey = _loadedAsset.RateLimitKey ?? string.Empty;
+            _policyUseIdempotencyKey = _loadedAsset.UseIdempotencyKey;
+            _policyCompressRequest = _loadedAsset.CompressRequest;
+            _policyDecompressResponse = _loadedAsset.DecompressResponse;
+            _policyRecordRequest = _loadedAsset.RecordRequest;
         }
 
         private string BuildCurl()
