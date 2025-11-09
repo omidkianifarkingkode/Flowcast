@@ -10,7 +10,10 @@ namespace Flowcast.Rest.Transport
     {
         public async Task<ApiResponse> SendAsync(ApiRequest req, CancellationToken ct)
         {
-            var uwr = new UnityWebRequest(req.Url, req.Method);
+            if (req.Url == null)
+                throw new System.ArgumentException("ApiRequest.Url must be an absolute URI", nameof(req));
+
+            var uwr = new UnityWebRequest(req.Url.AbsoluteUri, req.Method);
             if (req.TimeoutSeconds.HasValue && req.TimeoutSeconds.Value > 0)
                 uwr.timeout = req.TimeoutSeconds.Value;
 
