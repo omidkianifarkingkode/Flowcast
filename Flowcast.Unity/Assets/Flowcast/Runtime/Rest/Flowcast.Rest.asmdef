@@ -2,8 +2,7 @@
     "name": "Flowcast.Rest",
     "rootNamespace": "",
     "references": [
-        "Flowcast.Core",
-        "UniTask"
+        "Flowcast.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
