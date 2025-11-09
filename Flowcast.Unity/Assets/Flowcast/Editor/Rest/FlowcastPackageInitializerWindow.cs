@@ -7,6 +7,7 @@ using Flowcast.Rest.Bootstrap;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using Environment = Flowcast.Core.Environments.Environment;
 
 namespace Flowcast.Editor.Core
 {
@@ -17,7 +18,7 @@ namespace Flowcast.Editor.Core
     {
         private const string FlowcastUnitaskDefine = "FLOWCAST_UNITASK";
         private const string FlowcastNewtonsoftDefine = "FLOWCAST_NEWTONSOFT_JSON";
-        private const string SettingsFolderPath = "Assets/Content/Flowcast";
+        private const string SettingsFolderPath = "Assets/Contents/Flowcast";
         private const string SettingsAssetPath = SettingsFolderPath + "/FlowcastRestSettings.asset";
         private const string DevEnvironmentPath = SettingsFolderPath + "/Environment.Dev.asset";
         private const string ReleaseEnvironmentPath = SettingsFolderPath + "/Environment.Release.asset";
@@ -41,7 +42,7 @@ namespace Flowcast.Editor.Core
 
             EditorGUILayout.LabelField("REST Settings", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Creates or locates FlowcastRestSettings along with default Dev and Release environments in Assets/Content/Flowcast.",
+                "Creates or locates FlowcastRestSettings along with default Dev and Release environments in Assets/Contents/Flowcast.",
                 MessageType.Info);
 
             using (new EditorGUILayout.HorizontalScope())
@@ -228,7 +229,7 @@ namespace Flowcast.Editor.Core
             Selection.activeObject = settings;
             EditorGUIUtility.PingObject(settings);
 
-            Debug.Log("[Flowcast] FlowcastRestSettings initialized under Assets/Content/Flowcast.");
+            Debug.Log("[Flowcast] FlowcastRestSettings initialized under Assets/Contents/Flowcast.");
         }
 
         private static Environment EnsureEnvironmentAsset(string assetPath, string id, string displayName, string baseUrl)

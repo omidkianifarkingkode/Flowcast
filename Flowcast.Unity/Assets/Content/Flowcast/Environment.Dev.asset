@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94c262a5c57f8e84ba3978a48f80cbeb, type: 3}
+  m_Name: Environment.Dev
+  m_EditorClassIdentifier: 
+  Id: dev
+  DisplayName: Development
+  BaseUrl: https://api.dev.example.com
+  TimeoutSeconds: 15
+  EnableLogging: 1
+  DefaultHeaders: []
+  Rest:
+    DefaultLogging: 1
+    DefaultRetry: 1
+    DefaultRateLimit: 1
+    DefaultCircuitBreaker: 1
+    DefaultCaching: 0
+    DefaultAuth: 0
+    CacheSWR: 1
+    CacheDefaultTtlSeconds: 60
+    RetryMaxAttempts: 3
+    RetryBaseDelayMs: 250
+    RateLimitCapacity: 8
+    RateLimitRefillPerSecond: 4
+    BreakerFailureThreshold: 5
+    BreakerOpenMs: 5000
+    TransportMode: 0
+    ReplayDirectory: FlowcastRecords
+    MockDefaultLatencyMs: 0
+    PrefixPolicies: []

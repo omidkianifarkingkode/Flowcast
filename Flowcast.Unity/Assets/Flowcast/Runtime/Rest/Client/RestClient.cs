@@ -1,4 +1,7 @@
 ﻿// Runtime/Rest/Client/RestClient.cs
+#if FLOWCAST_UNITASK
+using Cysharp.Threading.Tasks;
+#endif
 using Flowcast.Core.Auth;
 using Flowcast.Core.Common;
 using Flowcast.Core.Environments;
@@ -179,12 +182,13 @@ namespace Flowcast.Rest.Client
                 => ExecuteAsync<RawResponse>(ct);
 
 #if FLOWCAST_UNITASK
-            // Optional UniTask façade
-            public Cysharp.Threading.Tasks.UniTask<Result<T>> AsResultUniTask<T>(System.Threading.CancellationToken ct = default)
-                => new Cysharp.Threading.Tasks.UniTask<Result<T>>(ExecuteAsync<T>(ct));
-            public Cysharp.Threading.Tasks.UniTask<Result<RawResponse>> AsRawUniTask(System.Threading.CancellationToken ct = default)
-                => new Cysharp.Threading.Tasks.UniTask<Result<RawResponse>>(ExecuteAsync<RawResponse>(ct));
+            public UniTask<Result<T>> AsResultUniTask<T>(CancellationToken ct = default)
+                => ExecuteAsync<T>(ct).AsUniTask();
+
+            public UniTask<Result<RawResponse>> AsRawUniTask(CancellationToken ct = default)
+                => ExecuteAsync<RawResponse>(ct).AsUniTask();
 #endif
+
 
             // ---- core execution with tiny pipeline ----
             private async Task<Result<T>> ExecuteAsync<T>(CancellationToken ct)

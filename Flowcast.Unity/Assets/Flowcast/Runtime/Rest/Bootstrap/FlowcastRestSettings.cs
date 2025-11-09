@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Flowcast.Core.Environments;
 using UnityEngine;
+using Environment = Flowcast.Core.Environments.Environment;
 
 namespace Flowcast.Rest.Bootstrap
 {
