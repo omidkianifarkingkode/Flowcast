@@ -17,6 +17,23 @@ namespace Flowcast.Core.Environments.Editor
         private void OnEnable()
         {
             _settings = FlowcastClientSettings.LoadFromResources();
+            EnvironmentProvider.Instance.Changed += OnEnvironmentChanged;
+        }
+
+        private void OnDisable()
+        {
+            EnvironmentProvider.Instance.Changed -= OnEnvironmentChanged;
+        }
+
+        private void OnFocus()
+        {
+            _settings = FlowcastClientSettings.LoadFromResources();
+            Repaint();
+        }
+
+        private void OnEnvironmentChanged(Flowcast.Core.Environments.Environment _)
+        {
+            Repaint();
         }
 
         private void OnGUI()
