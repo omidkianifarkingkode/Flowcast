@@ -1,11 +1,12 @@
-﻿using UnityEditor;
+using Flowcast.Rest.Bootstrap;
+using UnityEditor;
 using UnityEngine;
 
 namespace Flowcast.Core.Environments.Editor
 {
     public sealed class EnvironmentSwitcherWindow : EditorWindow
     {
-        private FlowcastClientSettings _settings;
+        private FlowcastRestSettings _settings;
         private Vector2 _scroll;
 
         [MenuItem("Flowcast/Environment Switcher")]
@@ -16,7 +17,7 @@ namespace Flowcast.Core.Environments.Editor
 
         private void OnEnable()
         {
-            _settings = FlowcastClientSettings.LoadFromResources();
+            _settings = LoadSettingsAsset();
             EnvironmentProvider.Instance.Changed += OnEnvironmentChanged;
         }
 
@@ -27,7 +28,7 @@ namespace Flowcast.Core.Environments.Editor
 
         private void OnFocus()
         {
-            _settings = FlowcastClientSettings.LoadFromResources();
+            _settings = LoadSettingsAsset();
             Repaint();
         }
 
@@ -41,7 +42,7 @@ namespace Flowcast.Core.Environments.Editor
             if (_settings == null)
             {
                 EditorGUILayout.HelpBox(
-                    "Create a FlowcastClientSettings asset and place it at Resources/Flowcast/ClientSettings.asset",
+                    "Create a FlowcastRestSettings asset and assign it to your FlowcastRestBootstrapper.",
                     MessageType.Info);
                 if (GUILayout.Button("Create Settings Asset"))
                 {
@@ -50,10 +51,10 @@ namespace Flowcast.Core.Environments.Editor
                 return;
             }
 
-            var set = _settings.EnvironmentSet;
-            if (set == null || set.Environments.Count == 0)
+            var list = _settings.Environments;
+            if (list == null || list.Count == 0)
             {
-                EditorGUILayout.HelpBox("Assign an EnvironmentSet with at least one Environment.", MessageType.Warning);
+                EditorGUILayout.HelpBox("Assign at least one Environment in FlowcastRestSettings.", MessageType.Warning);
                 return;
             }
 
@@ -63,7 +64,7 @@ namespace Flowcast.Core.Environments.Editor
             EditorGUILayout.Space(4);
 
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
-            foreach (var env in set.Environments)
+            foreach (var env in list)
             {
                 if (env == null) continue;
 
@@ -94,20 +95,28 @@ namespace Flowcast.Core.Environments.Editor
             EditorGUILayout.EndHorizontal();
         }
 
+        private static FlowcastRestSettings LoadSettingsAsset()
+        {
+            var guids = AssetDatabase.FindAssets("t:Flowcast.Rest.Bootstrap.FlowcastRestSettings");
+            if (guids.Length == 0) return null;
+            var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            return AssetDatabase.LoadAssetAtPath<FlowcastRestSettings>(path);
+        }
+
         private static void CreateSettingsAsset()
         {
-            var settings = ScriptableObject.CreateInstance<FlowcastClientSettings>();
-            const string dir = "Assets/Resources/Flowcast";
-            const string path = dir + "/ClientSettings.asset";
-            if (!AssetDatabase.IsValidFolder("Assets/Resources"))
-                AssetDatabase.CreateFolder("Assets", "Resources");
+            var settings = ScriptableObject.CreateInstance<FlowcastRestSettings>();
+            const string dir = "Assets/Flowcast/Rest";
+            const string path = dir + "/FlowcastRestSettings.asset";
+            if (!AssetDatabase.IsValidFolder("Assets/Flowcast"))
+                AssetDatabase.CreateFolder("Assets", "Flowcast");
             if (!AssetDatabase.IsValidFolder(dir))
-                AssetDatabase.CreateFolder("Assets/Resources", "Flowcast");
+                AssetDatabase.CreateFolder("Assets/Flowcast", "Rest");
             AssetDatabase.CreateAsset(settings, path);
             AssetDatabase.SaveAssets();
             Selection.activeObject = settings;
             EditorGUIUtility.PingObject(settings);
-            Debug.Log($"[Flowcast] Created {path}. Assign your EnvironmentSet there.");
+            Debug.Log($"[Flowcast] Created {path}. Assign your Environment assets there.");
         }
     }
 }

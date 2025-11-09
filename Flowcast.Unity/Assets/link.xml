@@ -8,8 +8,6 @@
     <type fullname="Flowcast.Core.Serialization.UnityJsonSerializer" preserve="all"/>
     <type fullname="Flowcast.Core.Serialization.SerializerRegistry" preserve="all"/>
     <type fullname="Flowcast.Core.Environments.Environment" preserve="all"/>
-    <type fullname="Flowcast.Core.Environments.EnvironmentSet" preserve="all"/>
-    <type fullname="Flowcast.Core.Environments.FlowcastClientSettings" preserve="all"/>
     <type fullname="Flowcast.Core.Environments.EnvironmentProvider" preserve="all"/>
     <type fullname="Flowcast.Core.Auth.SimpleBearerAuthProvider" preserve="all"/>
     <type fullname="Flowcast.Core.Auth.SimpleRefreshingAuthProvider" preserve="all"/>
@@ -17,6 +15,7 @@
 
   <!-- Flowcast Rest -->
   <assembly fullname="Flowcast.Rest">
+    <type fullname="Flowcast.Rest.Bootstrap.FlowcastRestSettings" preserve="all"/>
     <type fullname="Flowcast.Rest.Client.RestClient" preserve="all"/>
     <type fullname="Flowcast.Rest.Client.ApiRequest" preserve="all"/>
     <type fullname="Flowcast.Rest.Client.ApiResponse" preserve="all"/>
