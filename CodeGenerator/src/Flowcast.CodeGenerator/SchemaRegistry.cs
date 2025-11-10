@@ -8,7 +8,7 @@ namespace Flowcast.CodeGenerator;
 
 internal sealed class SchemaRegistry
 {
-    private readonly Dictionary<string, SchemaInfo> _schemas = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SchemaInfo> _schemas = new Dictionary<string, SchemaInfo>(StringComparer.Ordinal);
 
     public SchemaRegistry(string modelNamespace)
     {
@@ -54,15 +54,15 @@ internal sealed class SchemaRegistry
                 }
 
                 var baseType = usage == TypeUsage.Client
-                    ? $"{ModelNamespace}.{info.Name}"
+                    ? ModelNamespace + "." + info.Name
                     : info.Name;
                 var isNullable = !required || schema.Nullable || info.Schema.Nullable;
-                return new ResolvedType(baseType, isValueType: false, usesCollections: false, usesJsonElement: false, isNullable: isNullable);
+                return new ResolvedType(baseType, false, false, false, isNullable);
             }
 
             var fallback = NameUtilities.ToPascalCase(referenceId);
-            var qualified = usage == TypeUsage.Client ? $"{ModelNamespace}.{fallback}" : fallback;
-            return new ResolvedType(qualified, isValueType: false, usesCollections: false, usesJsonElement: false, isNullable: !required || schema.Nullable);
+            var qualified = usage == TypeUsage.Client ? ModelNamespace + "." + fallback : fallback;
+            return new ResolvedType(qualified, false, false, false, !required || schema.Nullable);
         }
 
         return ResolvePrimitiveType(schema, required, usage);
@@ -170,7 +170,7 @@ internal sealed class SchemaRegistry
         switch (schema.Type)
         {
             case "string":
-                return new ResolvedType("string", isValueType: false, usesCollections: false, usesJsonElement: false, isNullable: allowNull);
+                return new ResolvedType("string", false, false, false, allowNull);
             case "integer":
                 var integerType = schema.Format switch
                 {
@@ -180,7 +180,7 @@ internal sealed class SchemaRegistry
                     "byte" => "byte",
                     _ => "int"
                 };
-                return new ResolvedType(integerType, isValueType: true, usesCollections: false, usesJsonElement: false, isNullable: allowNull);
+                return new ResolvedType(integerType, true, false, false, allowNull);
             case "number":
                 var numberType = schema.Format switch
                 {
@@ -189,16 +189,16 @@ internal sealed class SchemaRegistry
                     "decimal" => "decimal",
                     _ => "double"
                 };
-                return new ResolvedType(numberType, isValueType: true, usesCollections: false, usesJsonElement: false, isNullable: allowNull);
+                return new ResolvedType(numberType, true, false, false, allowNull);
             case "boolean":
-                return new ResolvedType("bool", isValueType: true, usesCollections: false, usesJsonElement: false, isNullable: allowNull);
+                return new ResolvedType("bool", true, false, false, allowNull);
             case "array":
                 var itemSchema = schema.Items ?? new OpenApiSchema { Type = "object" };
-                var itemType = ResolveType(itemSchema, required: true, usage);
-                return new ResolvedType($"System.Collections.Generic.IReadOnlyList<{itemType.Declaration}>", isValueType: false, usesCollections: true, usesJsonElement: itemType.UsesJsonElement, isNullable: allowNull);
+                var itemType = ResolveType(itemSchema, true, usage);
+                return new ResolvedType("System.Collections.Generic.IReadOnlyList<" + itemType.Declaration + ">", false, true, itemType.UsesJsonElement, allowNull);
             case "object":
             default:
-                return new ResolvedType("System.Text.Json.JsonElement", isValueType: false, usesCollections: false, usesJsonElement: true, isNullable: allowNull);
+                return new ResolvedType("System.Text.Json.JsonElement", false, false, true, allowNull);
         }
     }
 
@@ -208,7 +208,7 @@ internal sealed class SchemaRegistry
         {
             builder.AppendLine("/// <summary>");
             builder.Append("/// ");
-            builder.AppendLine(model.Description.Replace("\n", " ")); // single line summary
+            builder.AppendLine(model.Description.Replace("\n", " "));
             builder.AppendLine("/// </summary>");
         }
 
@@ -250,27 +250,93 @@ internal sealed class SchemaRegistry
         builder.AppendLine("}");
     }
 
-    internal readonly record struct ResolvedType(string BaseType, bool IsValueType, bool UsesCollections, bool UsesJsonElement, bool IsNullable)
+    internal readonly struct ResolvedType
     {
-        public string Declaration => IsNullable ? $"{BaseType}?" : BaseType;
+        public ResolvedType(string baseType, bool isValueType, bool usesCollections, bool usesJsonElement, bool isNullable)
+        {
+            BaseType = baseType;
+            IsValueType = isValueType;
+            UsesCollections = usesCollections;
+            UsesJsonElement = usesJsonElement;
+            IsNullable = isNullable;
+        }
 
-        public ResolvedType WithNullable(bool isNullable) => new(BaseType, IsValueType, UsesCollections, UsesJsonElement, isNullable);
+        public string BaseType { get; }
+
+        public bool IsValueType { get; }
+
+        public bool UsesCollections { get; }
+
+        public bool UsesJsonElement { get; }
+
+        public bool IsNullable { get; }
+
+        public string Declaration => IsNullable ? BaseType + "?" : BaseType;
+
+        public ResolvedType WithNullable(bool isNullable)
+        {
+            return new ResolvedType(BaseType, IsValueType, UsesCollections, UsesJsonElement, isNullable);
+        }
     }
 
-    private sealed record SchemaInfo(string Key, string Name, OpenApiSchema Schema)
+    private sealed class SchemaInfo
     {
+        public SchemaInfo(string key, string name, OpenApiSchema schema)
+        {
+            Key = key;
+            Name = name;
+            Schema = schema;
+        }
+
+        public string Key { get; }
+
+        public string Name { get; }
+
+        public OpenApiSchema Schema { get; }
+
         public bool IsInlinePrimitive =>
             (Schema.Properties == null || Schema.Properties.Count == 0) &&
             (Schema.Enum == null || Schema.Enum.Count == 0) &&
             (Schema.AllOf == null || Schema.AllOf.Count == 0) &&
             (Schema.AnyOf == null || Schema.AnyOf.Count == 0) &&
             (Schema.OneOf == null || Schema.OneOf.Count == 0) &&
-            Schema.Type is "string" or "integer" or "number" or "boolean";
+            (Schema.Type == "string" || Schema.Type == "integer" || Schema.Type == "number" || Schema.Type == "boolean");
     }
 
-    private sealed record ModelDefinition(string Name, string? Description, IReadOnlyList<ModelProperty> Properties);
+    private sealed class ModelDefinition
+    {
+        public ModelDefinition(string name, string? description, IReadOnlyList<ModelProperty> properties)
+        {
+            Name = name;
+            Description = description;
+            Properties = properties;
+        }
 
-    private sealed record ModelProperty(string Name, string SerializedName, string? Description, ResolvedType Type);
+        public string Name { get; }
+
+        public string? Description { get; }
+
+        public IReadOnlyList<ModelProperty> Properties { get; }
+    }
+
+    private sealed class ModelProperty
+    {
+        public ModelProperty(string name, string serializedName, string? description, ResolvedType type)
+        {
+            Name = name;
+            SerializedName = serializedName;
+            Description = description;
+            Type = type;
+        }
+
+        public string Name { get; }
+
+        public string SerializedName { get; }
+
+        public string? Description { get; }
+
+        public ResolvedType Type { get; }
+    }
 }
 
 internal enum TypeUsage

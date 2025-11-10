@@ -10,12 +10,12 @@ public sealed class GenerationOptions
     /// <summary>
     /// Gets or sets the namespace for generated REST clients.
     /// </summary>
-    public string Namespace { get; init; } = "Flowcast.Generated";
+    public string Namespace { get; set; } = "Flowcast.Generated";
 
     /// <summary>
     /// Gets or sets the output directory where generated files will be written.
     /// </summary>
-    public string OutputDirectory { get; init; } = string.Empty;
+    public string OutputDirectory { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets the namespace used for generated models.

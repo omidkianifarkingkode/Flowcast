@@ -41,18 +41,22 @@ public sealed class OpenApiCodeGenerator
             var resolvedPath = document.ResolvePath(relativePath);
             if (!File.Exists(resolvedPath))
             {
-                throw new FileNotFoundException($"OpenAPI document '{relativePath}' could not be found.", resolvedPath);
+                throw new FileNotFoundException("OpenAPI document '" + relativePath + "' could not be found.", resolvedPath);
             }
 
-            using var stream = File.OpenRead(resolvedPath);
-            var reader = new OpenApiStreamReader();
-            var openApiDocument = reader.Read(stream, out var diagnostic);
+            OpenApiDiagnostic diagnostic;
+            OpenApiDocument openApiDocument;
+            using (var stream = File.OpenRead(resolvedPath))
+            {
+                var reader = new OpenApiStreamReader();
+                openApiDocument = reader.Read(stream, out diagnostic);
+            }
 
             if (diagnostic.Errors.Count > 0)
             {
                 foreach (var error in diagnostic.Errors)
                 {
-                    warnings.Add($"{Path.GetFileName(resolvedPath)}: {error.Message}");
+                    warnings.Add(Path.GetFileName(resolvedPath) + ": " + error.Message);
                 }
             }
 
@@ -69,7 +73,7 @@ public sealed class OpenApiCodeGenerator
         files.Add(restClientFile);
 
         var modelsFile = schemaRegistry.CreateModelFile();
-        if (modelsFile is not null)
+        if (modelsFile != null)
         {
             files.Add(modelsFile);
         }
@@ -178,16 +182,16 @@ public sealed class OpenApiCodeGenerator
         builder.AppendLine("    public bool IsFailure => !IsSuccess;");
         builder.AppendLine("    public string? Error { get; }");
         builder.AppendLine();
-        builder.AppendLine("    public static Result Success() => new(true, null);");
+        builder.AppendLine("    public static Result Success() => new Result(true, null);");
         builder.AppendLine();
         builder.AppendLine("    public static Result Failure(string error)");
         builder.AppendLine("    {");
         builder.AppendLine("        if (string.IsNullOrWhiteSpace(error))");
         builder.AppendLine("        {");
         builder.AppendLine("            throw new ArgumentException(\"A failure result requires an error message.\", nameof(error));");
-        builder.AppendLine("        }");
+        }
         builder.AppendLine();
-        builder.AppendLine("        return new(false, error);");
+        builder.AppendLine("        return new Result(false, error);");
         builder.AppendLine("    }");
         builder.AppendLine("}");
         builder.AppendLine();
@@ -201,16 +205,16 @@ public sealed class OpenApiCodeGenerator
         builder.AppendLine();
         builder.AppendLine("    public T? Value { get; }");
         builder.AppendLine();
-        builder.AppendLine("    public static Result<T> Success(T value) => new(true, value, null);");
+        builder.AppendLine("    public static Result<T> Success(T value) => new Result<T>(true, value, null);");
         builder.AppendLine();
         builder.AppendLine("    public static Result<T> Failure(string error)");
         builder.AppendLine("    {");
         builder.AppendLine("        if (string.IsNullOrWhiteSpace(error))");
         builder.AppendLine("        {");
         builder.AppendLine("            throw new ArgumentException(\"A failure result requires an error message.\", nameof(error));");
-        builder.AppendLine("        }");
+        }
         builder.AppendLine();
-        builder.AppendLine("        return new(false, default, error);");
+        builder.AppendLine("        return new Result<T>(false, default, error);");
         builder.AppendLine("    }");
         builder.AppendLine("}");
 
@@ -238,16 +242,16 @@ public sealed class OpenApiCodeGenerator
             builder.AppendLine("    /// </remarks>");
         }
 
-        builder.AppendLine($"    /// <remarks>HTTP {operation.HttpMethod} {operation.Path}</remarks>");
+        builder.AppendLine("    /// <remarks>HTTP " + operation.HttpMethod + " " + operation.Path + "</remarks>");
         foreach (var parameter in operation.Parameters)
         {
             var description = string.IsNullOrWhiteSpace(parameter.Description)
-                ? $"Value for '{parameter.Name}'."
+                ? "Value for '" + parameter.Name + "'."
                 : NormalizeComment(parameter.Description);
-            builder.AppendLine($"    /// <param name=\"{parameter.Name}\">{description}</param>");
+            builder.AppendLine("    /// <param name=\"" + parameter.Name + "\">" + description + "</param>");
         }
 
-        var parameterList = string.Join(", ", operation.Parameters.Select(p => $"{p.Type.Declaration} {p.Name}"));
+        var parameterList = string.Join(", ", operation.Parameters.Select(p => p.Type.Declaration + " " + p.Name));
         builder.Append("    public static ");
         builder.Append(operation.ReturnType);
         builder.Append(' ');
@@ -268,7 +272,8 @@ public sealed class OpenApiCodeGenerator
         }
 
         var fallback = operationType.ToString() + " " + path;
-        fallback = fallback.Replace("{", "By ", StringComparison.Ordinal).Replace("}", string.Empty, StringComparison.Ordinal);
+        fallback = fallback.Replace("{", "By ");
+        fallback = fallback.Replace("}", string.Empty);
         fallback = fallback.Replace('/', ' ');
         return NameUtilities.EnsureValidIdentifier(NameUtilities.ToPascalCase(fallback), true);
     }
@@ -277,7 +282,7 @@ public sealed class OpenApiCodeGenerator
     {
         var parameters = new Dictionary<string, MethodParameter>(StringComparer.Ordinal);
 
-        void AddParameters(IEnumerable<OpenApiParameter>? source)
+        Action<IEnumerable<OpenApiParameter>?> addParameters = source =>
         {
             if (source == null)
             {
@@ -286,20 +291,20 @@ public sealed class OpenApiCodeGenerator
 
             foreach (var parameter in source)
             {
-                var key = $"{parameter.In}:{parameter.Name}";
+                var key = parameter.In + ":" + parameter.Name;
                 parameters[key] = CreateParameter(parameter, schemaRegistry);
             }
-        }
+        };
 
-        AddParameters(pathItem.Parameters);
-        AddParameters(operation.Parameters);
+        addParameters(pathItem.Parameters);
+        addParameters(operation.Parameters);
 
-        if (operation.RequestBody is { } requestBody)
+        if (operation.RequestBody != null)
         {
-            var requestParameter = CreateBodyParameter(requestBody, schemaRegistry);
-            if (requestParameter is not null)
+            var requestParameter = CreateBodyParameter(operation.RequestBody, schemaRegistry);
+            if (requestParameter != null)
             {
-                var key = $"body:{requestParameter.Name}";
+                var key = "body:" + requestParameter.Name;
                 parameters[key] = requestParameter;
             }
         }
@@ -310,14 +315,22 @@ public sealed class OpenApiCodeGenerator
             .ToList();
     }
 
-    private static int GetSortOrder(ParameterLocation? location) => location switch
+    private static int GetSortOrder(ParameterLocation? location)
     {
-        ParameterLocation.Path => 0,
-        ParameterLocation.Query => 1,
-        ParameterLocation.Header => 2,
-        ParameterLocation.Cookie => 3,
-        _ => BodySortOrder
-    };
+        switch (location)
+        {
+            case ParameterLocation.Path:
+                return 0;
+            case ParameterLocation.Query:
+                return 1;
+            case ParameterLocation.Header:
+                return 2;
+            case ParameterLocation.Cookie:
+                return 3;
+            default:
+                return BodySortOrder;
+        }
+    }
 
     private static MethodParameter CreateParameter(OpenApiParameter parameter, SchemaRegistry schemaRegistry)
     {
@@ -374,8 +387,8 @@ public sealed class OpenApiCodeGenerator
                     return ("Result", false, false, false);
                 }
 
-                var resolved = schemaRegistry.ResolveType(schema, required: true, TypeUsage.Client);
-                return ($"Result<{resolved.Declaration}>", true, resolved.UsesCollections, resolved.UsesJsonElement);
+                var resolved = schemaRegistry.ResolveType(schema, true, TypeUsage.Client);
+                return ("Result<" + resolved.Declaration + ">", true, resolved.UsesCollections, resolved.UsesJsonElement);
             }
         }
 
@@ -384,12 +397,12 @@ public sealed class OpenApiCodeGenerator
             var schema = ResolveResponseSchema(defaultResponse);
             if (schema != null)
             {
-                var resolved = schemaRegistry.ResolveType(schema, required: true, TypeUsage.Client);
-                return ($"Result<{resolved.Declaration}>", true, resolved.UsesCollections, resolved.UsesJsonElement);
+                var resolved = schemaRegistry.ResolveType(schema, true, TypeUsage.Client);
+                return ("Result<" + resolved.Declaration + ">", true, resolved.UsesCollections, resolved.UsesJsonElement);
             }
         }
 
-        warnings.Add($"{methodName}: Could not determine a successful response payload. Falling back to Result.");
+        warnings.Add(methodName + ": Could not determine a successful response payload. Falling back to Result.");
         return ("Result", false, false, false);
     }
 
@@ -410,24 +423,78 @@ public sealed class OpenApiCodeGenerator
 
     private static string NormalizeComment(string value)
     {
-        return string.Join('\n', value.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        var parts = value.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < parts.Length; i++)
+        {
+            parts[i] = parts[i].Trim();
+        }
+
+        return string.Join("\n", parts);
     }
 
-    private sealed record OperationDefinition(
-        string MethodName,
-        string ReturnType,
-        bool IsGeneric,
-        string HttpMethod,
-        string Path,
-        string? Summary,
-        string? Description,
-        IReadOnlyList<MethodParameter> Parameters,
-        bool UsesCollections,
-        bool UsesJsonElement);
+    private sealed class OperationDefinition
+    {
+        public OperationDefinition(
+            string methodName,
+            string returnType,
+            bool isGeneric,
+            string httpMethod,
+            string path,
+            string? summary,
+            string? description,
+            IReadOnlyList<MethodParameter> parameters,
+            bool usesCollections,
+            bool usesJsonElement)
+        {
+            MethodName = methodName;
+            ReturnType = returnType;
+            IsGeneric = isGeneric;
+            HttpMethod = httpMethod;
+            Path = path;
+            Summary = summary;
+            Description = description;
+            Parameters = parameters;
+            UsesCollections = usesCollections;
+            UsesJsonElement = usesJsonElement;
+        }
 
-    private sealed record MethodParameter(
-        string Name,
-        string? Description,
-        SchemaRegistry.ResolvedType Type,
-        int SortOrder);
+        public string MethodName { get; }
+
+        public string ReturnType { get; }
+
+        public bool IsGeneric { get; }
+
+        public string HttpMethod { get; }
+
+        public string Path { get; }
+
+        public string? Summary { get; }
+
+        public string? Description { get; }
+
+        public IReadOnlyList<MethodParameter> Parameters { get; }
+
+        public bool UsesCollections { get; }
+
+        public bool UsesJsonElement { get; }
+    }
+
+    private sealed class MethodParameter
+    {
+        public MethodParameter(string name, string? description, SchemaRegistry.ResolvedType type, int sortOrder)
+        {
+            Name = name;
+            Description = description;
+            Type = type;
+            SortOrder = sortOrder;
+        }
+
+        public string Name { get; }
+
+        public string? Description { get; }
+
+        public SchemaRegistry.ResolvedType Type { get; }
+
+        public int SortOrder { get; }
+    }
 }

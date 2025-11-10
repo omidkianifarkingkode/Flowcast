@@ -9,7 +9,7 @@ namespace Flowcast.CodeGenerator;
 /// </summary>
 public static class RestSettingsLoader
 {
-    private static readonly JsonSerializerOptions Options = new()
+    private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
     {
         AllowTrailingCommas = true,
         PropertyNameCaseInsensitive = true,
@@ -34,8 +34,12 @@ public static class RestSettingsLoader
             throw new FileNotFoundException($"Could not find REST settings at '{absolutePath}'.", absolutePath);
         }
 
-        using var stream = File.OpenRead(absolutePath);
-        var settings = JsonSerializer.Deserialize<RestSettings>(stream, Options) ?? new RestSettings();
+        RestSettings settings;
+        using (var stream = File.OpenRead(absolutePath))
+        {
+            settings = JsonSerializer.Deserialize<RestSettings>(stream, Options) ?? new RestSettings();
+        }
+
         Normalize(settings);
         return new RestSettingsDocument(settings, absolutePath);
     }

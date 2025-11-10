@@ -4,7 +4,7 @@ The **Flowcast Code Generator** is a standalone .NET solution that turns OpenAPI
 
 ## Projects
 
-- `Flowcast.CodeGenerator` – reusable library that understands the configuration format, parses OpenAPI definitions, and produces the generated source files.
+- `Flowcast.CodeGenerator` – reusable library that understands the configuration format, parses OpenAPI definitions, and produces the generated source files. The assembly targets **.NET Standard 2.0** so the resulting DLL can be embedded in Unity workflows.
 - `Flowcast.CodeGenerator.Cli` – command-line front end that can be run inside build automation or from local terminals.
 
 ## Configuration

@@ -6,7 +6,7 @@ namespace Flowcast.CodeGenerator;
 
 internal static class NameUtilities
 {
-    private static readonly HashSet<string> CSharpKeywords = new(StringComparer.Ordinal)
+    private static readonly HashSet<string> CSharpKeywords = new HashSet<string>(StringComparer.Ordinal)
     {
         "abstract","as","base","bool","break","byte","case","catch","char","checked","class","const","continue",
         "decimal","default","delegate","do","double","else","enum","event","explicit","extern","false","finally",
