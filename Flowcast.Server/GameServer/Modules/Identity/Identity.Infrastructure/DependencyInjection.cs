@@ -46,6 +46,9 @@ public static class DependencyInjection
 
         builder.Services.AddSingleton<IValidateOptions<IdentityOptions>, IdentityOptionsValidator>();
 
+        builder.Services.Configure<GooglePlayGamesOptions>(
+            builder.Configuration.GetSection("GooglePlayGames"));
+
         return builder;
     }
 
@@ -82,6 +85,7 @@ public static class DependencyInjection
     {
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddKeyedSingleton<IProviderTokenVerifier, GoogleTokenVerifier>("google");
+        builder.Services.AddScoped<IGooglePlayGamesVerifier, GooglePlayGamesVerifier>();
         builder.Services.AddScoped<IKeyStore, DbKeyStore>();
 
         return builder;
