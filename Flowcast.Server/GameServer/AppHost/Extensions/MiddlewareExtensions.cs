@@ -2,9 +2,10 @@
 using Realtime.Transport.Gateway;
 using Serilog;
 using Shared.Infrastructure.Database;
+using Shared.Infrastructure.Extensions;
+using Shared.Presentation.ApiGuard;
 using Shared.Presentation.Endpoints;
 using Shared.Presentation.Swagger;
-using Shared.Infrastructure.Extensions;
 
 namespace AppHost.Extensions;
 
@@ -35,6 +36,7 @@ public static class MiddlewareExtensions
 
         // 4) Routing (explicit is clearer if you also map controllers)
         app.UseRouting();
+        app.UseApiGuard();
 
         // 5) Request logging AFTER routing to capture route template
         app.UseSerilogRequestLogging();

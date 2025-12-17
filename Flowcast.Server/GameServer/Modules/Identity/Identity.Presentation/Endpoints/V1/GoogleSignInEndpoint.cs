@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Application.Messaging;
+using Shared.Presentation.ApiGuard;
 using Shared.Presentation.Endpoints;
 using SharedKernel;
 
@@ -30,6 +31,7 @@ public sealed class GoogleSignInEndpoint : IEndpoint
 
             })
            .AllowAnonymous()
+           .AllowOnlyProduction()
            .MapToApiVersion(1.0)
            .WithTags(ApiInfo.Tag)
            .WithSummary(GoogleSignIn.Summary)
