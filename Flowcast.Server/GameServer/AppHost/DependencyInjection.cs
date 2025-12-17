@@ -4,6 +4,7 @@ using Presentation.Infrastructure;
 using Serilog;
 using Shared.Infrastructure;
 using Shared.Presentation;
+using Shared.Presentation.ApiGuard;
 using Shared.Presentation.Swagger;
 using Shared.Presentation.Versioning;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -32,6 +33,7 @@ public static class DependencyInjection
     public static WebApplicationBuilder ConfigureAppHost(this WebApplicationBuilder builder)
     {
         builder.ConfigureAppSettings();
+        builder.Services.AddApiGuard(builder.Configuration);
 
         return builder;
     }
