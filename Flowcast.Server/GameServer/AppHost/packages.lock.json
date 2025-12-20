@@ -493,10 +493,10 @@
       },
       "Serilog.Sinks.File": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "lxjg89Y8gJMmFxVkbZ+qDgjl+T4yC5F7WSLTvA+5q0R04tfKVLRL/EHpYoJ/MEQd2EeCKDuylBIVnAYMotmh2A==",
+        "resolved": "7.0.0",
+        "contentHash": "fKL7mXv7qaiNBUC71ssvn/dU0k9t0o45+qm2XgKAlSt19xF+ijjxyA3R6HmCgfKEKwfcfkwWjayuQtRueZFkYw==",
         "dependencies": {
-          "Serilog": "4.0.0"
+          "Serilog": "4.2.0"
         }
       },
       "Serilog.Sinks.Seq": {
@@ -763,6 +763,7 @@
         "type": "Project",
         "dependencies": {
           "Realtime.Core": "[1.0.0, )",
+          "Serilog.Sinks.File": "[7.0.0, )",
           "Shared.Application": "[1.0.0, )"
         }
       },
