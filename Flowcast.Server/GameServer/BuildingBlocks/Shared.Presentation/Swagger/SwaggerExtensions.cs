@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
-using Shared.Presentation.Swagger;
+using Microsoft.OpenApi;
 
 namespace Shared.Presentation.Swagger;
 
@@ -30,19 +29,12 @@ public static class SwaggerExtensions
             var securityRequirement = new OpenApiSecurityRequirement
             {
                 {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = JwtBearerDefaults.AuthenticationScheme
-                        }
-                    },
+                    new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme, null!, null!),
                     []
                 }
             };
 
-            o.AddSecurityRequirement(securityRequirement);
+            o.AddSecurityRequirement(_ => securityRequirement);
         });
 
         services.ConfigureOptions<ConfigureSwaggerGenOptions>();

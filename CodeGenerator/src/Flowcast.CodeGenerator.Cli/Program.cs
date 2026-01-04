@@ -50,7 +50,7 @@ internal static class Program
                     PrintUsage();
                     return 0;
                 default:
-                    if (arg.StartsWith('-', StringComparison.Ordinal))
+                    if (arg.StartsWith("-", StringComparison.Ordinal))
                     {
                         Console.Error.WriteLine($"Unknown option '{arg}'.");
                         return 1;

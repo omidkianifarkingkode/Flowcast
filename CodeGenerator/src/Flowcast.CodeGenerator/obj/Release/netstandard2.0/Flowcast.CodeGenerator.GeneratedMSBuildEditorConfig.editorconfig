@@ -1,0 +1,8 @@
+is_global = true
+build_property.RootNamespace = Flowcast.CodeGenerator
+build_property.ProjectDir = D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.CsWinRTUseWindowsUIXamlProjections = false
+build_property.EffectiveAnalysisLevelStyle = 
+build_property.EnableCodeStyleSeverity = 

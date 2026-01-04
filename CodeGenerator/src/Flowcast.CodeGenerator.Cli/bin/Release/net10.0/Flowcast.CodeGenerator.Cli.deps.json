@@ -1,0 +1,92 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "Flowcast.CodeGenerator.Cli/1.0.0": {
+        "dependencies": {
+          "Flowcast.CodeGenerator": "1.0.0"
+        },
+        "runtime": {
+          "Flowcast.CodeGenerator.Cli.dll": {}
+        }
+      },
+      "Microsoft.OpenApi/1.6.0": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.OpenApi.dll": {
+            "assemblyVersion": "1.6.0.0",
+            "fileVersion": "1.6.0.0"
+          }
+        }
+      },
+      "Microsoft.OpenApi.Readers/1.6.0": {
+        "dependencies": {
+          "Microsoft.OpenApi": "1.6.0",
+          "SharpYaml": "2.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.OpenApi.Readers.dll": {
+            "assemblyVersion": "1.6.0.0",
+            "fileVersion": "1.6.0.0"
+          }
+        }
+      },
+      "SharpYaml/2.1.0": {
+        "runtime": {
+          "lib/netstandard2.0/SharpYaml.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.1.0.0"
+          }
+        }
+      },
+      "Flowcast.CodeGenerator/1.0.0": {
+        "dependencies": {
+          "Microsoft.OpenApi": "1.6.0",
+          "Microsoft.OpenApi.Readers": "1.6.0"
+        },
+        "runtime": {
+          "Flowcast.CodeGenerator.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Flowcast.CodeGenerator.Cli/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.OpenApi/1.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ot8yCN04/sSpsXdxkQw2g3yuFNCYSIYHIgS2wZMhpt6XrLk15NnDZKLaI3lbzqfCV+BkauT3l9zSs4XA+4il2w==",
+      "path": "microsoft.openapi/1.6.0",
+      "hashPath": "microsoft.openapi.1.6.0.nupkg.sha512"
+    },
+    "Microsoft.OpenApi.Readers/1.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-S/DcmWWeIeId7zd0iMayqp6f/hWkxrMpYSt8pm9UXZTTCpAx0xY46j39L4gAP2PDyYvRPuL5DN2EFfj5s+UnOg==",
+      "path": "microsoft.openapi.readers/1.6.0",
+      "hashPath": "microsoft.openapi.readers.1.6.0.nupkg.sha512"
+    },
+    "SharpYaml/2.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-2jBenJ6QN0mj8G3ohrNO/uNhA92OJYsQFuI5dJ4zM/HauVoC/oJzK1sCVlUaVUpuXpHUa/k1waXVkkBR2luP/w==",
+      "path": "sharpyaml/2.1.0",
+      "hashPath": "sharpyaml.2.1.0.nupkg.sha512"
+    },
+    "Flowcast.CodeGenerator/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

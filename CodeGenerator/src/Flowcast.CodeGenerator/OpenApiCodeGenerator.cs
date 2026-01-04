@@ -189,7 +189,7 @@ public sealed class OpenApiCodeGenerator
         builder.AppendLine("        if (string.IsNullOrWhiteSpace(error))");
         builder.AppendLine("        {");
         builder.AppendLine("            throw new ArgumentException(\"A failure result requires an error message.\", nameof(error));");
-        }
+        builder.AppendLine("        }");
         builder.AppendLine();
         builder.AppendLine("        return new Result(false, error);");
         builder.AppendLine("    }");
@@ -212,7 +212,7 @@ public sealed class OpenApiCodeGenerator
         builder.AppendLine("        if (string.IsNullOrWhiteSpace(error))");
         builder.AppendLine("        {");
         builder.AppendLine("            throw new ArgumentException(\"A failure result requires an error message.\", nameof(error));");
-        }
+        builder.AppendLine("        }");
         builder.AppendLine();
         builder.AppendLine("        return new Result<T>(false, default, error);");
         builder.AppendLine("    }");
