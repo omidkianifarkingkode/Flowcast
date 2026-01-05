@@ -100,3 +100,8 @@ Flowcast.Unity/Assets/Contents
 #jetbrains & vsCode
 .idea/
 .vscode/
+.cursor/
+
+# .NET build outputs (recursive)
+**/bin/
+**/obj/
