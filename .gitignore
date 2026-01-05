@@ -97,5 +97,6 @@ Flowcast.Server/GameServer/AppHost/Configs/appsettings.*.Secrets.json
 Flowcast.Unity/Assets/Contents
 
 
-#jetbrains
-.idea
+#jetbrains & vsCode
+.idea/
+.vscode/
