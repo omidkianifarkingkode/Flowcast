@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "KCh0yPR2ITg=",
+  "success": true,
+  "projectFilePath": "D:\\Projects\\KingKodeStudio\\Flowcast\\CodeGenerator\\src\\Flowcast.CodeGenerator.Cli\\Flowcast.CodeGenerator.Cli.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\3F\\.nuget\\packages\\microsoft.openapi\\1.6.0\\microsoft.openapi.1.6.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\microsoft.openapi.readers\\1.6.0\\microsoft.openapi.readers.1.6.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\sharpyaml\\2.1.0\\sharpyaml.2.1.0.nupkg.sha512"
+  ],
+  "logs": []
+}

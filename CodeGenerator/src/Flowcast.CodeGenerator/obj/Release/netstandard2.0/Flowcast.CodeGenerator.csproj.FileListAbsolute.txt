@@ -1,0 +1,11 @@
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\obj\Release\netstandard2.0\Flowcast.CodeGenerator.csproj.AssemblyReference.cache
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\obj\Release\netstandard2.0\Flowcast.CodeGenerator.GeneratedMSBuildEditorConfig.editorconfig
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\obj\Release\netstandard2.0\Flowcast.CodeGenerator.AssemblyInfoInputs.cache
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\obj\Release\netstandard2.0\Flowcast.CodeGenerator.AssemblyInfo.cs
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\obj\Release\netstandard2.0\Flowcast.CodeGenerator.csproj.CoreCompileInputs.cache
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\obj\Release\netstandard2.0\Flowcast.CodeGenerator.sourcelink.json
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\bin\Release\netstandard2.0\Flowcast.CodeGenerator.deps.json
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\bin\Release\netstandard2.0\Flowcast.CodeGenerator.dll
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\bin\Release\netstandard2.0\Flowcast.CodeGenerator.pdb
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\obj\Release\netstandard2.0\Flowcast.CodeGenerator.dll
+D:\Projects\KingKodeStudio\Flowcast\CodeGenerator\src\Flowcast.CodeGenerator\obj\Release\netstandard2.0\Flowcast.CodeGenerator.pdb
