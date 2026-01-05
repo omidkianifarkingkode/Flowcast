@@ -1,8 +1,8 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using NetArchTest.Rules;
 using Xunit;
 
-namespace Identity.Test;
+namespace PlayerProgressStore.Test;
 
 public sealed class ProjectStructureTest
 {
@@ -11,104 +11,24 @@ public sealed class ProjectStructureTest
     private const string PresentationNameSpace = "Presentation";
     private const string DomainNameSpace = "Domain";
 
-    #region Identity_Domain_Test
+    #region PPS_Domain_Test
 
     [Fact]
-    public void Identity_Domain_Should_Not_Depend_On_Upper_Layers()
+    public void PPS_Domain_Should_Not_Depend_On_Upper_Layers()
     {
         var assembly = typeof(Domain.AssemblyReference).Assembly;
 
-        var forbiddenNamespaces = new[]
+        var forbiddenNameSpace = new[]
         {
             $".{ApplicationNameSpace}",
             $".{InfrastructureNameSpace}",
             $".{PresentationNameSpace}"
         };
-
+        
         var testResult = Types
             .InAssembly(assembly)
             .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNamespaces)
-            .GetResult();
-
-        testResult
-            .IsSuccessful
-            .Should()
-            .BeTrue();
-    }
-
-    #endregion
-
-    #region Identity_Application_Test
-
-    [Fact]
-    public void Identity_Application_Should_Not_Depend_On_Upper_Layers()
-    {
-        var assembly = typeof(Application.AssemblyReference).Assembly;
-
-        var forbiddenNamespaces = new[]
-        {
-            $".{InfrastructureNameSpace}",
-            $".{PresentationNameSpace}"
-        };
-
-        var testResult = Types
-            .InAssembly(assembly)
-            .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNamespaces)
-            .GetResult();
-
-        testResult
-            .IsSuccessful
-            .Should()
-            .BeTrue();
-    }
-
-    #endregion
-
-    #region Identity_Infrastructure_Test
-
-    [Fact]
-    public void Identity_Infrastructure_Should_Not_Depend_On_Upper_Layers()
-    {
-        var assembly = typeof(Infrastructure.AssemblyReference).Assembly;
-
-        var forbiddenNamespaces = new[]
-        {
-            $".{PresentationNameSpace}"
-        };
-
-        var testResult = Types
-            .InAssembly(assembly)
-            .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNamespaces)
-            .GetResult();
-
-        testResult
-            .IsSuccessful
-            .Should()
-            .BeTrue();
-    }
-
-    #endregion
-
-    #region Identity_Presentation_Test
-
-    [Fact]
-    public void Identity_Presentation_Should_Not_Depend_On_Upper_Layers()
-    {
-        var assembly = typeof(Presentation.AssemblyReference).Assembly;
-
-        var forbiddenNamespaces = new[]
-        {
-            $".{InfrastructureNameSpace}",
-            $".{PresentationNameSpace}"
-        };
-
-        var testResult = Types
-            .InAssembly(assembly)
-            .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNamespaces)
+            .HaveDependencyOnAny(forbiddenNameSpace)
             .GetResult();
 
         testResult
@@ -119,5 +39,84 @@ public sealed class ProjectStructureTest
 
     #endregion
     
+    #region PPS_Application_Test
+
+    [Fact]
+    public void PPS_Application_Should_Not_Depend_On_Upper_Layers()
+    {
+        var assembly = typeof(Application.AssemblyReference).Assembly;
+
+        var forbiddenNameSpace = new[]
+        {
+            $".{InfrastructureNameSpace}",
+            $".{PresentationNameSpace}"
+        };
+        
+        var testResult = Types
+            .InAssembly(assembly)
+            .ShouldNot()
+            .HaveDependencyOnAny(forbiddenNameSpace)
+            .GetResult();
+
+        testResult
+            .IsSuccessful
+            .Should()
+            .BeTrue();
+    }
+
+    #endregion
+    
+    #region PPS_Infrastructure_Test
+
+    [Fact]
+    public void PPS_Infrastructure_Should_Not_Depend_On_Upper_Layers()
+    {
+        var assembly = typeof(Infrastructure.AssemblyReference).Assembly;
+
+        var forbiddenNameSpace = new[]
+        {
+            $".{PresentationNameSpace}"
+        };
+        
+        var testResult = Types
+            .InAssembly(assembly)
+            .ShouldNot()
+            .HaveDependencyOnAny(forbiddenNameSpace)
+            .GetResult();
+
+        testResult
+            .IsSuccessful
+            .Should()
+            .BeTrue();
+    }
+
+    #endregion
+    
+    #region PPS_Infrastructure_Test
+
+    [Fact]
+    public void PPS_Presentation_Should_Not_Depend_On_Upper_Layers()
+    {
+        var assembly = typeof(Presentation.AssemblyReference).Assembly;
+
+        var forbiddenNameSpace = new[]
+        {
+            $".{InfrastructureNameSpace}",
+            $".{PresentationNameSpace}"
+        };
+        
+        var testResult = Types
+            .InAssembly(assembly)
+            .ShouldNot()
+            .HaveDependencyOnAny(forbiddenNameSpace)
+            .GetResult();
+
+        testResult
+            .IsSuccessful
+            .Should()
+            .BeTrue();
+    }
+
+    #endregion
     
 }

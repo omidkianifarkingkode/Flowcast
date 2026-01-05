@@ -20,10 +20,10 @@
     </ItemGroup>
     
     <ItemGroup>
-        <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
-        <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
-        <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />
-        <ProjectReference Include="..\Identity.Presentation\Identity.Presentation.csproj" />
+        <ProjectReference Include="..\PlayerProgressStore.Domain\PlayerProgressStore.Domain.csproj" />
+        <ProjectReference Include="..\PlayerProgressStore.Application\PlayerProgressStore.Application.csproj" />
+        <ProjectReference Include="..\PlayerProgressStore.Infrastructure\PlayerProgressStore.Infrastructure.csproj" />
+        <ProjectReference Include="..\PlayerProgressStore.Presentation\PlayerProgressStore.Presentation.csproj" />
     </ItemGroup>
 
 </Project>
