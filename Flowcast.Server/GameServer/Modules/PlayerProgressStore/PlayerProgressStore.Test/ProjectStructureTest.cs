@@ -6,29 +6,24 @@ namespace PlayerProgressStore.Test;
 
 public sealed class ProjectStructureTest
 {
-    private const string ApplicationNameSpace = "Application";
-    private const string InfrastructureNameSpace = "Infrastructure";
-    private const string PresentationNameSpace = "Presentation";
-    private const string DomainNameSpace = "Domain";
-
-    #region PPS_Domain_Test
+    #region PlayerProgressStore_Domain_Test
 
     [Fact]
-    public void PPS_Domain_Should_Not_Depend_On_Upper_Layers()
+    public void PlayerProgressStore_Domain_Should_Not_Depend_On_Upper_Layers()
     {
-        var assembly = typeof(Domain.AssemblyReference).Assembly;
+        var assembly = typeof(PlayerProgressStore.Domain.AssemblyReference).Assembly;
 
-        var forbiddenNameSpace = new[]
+        var forbiddenNamespaces = new[]
         {
-            $".{ApplicationNameSpace}",
-            $".{InfrastructureNameSpace}",
-            $".{PresentationNameSpace}"
+            "PlayerProgressStore.Application",
+            "PlayerProgressStore.Infrastructure",
+            "PlayerProgressStore.Presentation"
         };
-        
+
         var testResult = Types
             .InAssembly(assembly)
             .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNameSpace)
+            .HaveDependencyOnAny(forbiddenNamespaces)
             .GetResult();
 
         testResult
@@ -38,24 +33,24 @@ public sealed class ProjectStructureTest
     }
 
     #endregion
-    
-    #region PPS_Application_Test
+
+    #region PlayerProgressStore_Application_Test
 
     [Fact]
-    public void PPS_Application_Should_Not_Depend_On_Upper_Layers()
+    public void PlayerProgressStore_Application_Should_Not_Depend_On_Upper_Layers()
     {
-        var assembly = typeof(Application.AssemblyReference).Assembly;
+        var assembly = typeof(PlayerProgressStore.Application.AssemblyReference).Assembly;
 
-        var forbiddenNameSpace = new[]
+        var forbiddenNamespaces = new[]
         {
-            $".{InfrastructureNameSpace}",
-            $".{PresentationNameSpace}"
+            "PlayerProgressStore.Infrastructure",
+            "PlayerProgressStore.Presentation"
         };
-        
+
         var testResult = Types
             .InAssembly(assembly)
             .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNameSpace)
+            .HaveDependencyOnAny(forbiddenNamespaces)
             .GetResult();
 
         testResult
@@ -65,23 +60,23 @@ public sealed class ProjectStructureTest
     }
 
     #endregion
-    
-    #region PPS_Infrastructure_Test
+
+    #region PlayerProgressStore_Infrastructure_Test
 
     [Fact]
-    public void PPS_Infrastructure_Should_Not_Depend_On_Upper_Layers()
+    public void PlayerProgressStore_Infrastructure_Should_Not_Depend_On_Upper_Layers()
     {
-        var assembly = typeof(Infrastructure.AssemblyReference).Assembly;
+        var assembly = typeof(PlayerProgressStore.Infrastructure.AssemblyReference).Assembly;
 
-        var forbiddenNameSpace = new[]
+        var forbiddenNamespaces = new[]
         {
-            $".{PresentationNameSpace}"
+            "PlayerProgressStore.Presentation"
         };
-        
+
         var testResult = Types
             .InAssembly(assembly)
             .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNameSpace)
+            .HaveDependencyOnAny(forbiddenNamespaces)
             .GetResult();
 
         testResult
@@ -91,24 +86,23 @@ public sealed class ProjectStructureTest
     }
 
     #endregion
-    
-    #region PPS_Infrastructure_Test
+
+    #region PlayerProgressStore_Presentation_Test
 
     [Fact]
-    public void PPS_Presentation_Should_Not_Depend_On_Upper_Layers()
+    public void PlayerProgressStore_Presentation_Should_Not_Depend_On_Domain_Directly()
     {
-        var assembly = typeof(Presentation.AssemblyReference).Assembly;
+        var assembly = typeof(PlayerProgressStore.Presentation.AssemblyReference).Assembly;
 
-        var forbiddenNameSpace = new[]
+        var forbiddenNamespaces = new[]
         {
-            $".{InfrastructureNameSpace}",
-            $".{PresentationNameSpace}"
+            "PlayerProgressStore.Domain"
         };
-        
+
         var testResult = Types
             .InAssembly(assembly)
             .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNameSpace)
+            .HaveDependencyOnAny(forbiddenNamespaces)
             .GetResult();
 
         testResult
@@ -118,5 +112,4 @@ public sealed class ProjectStructureTest
     }
 
     #endregion
-    
 }

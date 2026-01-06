@@ -6,23 +6,18 @@ namespace Identity.Test;
 
 public sealed class ProjectStructureTest
 {
-    private const string ApplicationNameSpace = "Application";
-    private const string InfrastructureNameSpace = "Infrastructure";
-    private const string PresentationNameSpace = "Presentation";
-    private const string DomainNameSpace = "Domain";
-
     #region Identity_Domain_Test
 
     [Fact]
     public void Identity_Domain_Should_Not_Depend_On_Upper_Layers()
     {
-        var assembly = typeof(Domain.AssemblyReference).Assembly;
+        var assembly = typeof(Identity.Domain.AssemblyReference).Assembly;
 
         var forbiddenNamespaces = new[]
         {
-            $".{ApplicationNameSpace}",
-            $".{InfrastructureNameSpace}",
-            $".{PresentationNameSpace}"
+            "Identity.Application",
+            "Identity.Infrastructure",
+            "Identity.Presentation"
         };
 
         var testResult = Types
@@ -44,12 +39,12 @@ public sealed class ProjectStructureTest
     [Fact]
     public void Identity_Application_Should_Not_Depend_On_Upper_Layers()
     {
-        var assembly = typeof(Application.AssemblyReference).Assembly;
+        var assembly = typeof(Identity.Application.AssemblyReference).Assembly;
 
         var forbiddenNamespaces = new[]
         {
-            $".{InfrastructureNameSpace}",
-            $".{PresentationNameSpace}"
+            "Identity.Infrastructure",
+            "Identity.Presentation"
         };
 
         var testResult = Types
@@ -71,11 +66,11 @@ public sealed class ProjectStructureTest
     [Fact]
     public void Identity_Infrastructure_Should_Not_Depend_On_Upper_Layers()
     {
-        var assembly = typeof(Infrastructure.AssemblyReference).Assembly;
+        var assembly = typeof(Identity.Infrastructure.AssemblyReference).Assembly;
 
         var forbiddenNamespaces = new[]
         {
-            $".{PresentationNameSpace}"
+            "Identity.Presentation"
         };
 
         var testResult = Types
@@ -95,14 +90,13 @@ public sealed class ProjectStructureTest
     #region Identity_Presentation_Test
 
     [Fact]
-    public void Identity_Presentation_Should_Not_Depend_On_Upper_Layers()
+    public void Identity_Presentation_Should_Not_Depend_On_Domain_Directly()
     {
-        var assembly = typeof(Presentation.AssemblyReference).Assembly;
+        var assembly = typeof(Identity.Presentation.AssemblyReference).Assembly;
 
         var forbiddenNamespaces = new[]
         {
-            $".{InfrastructureNameSpace}",
-            $".{PresentationNameSpace}"
+            "Identity.Domain"
         };
 
         var testResult = Types
@@ -118,6 +112,4 @@ public sealed class ProjectStructureTest
     }
 
     #endregion
-    
-    
 }
