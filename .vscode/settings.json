@@ -1,0 +1,3 @@
+{
+    "dotnet.defaultSolution": "Flowcast.Server/GameServer/GameServer.sln"
+}
