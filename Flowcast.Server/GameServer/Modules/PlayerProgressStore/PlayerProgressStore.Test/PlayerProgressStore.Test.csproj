@@ -20,6 +20,7 @@
     </ItemGroup>
     
     <ItemGroup>
+        <ProjectReference Include="..\..\..\BuildingBlocks\Shared.Test\Shared.Test.csproj" />
         <ProjectReference Include="..\PlayerProgressStore.Domain\PlayerProgressStore.Domain.csproj" />
         <ProjectReference Include="..\PlayerProgressStore.Application\PlayerProgressStore.Application.csproj" />
         <ProjectReference Include="..\PlayerProgressStore.Infrastructure\PlayerProgressStore.Infrastructure.csproj" />

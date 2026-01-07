@@ -1,115 +1,14 @@
-﻿using FluentAssertions;
-using NetArchTest.Rules;
-using Xunit;
+﻿using System.Reflection;
 
 namespace PlayerProgressStore.Test;
 
-public sealed class ProjectStructureTest
+public class ProjectStructureTest : Shared.Test.ProjectStructureTest
 {
-    #region PlayerProgressStore_Domain_Test
+    protected override string ModuleName => "PlayerProgressStore";
 
-    [Fact]
-    public void PlayerProgressStore_Domain_Should_Not_Depend_On_Upper_Layers()
-    {
-        var assembly = typeof(PlayerProgressStore.Domain.AssemblyReference).Assembly;
-
-        var forbiddenNamespaces = new[]
-        {
-            "PlayerProgressStore.Application",
-            "PlayerProgressStore.Infrastructure",
-            "PlayerProgressStore.Presentation"
-        };
-
-        var testResult = Types
-            .InAssembly(assembly)
-            .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNamespaces)
-            .GetResult();
-
-        testResult
-            .IsSuccessful
-            .Should()
-            .BeTrue();
-    }
-
-    #endregion
-
-    #region PlayerProgressStore_Application_Test
-
-    [Fact]
-    public void PlayerProgressStore_Application_Should_Not_Depend_On_Upper_Layers()
-    {
-        var assembly = typeof(PlayerProgressStore.Application.AssemblyReference).Assembly;
-
-        var forbiddenNamespaces = new[]
-        {
-            "PlayerProgressStore.Infrastructure",
-            "PlayerProgressStore.Presentation"
-        };
-
-        var testResult = Types
-            .InAssembly(assembly)
-            .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNamespaces)
-            .GetResult();
-
-        testResult
-            .IsSuccessful
-            .Should()
-            .BeTrue();
-    }
-
-    #endregion
-
-    #region PlayerProgressStore_Infrastructure_Test
-
-    [Fact]
-    public void PlayerProgressStore_Infrastructure_Should_Not_Depend_On_Upper_Layers()
-    {
-        var assembly = typeof(PlayerProgressStore.Infrastructure.AssemblyReference).Assembly;
-
-        var forbiddenNamespaces = new[]
-        {
-            "PlayerProgressStore.Presentation"
-        };
-
-        var testResult = Types
-            .InAssembly(assembly)
-            .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNamespaces)
-            .GetResult();
-
-        testResult
-            .IsSuccessful
-            .Should()
-            .BeTrue();
-    }
-
-    #endregion
-
-    #region PlayerProgressStore_Presentation_Test
-
-    [Fact]
-    public void PlayerProgressStore_Presentation_Should_Not_Depend_On_Domain_Directly()
-    {
-        var assembly = typeof(PlayerProgressStore.Presentation.AssemblyReference).Assembly;
-
-        var forbiddenNamespaces = new[]
-        {
-            "PlayerProgressStore.Domain"
-        };
-
-        var testResult = Types
-            .InAssembly(assembly)
-            .ShouldNot()
-            .HaveDependencyOnAny(forbiddenNamespaces)
-            .GetResult();
-
-        testResult
-            .IsSuccessful
-            .Should()
-            .BeTrue();
-    }
-
-    #endregion
+    protected override Assembly DomainAssembly => typeof(Domain.AssemblyReference).Assembly;
+    protected override Assembly ApplicationAssembly => typeof(Application.AssemblyReference).Assembly;
+    protected override Assembly InfrastructureAssembly => typeof(Infrastructure.AssemblyReference).Assembly;
+    protected override Assembly PresentationAssembly => typeof(Presentation.AssemblyReference).Assembly;
+    protected override Assembly ContractsAssembly => typeof(Contracts.AssemblyReference).Assembly;
 }
