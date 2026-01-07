@@ -11,8 +11,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="ErrorOr" Version="2.0.1" />
-	  <PackageReference Include="MessagePack" Version="3.1.4" />
+	  <PackageReference Include="ErrorOr" />
+	  <PackageReference Include="MessagePack" />
 	</ItemGroup>
 
 </Project>

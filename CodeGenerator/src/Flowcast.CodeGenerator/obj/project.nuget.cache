@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "dgSpecHash": "AXYgOzGmtpg=",
+  "success": true,
+  "projectFilePath": "D:\\Projects\\KingKodeStudio\\Flowcast\\CodeGenerator\\src\\Flowcast.CodeGenerator\\Flowcast.CodeGenerator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\3F\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\microsoft.openapi\\1.6.0\\microsoft.openapi.1.6.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\microsoft.openapi.readers\\1.6.0\\microsoft.openapi.readers.1.6.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\sharpyaml\\2.1.0\\sharpyaml.2.1.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\system.memory\\4.5.4\\system.memory.4.5.4.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\system.text.encodings.web\\6.0.0\\system.text.encodings.web.6.0.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\system.text.json\\6.0.0\\system.text.json.6.0.0.nupkg.sha512",
+    "C:\\Users\\3F\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'System.Text.Json' 6.0.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4",
+      "projectPath": "D:\\Projects\\KingKodeStudio\\Flowcast\\CodeGenerator\\src\\Flowcast.CodeGenerator\\Flowcast.CodeGenerator.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\Projects\\KingKodeStudio\\Flowcast\\CodeGenerator\\src\\Flowcast.CodeGenerator\\Flowcast.CodeGenerator.csproj",
+      "libraryId": "System.Text.Json",
+      "targetGraphs": [
+        ".NETStandard,Version=v2.0"
+      ]
+    }
+  ]
+}
