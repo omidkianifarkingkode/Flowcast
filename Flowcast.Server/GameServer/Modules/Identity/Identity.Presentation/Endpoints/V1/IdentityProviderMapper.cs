@@ -12,6 +12,7 @@ public static class IdentityProviderMapper
             IdentityProvider.Google => Domain.Shared.IdentityProvider.Google,
             IdentityProvider.Facebook => Domain.Shared.IdentityProvider.Facebook,
             IdentityProvider.Apple => Domain.Shared.IdentityProvider.Apple,
+            IdentityProvider.GooglePlayGames => Domain.Shared.IdentityProvider.GooglePlayGames,
             _ => throw new NotImplementedException(),
         };
     }

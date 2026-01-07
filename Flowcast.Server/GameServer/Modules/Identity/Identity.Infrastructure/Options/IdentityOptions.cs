@@ -31,4 +31,10 @@ public class IdentityOptions
     /// Server-side key management options for DB-backed signing keys and JWKS.
     /// </summary>
     public KeyManagementOptions KeyManagement { get; set; } = new();
+    
+    
+    /// <summary>
+    /// Google Play Games OAuth options.
+    /// </summary>
+    public GooglePlayGamesOptions GooglePlay { get; set; } = new();
 }
