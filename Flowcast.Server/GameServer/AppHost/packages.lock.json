@@ -850,6 +850,7 @@
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.1, )",
           "Realtime.Core": "[1.0.0, )",
+          "Serilog.Sinks.File": "[7.0.0, )",
           "Shared.Application": "[1.0.0, )"
         }
       },

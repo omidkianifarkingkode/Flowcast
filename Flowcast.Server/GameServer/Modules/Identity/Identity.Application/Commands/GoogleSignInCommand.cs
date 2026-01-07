@@ -12,7 +12,7 @@ namespace Identity.Application.Commands;
 public sealed record GoogleSignInCommand(IdentityProvider Provider, string IdToken, Dictionary<string, string>? Meta) : ICommand<AuthResult>;
 
 public sealed class GoogleSignInCommandHandler(
-    [FromKeyedServices("google")] IProviderTokenVerifier googleVerifier,
+    IGooglePlayGamesVerifier gpgVerifier,
     IAccountRepository accounts,
     IIdentityRepository identities,
     IIdentityLoginAuditRepository audits,
@@ -23,11 +23,14 @@ public sealed class GoogleSignInCommandHandler(
     public async Task<Result<AuthResult>> Handle(GoogleSignInCommand command, CancellationToken ct)
     {
         // Only Google is supported here; if you plan to re-use for others, inject a factory
-        var verify = await googleVerifier.VerifyAsync(command.IdToken, new ProviderVerifyHints { /* Nonce/HostedDomain if needed */ }, ct);
+        var verify = await gpgVerifier.VerifyAsync(command.IdToken, ct);
         if (verify.IsFailure)
             return Result.Failure<AuthResult>(verify.Error);
 
-        var subject = verify.Value;
+        var identityInfo = verify.Value;
+
+        // Subject = Google Play Games PlayerId
+        var subject = identityInfo.PlayerId;
         var now = clock.UtcNow;
 
         // Try existing identity

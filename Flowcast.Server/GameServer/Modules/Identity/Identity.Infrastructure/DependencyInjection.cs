@@ -46,6 +46,9 @@ public static class DependencyInjection
 
         builder.Services.AddSingleton<IValidateOptions<IdentityOptions>, IdentityOptionsValidator>();
 
+        builder.Services.Configure<GooglePlayGamesOptions>(
+            builder.Configuration.GetSection("GooglePlayGames"));
+
         return builder;
     }
 
@@ -83,6 +86,24 @@ public static class DependencyInjection
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddKeyedSingleton<IProviderTokenVerifier, GoogleTokenVerifier>("google");
         builder.Services.AddScoped<IKeyStore, DbKeyStore>();
+
+        // 1) Register GoogleOAuthClient as a typed HttpClient
+        //    This makes HttpClient injected into GoogleOAuthClient configured and managed by IHttpClientFactory
+        builder.Services.AddHttpClient<GoogleOAuthClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://oauth2.googleapis.com/");
+            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+
+        // 2) Register GooglePlayGamesVerifier as a typed HttpClient implementation for IGooglePlayGamesVerifier
+        //    The HttpClient injected into the verifier will be configured for games API
+        builder.Services.AddHttpClient<IGooglePlayGamesVerifier, GooglePlayGamesVerifier>(client =>
+        {
+            client.BaseAddress = new Uri("https://games.googleapis.com/");
+            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
 
         return builder;
     }
