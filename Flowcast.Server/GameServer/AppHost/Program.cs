@@ -2,6 +2,7 @@ using AppHost;
 using AppHost.Extensions;
 using Identity.Presentation;
 using PlayerProgressStore.Presentation;
+using Shop.Presentation;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -13,7 +14,8 @@ builder
     .ConfigureAppHost()
     .ConfigureBuildingBlocks()
     .AddIdentity()
-    .AddPlayerProgress();
+    .AddPlayerProgress()
+    .AddShop();
 
 var app = builder.Build();
 

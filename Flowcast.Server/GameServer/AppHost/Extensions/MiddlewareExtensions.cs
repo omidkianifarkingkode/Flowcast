@@ -1,4 +1,4 @@
-﻿using Identity.Presentation;
+using Identity.Presentation;
 using Realtime.Transport.Gateway;
 using Serilog;
 using Shared.Infrastructure.Database;
@@ -6,6 +6,7 @@ using Shared.Infrastructure.Extensions;
 using Shared.Presentation.ApiGuard;
 using Shared.Presentation.Endpoints;
 using Shared.Presentation.Swagger;
+
 
 namespace AppHost.Extensions;
 
