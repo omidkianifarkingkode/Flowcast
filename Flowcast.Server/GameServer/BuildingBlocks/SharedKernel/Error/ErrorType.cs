@@ -9,4 +9,6 @@ public enum ErrorType
     Conflict = 4,
     Unauthorized = 5,
     Forbidden = 6,
+    TooLarge = 7, // error 413
+    RateLimited = 8 // error 429
 }

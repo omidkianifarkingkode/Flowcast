@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Shared.Application.Authentication;
 using System.Security.Claims;
 
@@ -7,9 +7,10 @@ namespace Shared.Infrastructure.Authentication;
 internal sealed class UserContext(IHttpContextAccessor httpContextAccessor) : IUserContext
 {
 
-    // Gets the current user ID from the current HTTP context or throws if unavailable
+    // Gets the current user ID from the current HTTP context or "system" when unauthenticated (e.g. Swagger / admin panel)
     public string UserId => GetUserId(httpContextAccessor.HttpContext)
-                          ?? throw new ApplicationException("User context is unavailable");
+                          // ?? throw new ApplicationException("User context is unavailable");
+                          ?? "system";
 
     // Try to get the user ID from any HttpContext (for flexibility/testing)
     public string? GetUserId(HttpContext? context)

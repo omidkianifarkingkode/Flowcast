@@ -16,6 +16,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Shared.Application.Services;
+using Shared.Infrastructure;
 using Shared.Infrastructure.Database;
 using SharedKernel;
 using System.IdentityModel.Tokens.Jwt;
@@ -39,7 +40,7 @@ public static class DependencyInjection
     private static WebApplicationBuilder SetupOptions(this WebApplicationBuilder builder)
     {
         builder.Services.AddOptions<IdentityOptions>()
-                .BindConfiguration("Identity")
+                .BindConfiguration(IdentityOptions.SectionName)
                 .ValidateDataAnnotations()
                 .Validate(o => o is not null, "Identity options missing")
                 .ValidateOnStart();
@@ -51,22 +52,13 @@ public static class DependencyInjection
 
     private static WebApplicationBuilder AddPersistences(this WebApplicationBuilder builder)
     {
-        builder.Services.AddDbContext<ApplicationDbContext>(opt =>
+        builder.AddDbContext<ApplicationDbContext>((serviceProvider) =>
         {
-            var identitySection = builder.Configuration.GetSection(IdentityOptions.SectionName);
-            var opts = identitySection.Get<IdentityOptions>()!;
-            var useInMemory = identitySection.GetValue<bool>("UseInMemoryDatabase");
+            var options = serviceProvider.GetRequiredService<IOptions<IdentityOptions>>().Value;
 
-            var connectionString = builder.Configuration.GetModuleConnectionString(IdentityOptions.SectionName);
+            var connectionString = options.ConnectionString ?? builder.Configuration.GetConnectionString("DefaultConnection")!;
 
-            if (useInMemory)
-            {
-                opt.UseInMemoryDatabase("Identity");
-            }
-            else
-            {
-                opt.UseSqlServer(connectionString);
-            }
+            return new DbContextSetupOptions(connectionString, "identity", options.UseInMemoryDatabase);
         });
 
         builder.Services.AddKeyedScoped<IUnitOfWork, UnitOfWork<ApplicationDbContext>>("identity");

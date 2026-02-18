@@ -1,0 +1,66 @@
+[
+  {
+    "orderId": "ORDER_TEST_001_GP",
+    "store": "GooglePlay",
+    "purchaseToken": "token_google_001_abc",
+    "signature": "sig_google_001_xyz",
+    "productId": "coins_100",
+    "receipt": "{\"orderId\":\"ORDER_TEST_001_GP\",\"packageName\":\"com.flowcast.game\"}",
+    "payload": "payload_google_001",
+    "userId": "u_1024",
+    "purchaseAtUtc": "2026-02-17T10:00:00.000Z",
+    "isSandbox": true,
+    "metadata": { "source": "swagger_test_1", "env": "dev" }
+  },
+  {
+    "orderId": "ORDER_TEST_002_AS",
+    "store": "Appstore",
+    "purchaseToken": "token_apple_002_def",
+    "signature": null,
+    "productId": "coins_500",
+    "receipt": "base64_receipt_apple_002",
+    "payload": "payload_apple_002",
+    "userId": "u_2048",
+    "purchaseAtUtc": "2026-02-17T11:30:00.000Z",
+    "isSandbox": true,
+    "metadata": { "source": "swagger_test_2" }
+  },
+  {
+    "orderId": "ORDER_TEST_003_GP",
+    "store": "GooglePlay",
+    "purchaseToken": "token_google_003_ghi",
+    "signature": "sig_google_003",
+    "productId": "starter_pack",
+    "receipt": "{\"orderId\":\"ORDER_TEST_003_GP\"}",
+    "payload": "payload_003",
+    "userId": "u_4096",
+    "purchaseAtUtc": "2026-02-16T14:00:00.000Z",
+    "isSandbox": false,
+    "metadata": {}
+  },
+  {
+    "orderId": "ORDER_TEST_004_OTHER",
+    "store": "OTHER",
+    "purchaseToken": "token_other_004",
+    "signature": "",
+    "productId": "vip_monthly",
+    "receipt": "receipt_other_004",
+    "payload": "payload_other_004",
+    "userId": "u_777",
+    "purchaseAtUtc": "2026-02-17T13:41:12.491Z",
+    "isSandbox": true,
+    "metadata": { "additionalProp1": "val1", "additionalProp2": "val2" }
+  },
+  {
+    "orderId": "ORDER_TEST_005_AS",
+    "store": "Appstore",
+    "purchaseToken": "token_apple_005_jkl",
+    "signature": null,
+    "productId": "battle_pass",
+    "receipt": "base64_receipt_apple_005",
+    "payload": "payload_apple_005",
+    "userId": "u_888",
+    "purchaseAtUtc": "2026-02-15T08:00:00.000Z",
+    "isSandbox": false
+  }
+]

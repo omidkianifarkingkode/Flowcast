@@ -10,7 +10,7 @@ public class IdentityOptions
     /// <summary>
     /// Database connection string. Required unless <see cref="UseInMemoryDatabase"/> is true.
     /// </summary>
-    public string ConnectionString { get; set; } = string.Empty;
+    public string? ConnectionString { get; set; } = string.Empty;
 
     /// <summary>
     /// Use EF InMemory provider (dev/test only).
