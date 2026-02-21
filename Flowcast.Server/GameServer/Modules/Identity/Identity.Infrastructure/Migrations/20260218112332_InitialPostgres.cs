@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace Identity.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialIdentity : Migration
+    public partial class InitialPostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,11 +20,11 @@ namespace Identity.Infrastructure.Migrations
                 schema: "Identity",
                 columns: table => new
                 {
-                    AccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DisplayName = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
-                    LastLoginAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastLoginRegion = table.Column<string>(type: "nchar(2)", fixedLength: true, maxLength: 2, nullable: true)
+                    AccountId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DisplayName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    LastLoginAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LastLoginRegion = table.Column<string>(type: "character(2)", fixedLength: true, maxLength: 2, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -36,19 +37,19 @@ namespace Identity.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    IdentityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    LoginAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Ip = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
-                    Region = table.Column<string>(type: "nchar(2)", fixedLength: true, maxLength: 2, nullable: true),
-                    UserAgent = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
-                    DeviceOs = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true),
-                    DeviceModel = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
-                    DeviceLanguage = table.Column<string>(type: "nvarchar(16)", maxLength: 16, nullable: true),
-                    AppVersion = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: true),
-                    TzOffsetMinutes = table.Column<int>(type: "int", nullable: true),
-                    ClientTimeUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    IdentityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AccountId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LoginAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Ip = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    Region = table.Column<string>(type: "character(2)", fixedLength: true, maxLength: 2, nullable: true),
+                    UserAgent = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    DeviceOs = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    DeviceModel = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    DeviceLanguage = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
+                    AppVersion = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    TzOffsetMinutes = table.Column<int>(type: "integer", nullable: true),
+                    ClientTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -60,14 +61,14 @@ namespace Identity.Infrastructure.Migrations
                 schema: "Identity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    KeyId = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
-                    Algorithm = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    PublicKeyPem = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PrivateKeyPem = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NotBeforeUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    KeyId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Algorithm = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    PublicKeyPem = table.Column<string>(type: "text", nullable: false),
+                    PrivateKeyPem = table.Column<string>(type: "text", nullable: true),
+                    NotBeforeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -79,15 +80,15 @@ namespace Identity.Infrastructure.Migrations
                 schema: "Identity",
                 columns: table => new
                 {
-                    IdentityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Provider = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
-                    Subject = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    LoginAllowed = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastSeenAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IdentityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AccountId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Provider = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Subject = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    LoginAllowed = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastSeenAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     LastMeta = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AccountId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    AccountId1 = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {

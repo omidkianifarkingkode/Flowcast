@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
@@ -20,18 +20,20 @@ public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Ap
 
         var config = builder.Build();
 
-        // Expect "Identity:ConnectionString" to exist in config
         var connStr = config.GetSection("Identity")["ConnectionString"];
         if (string.IsNullOrWhiteSpace(connStr))
             throw new InvalidOperationException("Missing Identity:ConnectionString in configuration.");
 
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(connStr, sql =>
-            {
-                // keep migrations in the same assembly as the DbContext
-                sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
-            })
-            .Options;
+        var provider = config["Database:Provider"] ?? "SqlServer";
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+        var migrationsAssembly = typeof(ApplicationDbContext).Assembly.FullName;
+
+        if (string.Equals(provider, "Postgres", StringComparison.OrdinalIgnoreCase))
+            optionsBuilder.UseNpgsql(connStr, npgsql => npgsql.MigrationsAssembly(migrationsAssembly));
+        else
+            optionsBuilder.UseSqlServer(connStr, sql => sql.MigrationsAssembly(migrationsAssembly));
+
+        var options = optionsBuilder.Options;
 
         return new ApplicationDbContext(options);
     }

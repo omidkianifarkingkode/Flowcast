@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Shared.Infrastructure.Database;
 using Shop.Domain.Entities;
@@ -55,11 +55,9 @@ public class PurchaseConfiguration : IEntityTypeConfiguration<Purchase>
 
 
         builder.Property(p => p.Receipt)
-            .HasColumnType("nvarchar(max)")
             .IsRequired(false);
 
         builder.Property(p => p.Payload)
-            .HasColumnType("nvarchar(max)")
             .IsRequired(false);
 
 
@@ -83,7 +81,6 @@ public class PurchaseConfiguration : IEntityTypeConfiguration<Purchase>
                 v => string.IsNullOrWhiteSpace(v)
                     ? new Dictionary<string, string>()
                     : JsonSerializer.Deserialize<Dictionary<string, string>>(v, JsonOptions.Default)!)
-            .HasColumnType("nvarchar(max)")
             .IsRequired(false);
 
         builder.HasMany(p => p.ValidationAttempts)

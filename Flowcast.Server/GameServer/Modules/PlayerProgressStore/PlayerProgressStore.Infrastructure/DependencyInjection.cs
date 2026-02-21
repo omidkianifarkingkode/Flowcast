@@ -53,10 +53,17 @@ namespace PlayerProgressStore.Infrastructure
                 }
                 else
                 {
-                    opt.UseSqlServer(connectionString, sql =>
+                    var provider = builder.Configuration["Database:Provider"] ?? "SqlServer";
+                    if (string.Equals(provider, "Postgres", StringComparison.OrdinalIgnoreCase))
                     {
-                        sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
-                    });
+                        opt.UseNpgsql(connectionString, npgsql =>
+                            npgsql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                    }
+                    else
+                    {
+                        opt.UseSqlServer(connectionString, sql =>
+                            sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                    }
                 }
             });
 

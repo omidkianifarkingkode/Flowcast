@@ -287,6 +287,11 @@
           "System.CodeDom": "6.0.0"
         }
       },
+      "Npgsql": {
+        "type": "Transitive",
+        "resolved": "10.0.0",
+        "contentHash": "xZAYhPOU2rUIFpV48xsqhCx9vXs6Y+0jX2LCoSEfDFYMw9jtAOUk3iQsCnDLrFIv9NT3JGMihn7nnuZsPKqJmA=="
+      },
       "Polly": {
         "type": "Transitive",
         "resolved": "7.2.4",
@@ -482,6 +487,7 @@
           "Identity.Application": "[1.0.0, )",
           "Microsoft.EntityFrameworkCore.InMemory": "[10.0.3, )",
           "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.3, )",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.0, )",
           "Shared.Infrastructure": "[1.0.0, )"
         }
       },
@@ -515,6 +521,7 @@
         "dependencies": {
           "Microsoft.EntityFrameworkCore.InMemory": "[10.0.3, )",
           "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.3, )",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.0, )",
           "PlayerProgressStore.Application": "[1.0.0, )",
           "Shared.Infrastructure": "[1.0.0, )"
         }
@@ -547,6 +554,7 @@
           "Microsoft.EntityFrameworkCore.InMemory": "[10.0.3, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.3, )",
           "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.3, )",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.0, )",
           "Realtime.Core": "[1.0.0, )",
           "Shared.Application": "[1.0.0, )"
         }
@@ -610,6 +618,7 @@
           "Microsoft.EntityFrameworkCore.InMemory": "[10.0.3, )",
           "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.3, )",
           "Microsoft.Extensions.Http.Polly": "[10.0.3, )",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.0, )",
           "Shared.Application": "[1.0.0, )",
           "Shared.Infrastructure": "[1.0.0, )",
           "Shop.Application": "[1.0.0, )",
@@ -775,6 +784,17 @@
         "requested": "[13.0.4, )",
         "resolved": "13.0.4",
         "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
+      },
+      "Npgsql.EntityFrameworkCore.PostgreSQL": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "E2+uSWxSB8LdsUVwPaqRWOcGOP92biry2JEwc0KJMdLJF+aZdczeIdEXVwEyv4nSVMQJH0o8tLhyAMiR6VF0lw==",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "[10.0.0, 11.0.0)",
+          "Microsoft.EntityFrameworkCore.Relational": "[10.0.0, 11.0.0)",
+          "Npgsql": "10.0.0"
+        }
       },
       "Scrutor": {
         "type": "CentralTransitive",

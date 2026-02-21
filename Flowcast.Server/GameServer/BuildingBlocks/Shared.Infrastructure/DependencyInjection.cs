@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -58,7 +58,13 @@ public static class DependencyInjection
                 }
                 else
                 {
-                    options.UseSqlServer(dbOptions.ConnectionString);
+                    var config = serviceProvider.GetRequiredService<IConfiguration>();
+                    var provider = config["Database:Provider"] ?? "SqlServer";
+                    var migrationsAssembly = typeof(T).Assembly.FullName;
+                    if (string.Equals(provider, "Postgres", StringComparison.OrdinalIgnoreCase))
+                        options.UseNpgsql(dbOptions.ConnectionString, npgsql => npgsql.MigrationsAssembly(migrationsAssembly));
+                    else
+                        options.UseSqlServer(dbOptions.ConnectionString, sql => sql.MigrationsAssembly(migrationsAssembly));
                 }
 
                 var auditInterceptor = serviceProvider.GetRequiredService<AuditInterceptor>();
