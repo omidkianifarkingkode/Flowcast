@@ -1,4 +1,4 @@
-﻿using AppHost.Extensions;
+using AppHost.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.Infrastructure;
 using Serilog;
@@ -34,6 +34,14 @@ public static class DependencyInjection
     {
         builder.ConfigureAppSettings();
         builder.Services.AddApiGuard(builder.Configuration);
+        builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
+        {
+            var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+            if (origins is { Length: > 0 })
+                p.WithOrigins(origins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+            else
+                p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        }));
 
         return builder;
     }
