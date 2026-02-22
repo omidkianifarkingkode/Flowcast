@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Shared.Application.Messaging;
 using Shared.Presentation.Endpoints;
-using Shop.Application.Features.Queries;
 using Shop.Contracts.V1;
 using SharedKernel;
+using Shop.Application.Queries;
+using Shop.Contracts;
 
 namespace Shop.Presentation.Endpoints.V1;
 
@@ -29,7 +30,8 @@ public sealed class GetPurchaseEndpoint : IEndpoint
                     error => CustomResults.Problem(error, http)
                 );
             })
-            .RequireAuthorization()
+            //.RequireAuthorization()
+            .WithTags(ApiInfo.Tag)
             .MapToApiVersion(1.0)
             .WithSummary(GetPurchaseList.Summary)
             .WithDescription(GetPurchaseList.Description);
@@ -41,8 +43,8 @@ public sealed class GetPurchaseEndpoint : IEndpoint
         return purchases
             .Select(p => new GetPurchaseList.Response(
                 Id: p.Id,
-                OrderId: p.OrderId,
-                Store: p.Store,
+                OrderId: p.OrderId.Value,
+                Store: p.Store.ToString(),
                 ProductId: p.ProductId,
                 UserId: p.UserId,
                 State: p.State.ToString(),

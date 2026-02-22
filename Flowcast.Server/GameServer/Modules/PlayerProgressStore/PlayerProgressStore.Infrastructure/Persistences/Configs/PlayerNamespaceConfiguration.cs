@@ -40,8 +40,7 @@ public class PlayerNamespaceConfiguration : IEntityTypeConfiguration<PlayerNames
 
         // JSON document stored as UTF-8 bytes (allow large payloads)
         builder.Property(x => x.Document)
-            .IsRequired()
-            .HasColumnType("varbinary(max)");
+            .IsRequired();
 
         // DocHash <-> string
         builder.Property(x => x.Hash)

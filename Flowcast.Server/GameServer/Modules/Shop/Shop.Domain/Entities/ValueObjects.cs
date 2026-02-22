@@ -1,8 +1,4 @@
-﻿
-
-using Newtonsoft.Json.Linq;
-
-namespace Shop.Domain.Entities;
+﻿namespace Shop.Domain.Entities;
 
 public readonly record struct PurchaseId
 {
@@ -22,14 +18,14 @@ public readonly record struct PurchaseId
 
     public static PurchaseId FromString(string value)
     {
-        if(string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("PurchaseId cannot be empty.");
 
-        if(!value.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase))
+        if (!value.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase))
             throw new FormatException($"PurchaseId must start with '{Prefix}'.");
 
         var guidPart = value[Prefix.Length..];
-        if(!Guid.TryParseExact(guidPart, "N", out _))
+        if (!Guid.TryParseExact(guidPart, "N", out _))
             throw new FormatException("Invalid GUID v7 format.");
 
         return new PurchaseId(value);
@@ -55,26 +51,6 @@ public readonly record struct OrderId
         return new OrderId(value.Trim());
     }
     public override string ToString() => Value;
-    
-}
-
-public readonly record struct Store
-{
-    public string Value { get; }
-
-    private Store(string value)
-    {
-        Value = value;
-    }
-    public static Store Create(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Store can not be empty");
-        if (value.Length is < 3 or > 100)
-            throw new ArgumentException("Store length must be between 3 to 100.");
-        return new Store(value.Trim());
-    }
-    public override string ToString() => Value;
 
 }
 
@@ -96,20 +72,16 @@ public readonly record struct PurchaseToken
     public override string ToString() => Value;
 }
 
-public sealed record  PurchaseSignature
+public readonly record struct PurchaseSignature
 {
     public string Value { get; }
-
     private PurchaseSignature(string value)
     {
         Value = value;
     }
     public static PurchaseSignature Create(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Signature cannot be emtpy");
-        
-        return new PurchaseSignature(value.Trim());
+        return new PurchaseSignature(value ?? "");
     }
     public override string ToString() => Value;
 }

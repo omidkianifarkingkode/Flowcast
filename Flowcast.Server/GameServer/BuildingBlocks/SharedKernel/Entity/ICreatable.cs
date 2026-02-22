@@ -2,7 +2,7 @@
 
 public interface ICreatable
 {
-	DateTime CreatedOnUtc { get; set; }
+	DateTimeOffset CreatedAtUtc { get; set; }
 
 	string? CreatorUser { get; set; }
 }

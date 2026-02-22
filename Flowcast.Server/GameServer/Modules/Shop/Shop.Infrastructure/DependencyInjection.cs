@@ -3,12 +3,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
 using Shared.Application.Services;
+using Shared.Infrastructure;
 using Shared.Infrastructure.Database;
-using Shop.Application.IRepositories;
+using Shop.Application.Interfaces;
+using Shop.Application.Repositories;
 using Shop.Infrastructure.Options;
 using Shop.Infrastructure.Persistences;
 using Shop.Infrastructure.Persistences.Repositories;
+using Shop.Infrastructure.Services;
 
 namespace Shop.Infrastructure;
 
@@ -18,7 +23,8 @@ public static class DependencyInjection
     {
         builder
             .SetupOptions()
-            .AddPersistances();
+            .AddPersistances()
+            .AddServices();
 
         return builder;
     }
@@ -30,39 +36,47 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .Validate(x => x is not null, "Shop options not found")
             .ValidateOnStart();
+
         builder.Services.AddSingleton<IValidateOptions<ShopOptions>, ShopOptionsValidator>();
 
-        return builder; 
+        return builder;
     }
     private static WebApplicationBuilder AddPersistances(this WebApplicationBuilder builder)
     {
-        builder.Services.AddDbContext<ApplicationDbContext>(opt =>
+        builder.AddDbContext<ApplicationDbContext>((serviceProvider) =>
         {
-            var shopOptions = builder.Configuration
-                .GetSection(ShopOptions.SectionName)
-                .Get<ShopOptions>()
-                ?? throw new InvalidOperationException("Shop options not found");
+            var options = serviceProvider.GetRequiredService<IOptions<ShopOptions>>().Value;
 
-            if(shopOptions.UseInMemoryDatabase)
-            {
-                opt.UseInMemoryDatabase("shop");
-            }
-            else
-            {
-                if(string.IsNullOrWhiteSpace(shopOptions.ConnectionStrings))
-                    throw new InvalidOperationException("Shop connection string not configured");
+            var connectionString = options.ConnectionString ?? builder.Configuration.GetConnectionString("DefaultConnection")!;
 
-                opt.UseSqlServer(shopOptions.ConnectionStrings, sql =>
-                {
-                    sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
-                });
-            }
+            return new DbContextSetupOptions(connectionString, "shop", options.UseInMemoryDatabase);
         });
 
+        builder.Services.AddKeyedScoped<IUnitOfWork, UnitOfWork<ApplicationDbContext>>("shop");
         builder.Services.AddScoped<IPurchaseRepository, PurchaseRepository>();
-        builder.Services.AddScoped<IUnitOfWork, UnitOfWork<ApplicationDbContext>>();
 
         return builder;
     }
 
+    private static WebApplicationBuilder AddServices(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHttpClient<IPurchaseValidationService, PurchaseValidationService>(client =>
+        {
+            client.BaseAddress = new Uri("https://eu-kkvr.kingcodestudio.com/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        })
+        .AddPolicyHandler(HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))))
+        .AddPolicyHandler(HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .CircuitBreakerAsync(
+                handledEventsAllowedBeforeBreaking: 5,
+                durationOfBreak: TimeSpan.FromSeconds(30)));
+
+        builder.Services.AddHostedService<PurchaseValidationWorker>();
+
+        return builder;
+    }
 }

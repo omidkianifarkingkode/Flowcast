@@ -1,4 +1,5 @@
-﻿using SharedKernel;
+﻿using Microsoft.EntityFrameworkCore;
+using SharedKernel;
 
 namespace Shared.Application.Services;
 

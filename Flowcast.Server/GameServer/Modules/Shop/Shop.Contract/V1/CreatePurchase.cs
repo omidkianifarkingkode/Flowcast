@@ -1,15 +1,12 @@
-﻿using Shop.Domain.Entities;
-using Shop.Domain.Enums;
-
-namespace Shop.Contract.V1
+﻿namespace Shop.Contracts.V1
 {
     public static class CreatePurchase
     {
         public const string Method = "POST";
         public const string Route = "shop/purchases";
 
-        public const string Summary = "Create a purchase";
-        public const string Description = "Creates a pending purchase for a player.";
+        public const string Summary = "Log a purchase";
+        public const string Description = "Log purchase for a player.";
 
         public record Request(
              string OrderId,
@@ -22,7 +19,7 @@ namespace Shop.Contract.V1
              string UserId,
              DateTimeOffset PurchaseAtUtc,
              bool IsSandbox,
-             Dictionary<string, object>? Metadata = null
+             Dictionary<string, string>? Metadata = null
          );
 
 

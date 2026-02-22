@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Shared.Infrastructure.Database;
 using Shop.Domain.Entities;
 using System.Text.Json;
 
@@ -10,6 +11,7 @@ public class PurchaseConfiguration : IEntityTypeConfiguration<Purchase>
     public void Configure(EntityTypeBuilder<Purchase> builder)
     {
         builder.ToTable("Purchases");
+
         builder.HasKey(p => p.Id);
 
         builder.Property(p => p.Id)
@@ -24,35 +26,28 @@ public class PurchaseConfiguration : IEntityTypeConfiguration<Purchase>
                .IsDescending();
 
         builder.Property(p => p.OrderId)
-           .HasConversion(
-               id => id.Value,
-               value => OrderId.Create(value))
-           .HasColumnName("OrderId")
-           .IsRequired();
+            .HasConversion(
+                id => id.Value,
+                value => OrderId.Create(value))
+            .HasMaxLength(2024)
+            .IsRequired();
 
         builder.Property(p => p.Store)
-           .HasConversion(
-               store => store.Value,
-               value => Store.Create(value))
-           .HasColumnName("Store")
-           .HasMaxLength(50)
-           .IsRequired();
+            .HasConversion<string>()
+            .IsRequired();
 
         builder.Property(p => p.PurchaseToken)
             .HasConversion(
-                token => token != null ? token.Value : null,
-                value => value != null ? PurchaseToken.Create(value) : default)
-            .HasColumnName("PurchaseToken")
-            .HasMaxLength(200)
+                token => token.Value,
+                value => PurchaseToken.Create(value))
+            .HasMaxLength(4000)
             .IsRequired();
 
-        builder.OwnsOne(p => p.Signature, s =>
-        {
-            s.Property(x => x.Value)
-             .HasColumnName("Signature")
-             .HasMaxLength(100)
-             .IsRequired(false);
-        });
+        builder.Property(p => p.Signature)
+            .HasConversion(
+                sig => sig.HasValue ? sig.Value.Value : null,
+                value => value != null ? PurchaseSignature.Create(value) : null)
+            .IsRequired(false);
 
         builder.Property(p => p.ProductId)
             .IsRequired()
@@ -60,12 +55,10 @@ public class PurchaseConfiguration : IEntityTypeConfiguration<Purchase>
 
 
         builder.Property(p => p.Receipt)
-            .IsRequired(false)
-            .HasColumnType("nvarchar(max)");
+            .IsRequired(false);
 
         builder.Property(p => p.Payload)
-            .IsRequired(false)
-            .HasColumnType("nvarchar(max)");
+            .IsRequired(false);
 
 
         builder.Property(p => p.PurchaseAtUtc)
@@ -76,35 +69,46 @@ public class PurchaseConfiguration : IEntityTypeConfiguration<Purchase>
             .HasMaxLength(100);
 
         builder.Property(p => p.State)
+            .HasConversion<string>()
             .IsRequired();
 
         builder.Property(p => p.IsSandbox)
-            .HasField("_isSandBox")
-            .HasColumnName("IsSandbox")
             .IsRequired();
 
-        builder.Property(p => p.CreatedAtUtc)
-            .IsRequired();
-
-        builder.Property(p => p.UpdatedAtUtc)
+        builder.Property(p => p.Metadata)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions.Default),
+                v => string.IsNullOrWhiteSpace(v)
+                    ? new Dictionary<string, string>()
+                    : JsonSerializer.Deserialize<Dictionary<string, string>>(v, JsonOptions.Default)!)
             .IsRequired(false);
 
-        builder.Property(p => p.Meta)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
-                v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, JsonSerializerOptions.Default) ?? new Dictionary<string, object>())
-            .HasColumnType("nvarchar(max)")
-            .IsRequired();
-
-        builder.HasMany(p => p.PurchaseValidationAttempts)
+        builder.HasMany(p => p.ValidationAttempts)
             .WithOne()
             .HasForeignKey(a => a.PurchaseId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        var attemptNavigation = builder.Metadata
+            .FindNavigation(nameof(Purchase.ValidationAttempts))!;
+
+        attemptNavigation.SetField("_validationAttempts");
+        attemptNavigation.SetPropertyAccessMode(PropertyAccessMode.Field);
 
         builder.HasIndex(p => new { p.Store, p.OrderId })
                .IsUnique();
 
         builder.HasIndex(p => new { p.Store, p.Id, p.State, p.IsSandbox })
                .HasDatabaseName("IX_Purchases_Filter");
+
+        builder.ConfigureAuditable();
+    }
+
+    private static class JsonOptions
+    {
+        public static readonly JsonSerializerOptions Default = new()
+        {
+            PropertyNamingPolicy = null,
+            WriteIndented = false
+        };
     }
 }

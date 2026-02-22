@@ -1,6 +1,4 @@
-﻿using Shop.Domain.Entities;
-
-namespace Shop.Contracts.V1;
+﻿namespace Shop.Contracts.V1;
 
 public static class GetPurchaseList
 {
@@ -13,9 +11,9 @@ public static class GetPurchaseList
     public record Request();
 
     public sealed record Response(
-         PurchaseId Id,
-         OrderId OrderId,
-         Store Store,
+         string Id,
+         string OrderId,
+         string Store,
          string ProductId,
          string UserId,
          string State,

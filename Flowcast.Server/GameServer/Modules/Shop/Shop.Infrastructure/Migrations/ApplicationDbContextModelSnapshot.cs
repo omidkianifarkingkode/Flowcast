@@ -2,8 +2,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Shop.Infrastructure.Persistences;
 
 #nullable disable
@@ -17,70 +17,84 @@ namespace Shop.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasDefaultSchema("Shop")
+                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Shop.Domain.Entities.Purchase", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(40)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(40)");
+                        .HasColumnType("character varying(40)");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAtUtc");
+
+                    b.Property<string>("CreatorUser")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("CreatorUser");
 
                     b.Property<bool>("IsSandbox")
-                        .HasColumnType("bit")
-                        .HasColumnName("IsSandbox");
+                        .HasColumnType("boolean");
 
-                    b.Property<string>("Meta")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ModifiedAtUtc");
+
+                    b.Property<string>("ModifierUser")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ModifierUser");
 
                     b.Property<string>("OrderId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("OrderId");
+                        .HasMaxLength(2024)
+                        .HasColumnType("character varying(2024)");
 
                     b.Property<string>("Payload")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProductId")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTimeOffset>("PurchaseAtUtc")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PurchaseToken")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("PurchaseToken");
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
 
                     b.Property<string>("Receipt")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
-                    b.Property<int>("State")
-                        .HasColumnType("int");
+                    b.Property<string>("Signature")
+                        .HasColumnType("text");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Store")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("Store");
-
-                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("text");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -93,7 +107,7 @@ namespace Shop.Infrastructure.Migrations
                     b.HasIndex("Store", "Id", "State", "IsSandbox")
                         .HasDatabaseName("IX_Purchases_Filter");
 
-                    b.ToTable("Purchases", (string)null);
+                    b.ToTable("Purchases", "Shop");
                 });
 
             modelBuilder.Entity("Shop.Domain.Entities.PurchaseValidationAttempt", b =>
@@ -102,63 +116,43 @@ namespace Shop.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AttemptNo")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ErrorCode")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("ErrorMessage")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<DateTimeOffset?>("FinishedAtUtc")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PurchaseId")
                         .IsRequired()
-                        .HasColumnType("varchar(40)");
+                        .HasColumnType("character varying(40)");
 
                     b.Property<DateTimeOffset>("StartedAtUtc")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PurchaseId");
 
-                    b.ToTable("PurchaseValidationAttempts", (string)null);
-                });
+                    b.HasIndex("PurchaseId", "AttemptNo")
+                        .IsUnique();
 
-            modelBuilder.Entity("Shop.Domain.Entities.Purchase", b =>
-                {
-                    b.OwnsOne("Shop.Domain.Entities.PurchaseSignature", "Signature", b1 =>
-                        {
-                            b1.Property<string>("PurchaseId")
-                                .HasColumnType("varchar(40)");
-
-                            b1.Property<string>("Value")
-                                .HasMaxLength(100)
-                                .HasColumnType("nvarchar(100)")
-                                .HasColumnName("Signature");
-
-                            b1.HasKey("PurchaseId");
-
-                            b1.ToTable("Purchases");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PurchaseId");
-                        });
-
-                    b.Navigation("Signature");
+                    b.ToTable("PurchaseValidationAttempts", "Shop");
                 });
 
             modelBuilder.Entity("Shop.Domain.Entities.PurchaseValidationAttempt", b =>
                 {
                     b.HasOne("Shop.Domain.Entities.Purchase", null)
-                        .WithMany("PurchaseValidationAttempts")
+                        .WithMany("ValidationAttempts")
                         .HasForeignKey("PurchaseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -166,7 +160,7 @@ namespace Shop.Infrastructure.Migrations
 
             modelBuilder.Entity("Shop.Domain.Entities.Purchase", b =>
                 {
-                    b.Navigation("PurchaseValidationAttempts");
+                    b.Navigation("ValidationAttempts");
                 });
 #pragma warning restore 612, 618
         }

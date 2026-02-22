@@ -1,4 +1,4 @@
-﻿using Identity.Domain.Entities;
+using Identity.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -65,7 +65,6 @@ public sealed class IdentityEntityConfig : IEntityTypeConfiguration<IdentityEnti
 
         b.Property(i => i.LastMeta)
             .HasConversion(DictToJson)
-            .HasColumnType("nvarchar(max)")                   // optional but nice on SQL Server
             .Metadata.SetValueComparer(DictComparer);
 
         b.HasIndex(i => new { i.Provider, i.Subject }).IsUnique();

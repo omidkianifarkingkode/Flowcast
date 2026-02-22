@@ -1,14 +1,18 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Shared.Application.Authentication;
 using Shared.Application.Services;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Authorization;
+using Shared.Infrastructure.Database;
 using Shared.Infrastructure.Services;
 
 namespace Shared.Infrastructure;
+
 
 public static class DependencyInjection
 {
@@ -33,8 +37,39 @@ public static class DependencyInjection
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IUserContext, UserContext>();
 
+        builder.Services.AddScoped<AuditInterceptor>();
+
         builder.Host.UseSerilog(
             (ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
+
+        return builder;
+    }
+
+
+    public static WebApplicationBuilder AddDbContext<T>(this WebApplicationBuilder builder, Func<IServiceProvider, DbContextSetupOptions> optionsFunc) where T : DbContext
+    {
+        builder.Services.AddDbContext<T>((serviceProvider, options) =>
+            {
+                var dbOptions = optionsFunc(serviceProvider);
+
+                if (dbOptions.UseInMemoryDb)
+                {
+                    options.UseInMemoryDatabase(dbOptions.ModuleName);
+                }
+                else
+                {
+                    var config = serviceProvider.GetRequiredService<IConfiguration>();
+                    var provider = config["Database:Provider"] ?? "SqlServer";
+                    var migrationsAssembly = typeof(T).Assembly.FullName;
+                    if (string.Equals(provider, "Postgres", StringComparison.OrdinalIgnoreCase))
+                        options.UseNpgsql(dbOptions.ConnectionString, npgsql => npgsql.MigrationsAssembly(migrationsAssembly));
+                    else
+                        options.UseSqlServer(dbOptions.ConnectionString, sql => sql.MigrationsAssembly(migrationsAssembly));
+                }
+
+                var auditInterceptor = serviceProvider.GetRequiredService<AuditInterceptor>();
+                options.AddInterceptors(auditInterceptor);
+            });
 
         return builder;
     }

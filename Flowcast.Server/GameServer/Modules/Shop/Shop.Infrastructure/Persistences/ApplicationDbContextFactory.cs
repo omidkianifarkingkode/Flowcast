@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Shop.Infrastructure.Options;
@@ -24,15 +24,19 @@ public sealed class ApplicationDbContextFactory
             .GetSection(ShopOptions.SectionName)
             .Get<ShopOptions>();
 
-        if(string.IsNullOrWhiteSpace(shopOptions?.ConnectionStrings))
+        if(string.IsNullOrWhiteSpace(shopOptions?.ConnectionString))
             throw new InvalidOperationException("Shop Connection string not found");
 
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(shopOptions.ConnectionStrings, sql =>
-            {
-                sql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
-            })
-            .Options;
+        var provider = config["Database:Provider"] ?? "SqlServer";
+        var migrationsAssembly = typeof(ApplicationDbContext).Assembly.FullName;
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+
+        if (string.Equals(provider, "Postgres", StringComparison.OrdinalIgnoreCase))
+            optionsBuilder.UseNpgsql(shopOptions.ConnectionString, npgsql => npgsql.MigrationsAssembly(migrationsAssembly));
+        else
+            optionsBuilder.UseSqlServer(shopOptions.ConnectionString, sql => sql.MigrationsAssembly(migrationsAssembly));
+
+        var options = optionsBuilder.Options;
 
         return new ApplicationDbContext(options);
     }

@@ -8,10 +8,18 @@ public class PurchaseValidationAttemptConfiguration : IEntityTypeConfiguration<P
 {
     public void Configure(EntityTypeBuilder<PurchaseValidationAttempt> builder)
     {
-        builder
-            .ToTable("PurchaseValidationAttempts");
-        builder
-            .HasKey(a => a.Id);
+        builder.ToTable("PurchaseValidationAttempts");
+
+        builder.HasKey(a => a.Id);
+
+        builder.Property(a => a.Id)
+            .ValueGeneratedOnAdd();
+
+        builder.Property(a => a.PurchaseId)
+            .HasConversion(
+                id => id.Value,
+                value => PurchaseId.FromString(value))
+            .IsRequired();
 
         builder.Property(a => a.AttemptNo)
             .IsRequired();
@@ -27,16 +35,12 @@ public class PurchaseValidationAttemptConfiguration : IEntityTypeConfiguration<P
             .IsRequired(false);
 
         builder.Property(a => a.ErrorMessage)
-            .HasMaxLength(500)
+            .HasMaxLength(1000)
             .IsRequired(false);
 
-        builder.Property(a => a.PurchaseId)
-            .HasConversion(
-                id => id.Value,
-                value => PurchaseId.FromString(value))
-            .IsRequired();
+        builder.HasIndex(a => a.PurchaseId);
 
-        builder
-            .HasIndex(a => a.PurchaseId);
+        builder.HasIndex(a => new { a.PurchaseId, a.AttemptNo })
+            .IsUnique();
     }
 }
