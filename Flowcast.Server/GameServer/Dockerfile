@@ -1,8 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
-RUN dotnet restore
-RUN dotnet publish AppHost/AppHost.csproj -c Release -o /app/publish
+RUN dotnet restore AppHost/AppHost.csproj
+RUN dotnet publish AppHost/AppHost.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
