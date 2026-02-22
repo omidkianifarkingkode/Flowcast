@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+if [ -d "$ROOT/Flowcast.Server/GameServer" ]; then
+  cd "$ROOT/Flowcast.Server/GameServer"
+elif [ -f "$ROOT/GameServer.sln" ]; then
+  cd "$ROOT"
+else
+  echo "Could not find GameServer. Run from repo root."
+  exit 1
+fi
+echo "Running tests before push..."
+dotnet build -q
+dotnet test --no-build -q
+echo "All tests passed."
