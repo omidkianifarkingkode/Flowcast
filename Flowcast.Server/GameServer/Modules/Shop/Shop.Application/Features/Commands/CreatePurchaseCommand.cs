@@ -1,5 +1,6 @@
-﻿using Shared.Application.Messaging;
+using Shared.Application.Messaging;
 using Shop.Domain.Entities;
+using Shop.Domain.Enums;
 
 namespace Shop.Application.Features.Commands;
 

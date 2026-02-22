@@ -1,4 +1,4 @@
-﻿using Shared.Application.Messaging;
+using Shared.Application.Messaging;
 using Shared.Application.Services;
 using SharedKernel;
 using Shop.Application.IRepositories;
@@ -23,7 +23,7 @@ public sealed class CreatePurchaseCommandHandler(
                     new CreatePurchaseResult(existing.Id, false)
                     );
 
-        var purchase = Purchase.LogNew(
+        var purchaseResult = Purchase.LogNew(
             id: PurchaseId.New(),
             orderId: command.OrderId,
             store: command.Store,
@@ -35,19 +35,19 @@ public sealed class CreatePurchaseCommandHandler(
             purchaseAtUtc: command.PurchaseAtUtc,
             isSandbox: command.IsSandbox,
             signature: command.Signature,
-            meta: command.Metadata
+            metadata: command.Metadata?.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString() ?? "")
         );
+        if (purchaseResult.IsFailure)
+            return Result.Failure<CreatePurchaseResult>(purchaseResult.Error);
 
-        
-        var result = await purchaseRepo.AddNewLog(purchase, ct);
-        if(result.IsFailure)
-            return Result.Failure<CreatePurchaseResult>(result.Error);
+        var purchase = purchaseResult.Value;
+        var addResult = await purchaseRepo.AddNewLog(purchase, ct);
+        if (addResult.IsFailure)
+            return Result.Failure<CreatePurchaseResult>(addResult.Error);
 
         await uow.SaveChangesAsync(ct);
 
-        return Result.Success(
-                new CreatePurchaseResult(purchase.Id, true)
-                );
+        return Result.Success(new CreatePurchaseResult(purchase.Id, true));
     }
 
 }

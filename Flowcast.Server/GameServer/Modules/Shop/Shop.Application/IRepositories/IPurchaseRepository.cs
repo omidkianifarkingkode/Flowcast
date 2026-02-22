@@ -1,5 +1,6 @@
-﻿using SharedKernel;
+using SharedKernel;
 using Shop.Domain.Entities;
+using Shop.Domain.Enums;
 
 namespace Shop.Application.IRepositories
 {

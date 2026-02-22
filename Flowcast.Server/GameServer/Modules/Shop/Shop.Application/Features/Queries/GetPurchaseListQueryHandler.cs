@@ -1,4 +1,4 @@
-﻿using Shared.Application.Messaging;
+using Shared.Application.Messaging;
 using SharedKernel;
 using Shop.Application.IRepositories;
 
@@ -24,7 +24,7 @@ public sealed class GetPurchaseListQueryHandler(
                     State: p.State,
                     PurchaseAtUtc: p.PurchaseAtUtc,
                     CreatedAtUtc: p.CreatedAtUtc,
-                    ValidationAttemptsCount: p.PurchaseValidationAttempts.Count
+                    ValidationAttemptsCount: p.ValidationAttempts.Count
                     ))
                 .ToList();
 
