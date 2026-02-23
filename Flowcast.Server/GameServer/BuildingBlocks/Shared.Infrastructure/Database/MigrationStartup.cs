@@ -12,9 +12,10 @@ public static class MigrationStartup
 {
     public static async Task ApplyAllMigrationsAsync(this WebApplication app)
     {
-        if (!app.Environment.IsLocalOrDevelopement() && !string.Equals(Environment.GetEnvironmentVariable("MIGRATE_ONLY"), "true", StringComparison.OrdinalIgnoreCase))
-            return;
+        var isMigrateOnly = string.Equals(Environment.GetEnvironmentVariable("MIGRATE_ONLY"), "true", StringComparison.OrdinalIgnoreCase);
 
+        if (!app.Environment.IsLocalOrDevelopement() && !isMigrateOnly)
+            return;
         using var scope = app.Services.CreateScope();
         var sp = scope.ServiceProvider;
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("EFMigrations");
