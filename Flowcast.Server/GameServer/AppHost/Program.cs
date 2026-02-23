@@ -1,6 +1,7 @@
 using AppHost;
 using AppHost.Extensions;
 using Identity.Presentation;
+using Shared.Infrastructure.Database;
 using PlayerProgressStore.Presentation;
 using Shop.Presentation;
 
@@ -20,6 +21,12 @@ builder
 var app = builder.Build();
 
 app.LogEnvironmentStartup();
+
+if (string.Equals(Environment.GetEnvironmentVariable("MIGRATE_ONLY"), "true", StringComparison.OrdinalIgnoreCase))
+{
+    await app.ApplyAllMigrationsAsync();
+    return;
+}
 
 await app.UseAppHost();
 await app.RunAsync();

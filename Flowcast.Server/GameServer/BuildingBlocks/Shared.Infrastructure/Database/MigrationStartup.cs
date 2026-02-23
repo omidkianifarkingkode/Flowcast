@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,7 +12,7 @@ public static class MigrationStartup
 {
     public static async Task ApplyAllMigrationsAsync(this WebApplication app)
     {
-        if (!app.Environment.IsLocalOrDevelopement())
+        if (!app.Environment.IsLocalOrDevelopement() && !string.Equals(Environment.GetEnvironmentVariable("MIGRATE_ONLY"), "true", StringComparison.OrdinalIgnoreCase))
             return;
 
         using var scope = app.Services.CreateScope();

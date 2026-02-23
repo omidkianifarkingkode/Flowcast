@@ -26,10 +26,10 @@ public static class MiddlewareExtensions
         app.UseHttpsRedirection();
 
         // 3) Swagger (dev only)
+        await app.ApplyAllMigrationsAsync();
+
         if (app.Environment.IsLocalOrDevelopement())
         {
-            await app.ApplyAllMigrationsAsync();
-
             app.UseSwagger();
             app.UseSwaggerUI();
         }
