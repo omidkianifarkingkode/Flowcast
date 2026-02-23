@@ -11,30 +11,27 @@ public static class SwaggerExtensions
     {
         services.AddSwaggerGen(o =>
         {
-            //o.EnableAnnotations();
             o.CustomSchemaIds(id => id.FullName!.Replace('+', '-'));
 
-            var securityScheme = new OpenApiSecurityScheme
+            o.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
             {
-                Name = "JWT Authentication",
-                Description = "Enter your JWT token in this field",
+                Name = "Authorization",
+                Description = "Enter your JWT token **without** the 'Bearer ' prefix",
                 In = ParameterLocation.Header,
                 Type = SecuritySchemeType.Http,
-                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                Scheme = "bearer",
                 BearerFormat = "JWT"
-            };
+            });
 
-            o.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, securityScheme);
-
-            var securityRequirement = new OpenApiSecurityRequirement
+            // This is the key line that fixes header-not-sent in v10.1.x on .NET 10
+            // It registers the scheme so Swagger UI knows how to apply it
+            o.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme, null!, null!),
-                    []
-                }
-            };
+                [new OpenApiSecuritySchemeReference("bearer", document)] = []   // empty scopes = bearer token only
+            });
 
-            o.AddSecurityRequirement(_ => securityRequirement);
+            // ADD the filter → it will apply security only where needed
+            o.OperationFilter<AuthorizeCheckOperationFilter>();
         });
 
         services.ConfigureOptions<ConfigureSwaggerGenOptions>();

@@ -1,4 +1,4 @@
-﻿using Identity.Presentation;
+using Identity.Presentation;
 using Realtime.Transport.Gateway;
 using Serilog;
 using Shared.Infrastructure.Database;
@@ -26,6 +26,7 @@ public static class MiddlewareExtensions
         app.UseHttpsRedirection();
 
         // 3) Swagger (dev only)
+
         if (app.Environment.IsLocalOrDevelopement())
         {
             await app.ApplyAllMigrationsAsync();
@@ -34,7 +35,7 @@ public static class MiddlewareExtensions
             app.UseSwaggerUI();
         }
 
-        // 4) Routing (explicit is clearer if you also map controllers)
+        app.UseCors();
         app.UseRouting();
         app.UseApiGuard();
 

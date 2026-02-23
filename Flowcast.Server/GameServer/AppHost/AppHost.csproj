@@ -13,6 +13,7 @@
     <ProjectReference Include="..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Modules\Identity\Identity.Presentation\Identity.Presentation.csproj" />
     <ProjectReference Include="..\Modules\PlayerProgressStore\PlayerProgressStore.Presentation\PlayerProgressStore.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Shop\Shop.Presentation\Shop.Presentation.csproj" />
 	<ProjectReference Include="..\Realtime.Transport\Realtime.Core\Realtime.Core.csproj" />
   </ItemGroup>
 

@@ -2,7 +2,7 @@
 
 public interface IModifiable
 {
-	DateTime? ModifiedOnUtc { get; set; }
+	DateTimeOffset? ModifiedAtUtc { get; set; }
 
 	string? ModifierUser { get; set; }
 }
