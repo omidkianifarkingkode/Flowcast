@@ -41,11 +41,24 @@ public static class DependencyInjection
 
         builder.Host.UseSerilog((ctx, cfg) =>
         {
-            cfg.ReadFrom.Configuration(ctx.Configuration);
-            if (string.Equals(Environment.GetEnvironmentVariable("MIGRATE_ONLY"), "true", StringComparison.OrdinalIgnoreCase))
+            cfg.MinimumLevel.Information()
+                .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+                .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}");
+
+            var seqUrl = ctx.Configuration["Serilog__SeqUrl"]
+                ?? ctx.Configuration["Serilog:SeqUrl"]
+                ?? ctx.Configuration["Serilog__WriteTo__1__Args__ServerUrl"];
+            if (!string.IsNullOrWhiteSpace(seqUrl))
             {
-                cfg.WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
+                try
+                {
+                    cfg.WriteTo.Seq(seqUrl.Trim());
+                }
+                catch { }
             }
+
         });
 
         return builder;

@@ -556,6 +556,7 @@
           "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.3, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.0, )",
           "Realtime.Core": "[1.0.0, )",
+          "Serilog.Sinks.Seq": "[9.0.0, )",
           "Shared.Application": "[1.0.0, )"
         }
       },
