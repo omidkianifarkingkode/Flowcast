@@ -39,8 +39,14 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<AuditInterceptor>();
 
-        builder.Host.UseSerilog(
-            (ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
+        builder.Host.UseSerilog((ctx, cfg) =>
+        {
+            cfg.ReadFrom.Configuration(ctx.Configuration);
+            if (string.Equals(Environment.GetEnvironmentVariable("MIGRATE_ONLY"), "true", StringComparison.OrdinalIgnoreCase))
+            {
+                cfg.WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
+            }
+        });
 
         return builder;
     }

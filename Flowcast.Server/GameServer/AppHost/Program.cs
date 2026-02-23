@@ -24,7 +24,15 @@ app.LogEnvironmentStartup();
 
 if (string.Equals(Environment.GetEnvironmentVariable("MIGRATE_ONLY"), "true", StringComparison.OrdinalIgnoreCase))
 {
-    await app.ApplyAllMigrationsAsync();
+    try
+    {
+        await app.ApplyAllMigrationsAsync();
+        Environment.Exit(0);
+    }
+    catch
+    {
+        Environment.Exit(1);
+    }
     return;
 }
 
