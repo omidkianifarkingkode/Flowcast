@@ -1,4 +1,4 @@
-﻿using Identity.Domain.Shared;
+using Identity.Domain.Shared;
 using SharedKernel;
 
 namespace Identity.Domain.Entities;
@@ -20,6 +20,14 @@ public sealed class Account
 
     public static Account CreateNew(DateTime nowUtc) =>
         new() { AccountId = Guid.NewGuid(), CreatedAtUtc = nowUtc };
+
+    // Factory for guest accounts that always initializes a display name
+    public static Account CreateNewForGuest(DateTime nowUtc, string guestDisplayName)
+    {
+        var a = CreateNew(nowUtc);
+        a.SetDisplayName(guestDisplayName);
+        return a;
+    }
 
     public static Account Create(Guid id, DateTime nowUtc) =>
         new() { AccountId = id, CreatedAtUtc = nowUtc };
@@ -57,6 +65,31 @@ public sealed class Account
         return id;
     }
 
+    // Enforces guest subject constraints and reuses the identity when the same guest signs in again
+    public Result<IdentityEntity> AddOrTouchGuestIdentity(string guestSubject, DateTime nowUtc, Dictionary<string, string>? meta)
+    {
+        guestSubject = guestSubject.Trim();
+        if (string.IsNullOrWhiteSpace(guestSubject) || guestSubject.Length > 128)
+            return Result.Failure<IdentityEntity>(DomainErrors.InvalidGuestSubject);
+
+        var existing = _identities.FirstOrDefault(i =>
+            i.Provider == IdentityProvider.None && i.Subject == guestSubject);
+
+        if (existing is not null)
+        {
+            if (!existing.LoginAllowed)
+                return Result.Failure<IdentityEntity>(DomainErrors.GuestLoginDisabled);
+
+            existing.TouchSeen(nowUtc, meta);
+            return existing;
+        }
+
+        var id = IdentityEntity.Create(Guid.NewGuid(), AccountId, IdentityProvider.None, guestSubject, nowUtc, loginAllowed: true);
+        id.TouchSeen(nowUtc, meta);
+        _identities.Add(id);
+        return id;
+    }
+
     public Result<IdentityEntity> LinkProvider(IdentityProvider provider, string subject, DateTime nowUtc)
     {
         if (provider == IdentityProvider.Device)
@@ -69,9 +102,11 @@ public sealed class Account
         var linked = IdentityEntity.Create(Guid.NewGuid(), AccountId, provider, subject, nowUtc, loginAllowed: true);
         _identities.Add(linked);
 
-        // disable all device logins once any non-device is linked
         foreach (var dev in _identities.Where(i => i.Provider == IdentityProvider.Device && i.LoginAllowed))
             dev.DisableLogin();
+
+        foreach (var guest in _identities.Where(i => i.Provider == IdentityProvider.None && i.LoginAllowed))
+            guest.DisableLogin();
 
         return linked;
     }

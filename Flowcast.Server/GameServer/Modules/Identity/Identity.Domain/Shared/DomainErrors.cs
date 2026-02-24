@@ -1,4 +1,4 @@
-﻿using SharedKernel;
+using SharedKernel;
 
 namespace Identity.Domain.Shared;
 
@@ -6,6 +6,12 @@ public static class DomainErrors
 {
     public static readonly Error InvalidDeviceId =
         Error.Problem("Identity.InvalidDeviceId", "DeviceId is null or length is too large.");
+
+    public static readonly Error InvalidGuestSubject =
+        Error.Problem("Identity.InvalidGuestSubject", "Guest subject is null or length is too large.");
+
+    public static readonly Error GuestLoginDisabled =
+        Error.Conflict("Auth.GuestDisabled", "Guest identity is disabled after linking.");
 
     // Business rule: you cannot link the "Device" provider.
     public static readonly Error InvalidProvider =
