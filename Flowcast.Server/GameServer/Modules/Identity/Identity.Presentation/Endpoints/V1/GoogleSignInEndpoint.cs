@@ -1,4 +1,4 @@
-﻿using Identity.Application.Commands;
+using Identity.Application.Commands;
 using Identity.Contracts;
 using Identity.Contracts.V1;
 using Identity.Contracts.V1.Shared;
@@ -18,35 +18,25 @@ public sealed class GoogleSignInEndpoint : IEndpoint
     {
         app.MapPost(GoogleSignIn.Route,
             async (GoogleSignIn.Request request,
-                   ICommandHandler<GoogleSignInCommand, AuthResult> handler,
+                   ICommandHandler<LoginByGoogleIdCommand, AuthResult> handler,
                    HttpContext http,
                    CancellationToken ct) =>
             {
-                var command = ToCommand(request);
+                var command = new LoginByGoogleIdCommand(request.UserId, MetadataItem.ToDictionary(request.Metadata));
                 var result = await handler.Handle(command, ct);
 
                 return result.Match(
-                    auth => Results.Ok(ToResponse(result.Value)),
+                    auth => Results.Ok(ToResponse(auth)),
                     error => CustomResults.Problem(error, http));
-
             })
            .AllowAnonymous()
-           .AllowOnlyProduction()
+          // .AllowOnlyProduction()
            .MapToApiVersion(1.0)
            .WithTags(ApiInfo.Tag)
            .WithSummary(GoogleSignIn.Summary)
            .WithDescription(GoogleSignIn.Description);
     }
 
-    private static GoogleSignInCommand ToCommand(GoogleSignIn.Request request)
-    {
-        var command = new GoogleSignInCommand(IdentityProvider.Google.MapToDomain(), request.IdToken, request.Meta);
-
-        return command;
-    }
-
-    private static GoogleSignIn.Response ToResponse(AuthResult auth)
-    {
-        return new GoogleSignIn.Response(auth.AccountId, auth.AccessToken, auth.RefreshToken, auth.ExpiresAtUtc);
-    }
+    private static GoogleSignIn.Response ToResponse(AuthResult auth) =>
+        new(auth.AccountId, auth.AccessToken, auth.RefreshToken, new DateTimeOffset(auth.ExpiresAtUtc));
 }

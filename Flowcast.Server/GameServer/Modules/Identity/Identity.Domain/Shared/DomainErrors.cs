@@ -10,6 +10,9 @@ public static class DomainErrors
     public static readonly Error InvalidGuestSubject =
         Error.Problem("Identity.InvalidGuestSubject", "Guest subject is null or length is too large.");
 
+    public static readonly Error InvalidGoogleUserId =
+        Error.Problem("Identity.InvalidGoogleUserId", "Google user ID is null or length is too large.");
+
     public static readonly Error GuestLoginDisabled =
         Error.Conflict("Auth.GuestDisabled", "Guest identity is disabled after linking.");
 
