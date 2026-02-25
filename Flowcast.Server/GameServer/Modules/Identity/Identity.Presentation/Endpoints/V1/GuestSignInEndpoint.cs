@@ -35,6 +35,15 @@ public sealed class GuestSignInEndpoint : IEndpoint
             .WithDescription(GuestSignIn.Description);
     }
 
-    private static GuestSignIn.Response ToResponse(AuthResult auth) =>
-        new(auth.AccountId, auth.AccessToken, auth.RefreshToken, new DateTimeOffset(auth.ExpiresAtUtc));
+    private static GuestSignIn.Response ToResponse(AuthResult auth)
+    {
+        var expiresIn = (int)Math.Max(0, (auth.ExpiresAtUtc - DateTime.UtcNow).TotalSeconds);
+        return new GuestSignIn.Response(
+            auth.AccountId,
+            auth.AccessToken,
+            auth.RefreshToken,
+            expiresIn,
+            "Bearer",
+            "guest");
+    }
 }

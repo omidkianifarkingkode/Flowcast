@@ -12,12 +12,12 @@ public static class GuestSignIn
 
     public record Request(IReadOnlyList<MetadataItem>? Metadata = null);
 
-    //Response 
     public record Response(
-       Guid AccountId,
-       string AccessToken,
-       string RefreshToken,
-       DateTimeOffset ExpiresAtUtc
-   );
-
+        Guid AccountId,
+        string AccessToken,
+        string RefreshToken,
+        int ExpiresIn,
+        string TokenType,
+        string GrantType
+    );
 }
